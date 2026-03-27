@@ -252,11 +252,13 @@ def generate_prompts(tz_data):
     # === POSITIVE PROMPT ===
     parts = []
     
-    # 1. Заголовок качества
+    # 1. Заголовок качества + освещение (фикс "мёртвого" освещения)
     parts.append("ULTRA HIGH QUALITY photorealistic interior photograph for Architectural Digest magazine cover")
     parts.append("Professional architectural photography, Hasselblad H6D-400c medium format camera")
     parts.append("8K ultra high resolution, tack sharp details, perfect exposure")
     parts.append("EXACT LAYOUT preserved from reference sketch")
+    parts.append("Natural soft daylight, warm ambient lighting, gentle shadows, realistic light bounce")
+    parts.append("Interior only - empty space outside room boundaries, no extended walls")
     
     # 2. Ракурс из скетчей
     if tz_data.get('primary_sketch'):
@@ -333,9 +335,17 @@ def generate_prompts(tz_data):
         if ref_data.get('size'):
             element_parts.append(f"size: {ref_data['size']}")
         
-        # Фактура
+        # Фактура — критично для правильного рендера
         if ref_data.get('texture'):
+            texture = ref_data['texture'].lower()
             element_parts.append(f"texture: {ref_data['texture']}")
+            # Добавляем английский эквивалент для SD
+            if 'матов' in texture:
+                element_parts.append("(matte finish, NOT glossy)")
+            elif 'глянц' in texture:
+                element_parts.append("(glossy finish, reflective)")
+            if 'керамик' in texture or 'плитк' in texture:
+                element_parts.append("(ceramic tile with visible grout lines)")
         
         # CRITICAL маркер
         if ref_data.get('critical'):
@@ -357,6 +367,11 @@ def generate_prompts(tz_data):
     parts.append("soft shadows, depth of field, magazine editorial cover quality")
     parts.append("rich saturated colors, natural lighting")
     
+    # 8. Surface-specific качество (фикс "плитка как сайдинг")
+    parts.append("WALL TILES: visible horizontal and vertical grout lines, ceramic matte finish, NOT glossy siding")
+    parts.append("FLOOR TILES: accurate tile pattern with grout, natural ceramic texture")
+    parts.append("SHOWER: fabric curtain on metal rod, NOT glass partition")
+    
     positive = ". ".join(parts)
     
     # === NEGATIVE PROMPT ===
@@ -366,7 +381,14 @@ def generate_prompts(tz_data):
         "low quality, blurry, out of focus, distorted, deformed",
         "watermark, text, signature, logo, border, frame",
         "plastic look, video game graphics, Blender, Maya, Unreal Engine",
-        "wrong colors, color bleeding, jpeg artifacts, noise, grain"
+        "wrong colors, color bleeding, jpeg artifacts, noise, grain",
+        # Структурные ошибки (из замечаний Маши)
+        "extended walls beyond room, extra rooms, walls outside boundaries",
+        "glass shower partition, glass shower door",  # должна быть тканевая шторка
+        "glossy wall tiles, siding, vinyl panels",    # плитка должна быть матовая
+        "flat lighting, dead lighting, no shadows, harsh shadows",
+        "missing fixtures, missing towel warmer, missing radiator",
+        "cyborg fixtures, merged objects, fused geometry, extra shower heads"
     ]
     
     # Добавляем ограничения из ТЗ — универсальный парсинг
