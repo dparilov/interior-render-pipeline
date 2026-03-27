@@ -9,73 +9,132 @@ import os
 import argparse
 from pathlib import Path
 
+# Entity classes for routing
+CLASS_SURFACE = 'surface'
+CLASS_FIXTURE = 'fixture'
+
+# Render modes (current = same flow, future = different pipelines)
+RENDER_REGIONAL_IPADAPTER = 'regional_ipadapter'  # current unified flow
+RENDER_PROJECTION_TILING = 'projection_tiling'    # future: large surfaces
+RENDER_LOCAL_INPAINT = 'local_inpaint'            # future: fixture editing
+
 # Entity → reference mapping (from ТЗ analysis)
 ENTITY_REFERENCES = {
+    # ═══════════════════════════════════════════════════════════
+    # SURFACES — large areas, tileable/projectable
+    # ═══════════════════════════════════════════════════════════
     'floor': {
+        'class': CLASS_SURFACE,
+        'surface_kind': 'floor',
         'reference': 'floor_tiles.jpg',
         'description': 'Напольная плитка Equipe Rivoli Blue 15x15',
-        'material_in_model': 'Материал'  # Bergen-Azul
+        'material_in_model': 'Материал',  # Bergen-Azul
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'wall_tiles': {
+        'class': CLASS_SURFACE,
+        'surface_kind': 'wall',
         'reference': 'wall_tiles.png',
         'description': 'Настенная плитка Costa Nova Onda White 5x20',
-        'material_in_model': 'Материал1'  # White-Glossy
+        'material_in_model': 'Материал1',  # White-Glossy
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'wall_paint': {
+        'class': CLASS_SURFACE,
+        'surface_kind': 'wall',
         'reference': None,  # цвет, не текстура
         'description': 'Краска Lanors Mons №176 Portland',
         'color': '#818181',
-        'material_in_model': '[0131_Silver]'
-    },
-    'vanity': {
-        'reference': 'vanity.jpg',
-        'description': 'Тумба Тумба 114см тёмно-серая',
-        'material_in_model': '[0134_DimGray]'
-    },
-    'mirror': {
-        'reference': 'mirror.jpg',
-        'description': 'Зеркало 80×100см с подсветкой',
-        'material_in_model': '[Mirror 01]'
-    },
-    'bathtub': {
-        'reference': 'bathtub.jpg',
-        'description': 'Ванна Volle 170×70',
-        'material_in_model': None  # default white
+        'material_in_model': '[0131_Silver]',
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'bathtub_screen': {
+        'class': CLASS_SURFACE,
+        'surface_kind': 'bathtub_screen',
         'reference': 'wall_tiles.png',  # тот же что стены
         'description': 'Экран ванны - плитка Costa Nova',
-        'material_in_model': 'Материал1'
+        'material_in_model': 'Материал1',
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
+    },
+    
+    # ═══════════════════════════════════════════════════════════
+    # FIXTURES — discrete objects, locally editable
+    # ═══════════════════════════════════════════════════════════
+    'vanity': {
+        'class': CLASS_FIXTURE,
+        'reference': 'vanity.jpg',
+        'description': 'Тумба 114см тёмно-серая',
+        'material_in_model': '[0134_DimGray]',
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
+    },
+    'mirror': {
+        'class': CLASS_FIXTURE,
+        'reference': 'mirror.jpg',
+        'description': 'Зеркало 80×100см с подсветкой',
+        'material_in_model': '[Mirror 01]',
+        'critical': False,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
+    },
+    'bathtub': {
+        'class': CLASS_FIXTURE,
+        'reference': 'bathtub.jpg',
+        'description': 'Ванна Volle 170×70',
+        'material_in_model': None,  # default white
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'shower': {
+        'class': CLASS_FIXTURE,
         'reference': None,
         'description': 'Душевая штора + карниз',
-        'material_in_model': None
+        'material_in_model': None,
+        'critical': False,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'rainshower': {
+        'class': CLASS_FIXTURE,
         'reference': 'rainshower.jpg',
         'description': 'Душевая система IDDIS',
-        'material_in_model': 'Chrome1'
+        'material_in_model': 'Chrome1',
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'towel_warmer': {
+        'class': CLASS_FIXTURE,
         'reference': 'towel_warmer.jpg',
         'description': 'Полотенцесушитель Маргроид 50×80',
-        'material_in_model': '[0128_White]'
+        'material_in_model': '[0128_White]',
+        'critical': False,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'basket': {
+        'class': CLASS_FIXTURE,
         'reference': 'basket.jpg',
         'description': 'Корзина AM.PM Raga',
-        'material_in_model': 'мяг'  # ротанг
+        'material_in_model': 'мяг',  # ротанг
+        'critical': False,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'window': {
+        'class': CLASS_FIXTURE,
         'reference': None,
         'description': 'Окно с матовым стеклом',
-        'material_in_model': 'Материал57'  # стекло
+        'material_in_model': 'Материал57',  # стекло
+        'critical': False,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     },
     'faucet': {
+        'class': CLASS_FIXTURE,
         'reference': 'faucet.jpg',
         'description': 'Смеситель IDDIS Shelfy черный',
-        'material_in_model': 'black'
+        'material_in_model': 'black',
+        'critical': True,
+        'render_mode': RENDER_REGIONAL_IPADAPTER
     }
 }
 
@@ -97,34 +156,44 @@ def generate_manifest(masks_dir: str, references_dir: str, output_path: str, sce
         mask_file = masks_path / f'mask_{entity_name}.png'
         
         entity_data = {
+            'class': info.get('class'),
             'description': info['description'],
-            'mask': str(mask_file) if mask_file.exists() else None,
+            'mask_path': str(mask_file) if mask_file.exists() else None,
             'mask_exists': mask_file.exists(),
-            'material_in_model': info.get('material_in_model')
+            'material_in_model': info.get('material_in_model'),
+            'critical': info.get('critical', False),
+            'render_mode': info.get('render_mode', RENDER_REGIONAL_IPADAPTER)
         }
+        
+        # Surface-specific fields
+        if info.get('surface_kind'):
+            entity_data['surface_kind'] = info['surface_kind']
         
         # Reference image
         if info.get('reference'):
             ref_file = refs_path / info['reference']
-            entity_data['reference'] = str(ref_file) if ref_file.exists() else info['reference']
+            entity_data['reference_path'] = str(ref_file) if ref_file.exists() else info['reference']
             entity_data['reference_exists'] = ref_file.exists()
         
-        # Color (for paint)
+        # Color (for paint surfaces without texture)
         if info.get('color'):
             entity_data['color'] = info['color']
         
         manifest['entities'][entity_name] = entity_data
     
-    # Summary
-    total = len(manifest['entities'])
-    with_masks = sum(1 for e in manifest['entities'].values() if e.get('mask_exists'))
-    with_refs = sum(1 for e in manifest['entities'].values() if e.get('reference_exists'))
+    # Summary with class breakdown
+    entities = manifest['entities']
+    surfaces = {k: v for k, v in entities.items() if v.get('class') == CLASS_SURFACE}
+    fixtures = {k: v for k, v in entities.items() if v.get('class') == CLASS_FIXTURE}
     
     manifest['summary'] = {
-        'total_entities': total,
-        'masks_found': with_masks,
-        'references_found': with_refs,
-        'ready_for_render': with_masks > 0
+        'total_entities': len(entities),
+        'surfaces': len(surfaces),
+        'fixtures': len(fixtures),
+        'masks_found': sum(1 for e in entities.values() if e.get('mask_exists')),
+        'references_found': sum(1 for e in entities.values() if e.get('reference_exists')),
+        'critical_entities': sum(1 for e in entities.values() if e.get('critical')),
+        'ready_for_render': sum(1 for e in entities.values() if e.get('mask_exists')) > 0
     }
     
     # Write
