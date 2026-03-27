@@ -1,0 +1,97 @@
+2026-03-22T18:26:05.346Z === START v4 workers=4 max_per_worker=200 ===
+2026-03-22T18:26:05.347Z === Zones: ru-central1-a, ru-central1-b, ru-central1-d, ru-central1-a ===
+2026-03-22T18:26:05.347Z [W1] START zone=ru-central1-a
+2026-03-22T18:26:05.361Z [W2] START zone=ru-central1-b
+2026-03-22T18:26:05.362Z [W3] START zone=ru-central1-d
+2026-03-22T18:26:05.362Z [W4] START zone=ru-central1-a
+2026-03-22T18:26:09.866Z [W1] SKIP zone=ru-central1-a ip=93.77.186.31
+2026-03-22T18:26:10.616Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.234.107 id=fl82te0a3tlm80qq3ptd — pinging...
+2026-03-22T18:26:22.852Z [W3] PING FAIL ip=158.160.234.107, releasing
+2026-03-22T18:26:22.938Z [W2] SKIP zone=ru-central1-b ip=89.169.184.250
+2026-03-22T18:26:22.954Z [W4] SKIP zone=ru-central1-a ip=93.77.185.177
+2026-03-22T18:26:25.898Z [W1] SKIP zone=ru-central1-a ip=93.77.189.45
+2026-03-22T18:26:28.006Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.226.39 id=fl87thlsvn2guqn7q7n9 — pinging...
+2026-03-22T18:26:40.260Z [W3] PING FAIL ip=158.160.226.39, releasing
+2026-03-22T18:26:40.291Z [W4] SKIP zone=ru-central1-a ip=93.77.184.156
+2026-03-22T18:26:43.371Z [W2] SKIP zone=ru-central1-b ip=213.165.216.255
+2026-03-22T18:26:43.373Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.122.200 id=e9bhkak24gttrk3p814o — pinging...
+2026-03-22T18:26:55.620Z [W1] PING FAIL ip=158.160.122.200, releasing
+2026-03-22T18:26:55.761Z [W4] SKIP zone=ru-central1-a ip=130.193.50.141
+2026-03-22T18:26:58.674Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.240.15 id=fl8jagqp66o0qmf0hojh — pinging...
+2026-03-22T18:27:10.916Z [W3] PING FAIL ip=158.160.240.15, releasing
+2026-03-22T18:27:10.962Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.35.208 id=e9bo52f2jif426vh7855 — pinging...
+2026-03-22T18:29:22.402Z === START v4 workers=4 max_per_worker=200 ===
+2026-03-22T18:29:22.403Z === Zones: ru-central1-a, ru-central1-b, ru-central1-d, ru-central1-a ===
+2026-03-22T18:29:22.403Z [W1] START zone=ru-central1-a
+2026-03-22T18:29:22.417Z [W2] START zone=ru-central1-b
+2026-03-22T18:29:22.417Z [W3] START zone=ru-central1-d
+2026-03-22T18:29:22.418Z [W4] START zone=ru-central1-a
+2026-03-22T18:29:26.078Z [W4] SKIP zone=ru-central1-a ip=93.77.177.210
+2026-03-22T18:29:26.859Z [W2] SKIP zone=ru-central1-b ip=213.165.215.207
+2026-03-22T18:29:27.974Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.108.99 id=e9bkaeqrve4dmvnkvrj4 — pinging...
+2026-03-22T18:29:40.228Z [W1] PING FAIL ip=158.160.108.99, releasing
+2026-03-22T18:29:52.515Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.206.202 id=fl8ptkpm4vsne0af1fjm — pinging...
+2026-03-22T18:30:04.739Z [W3] PING FAIL ip=158.160.206.202, releasing
+2026-03-22T18:30:17.005Z [W4] SKIP zone=ru-central1-a ip=93.77.185.196
+2026-03-22T18:30:17.015Z [W2] SKIP zone=ru-central1-b ip=178.154.195.135
+2026-03-22T18:30:23.222Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.203.95 id=fl8v5q6ms6e8sl0s7326 — pinging...
+2026-03-22T18:30:35.460Z [W3] PING FAIL ip=158.160.203.95, releasing
+2026-03-22T18:30:47.741Z [W1] SKIP zone=ru-central1-a ip=93.77.184.156
+2026-03-22T18:30:47.766Z [W4] 158.160 FOUND zone=ru-central1-a ip=158.160.124.98 id=e9bkme7qon4uh1gc9dsp — pinging...
+2026-03-22T18:30:59.971Z [W4] PING FAIL ip=158.160.124.98, releasing
+2026-03-22T18:31:12.233Z [W2] SKIP zone=ru-central1-b ip=51.250.23.128
+2026-03-22T18:31:16.046Z [W1] SKIP zone=ru-central1-a ip=89.169.156.152
+2026-03-22T18:31:17.878Z [W4] SKIP zone=ru-central1-a ip=93.77.176.190
+2026-03-22T18:31:19.057Z [W2] SKIP zone=ru-central1-b ip=213.165.213.142
+2026-03-22T18:31:20.661Z [W1] SKIP zone=ru-central1-a ip=89.169.148.74
+2026-03-22T18:31:23.787Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.232.79 id=fl89sfv8jv365rev9bk8 — pinging...
+2026-03-22T18:31:36.004Z [W3] PING FAIL ip=158.160.232.79, releasing
+2026-03-22T18:31:48.274Z [W1] SKIP zone=ru-central1-a ip=93.77.189.45
+2026-03-22T18:31:48.328Z [W2] SKIP zone=ru-central1-b ip=213.165.209.238
+2026-03-22T18:31:51.311Z [W4] SKIP zone=ru-central1-a ip=93.77.181.40
+2026-03-22T18:31:53.325Z [W1] SKIP zone=ru-central1-a ip=93.77.177.210
+2026-03-22T18:31:54.264Z [W2] SKIP zone=ru-central1-b ip=213.165.218.138
+2026-03-22T18:31:55.524Z [W4] SKIP zone=ru-central1-a ip=89.169.147.149
+2026-03-22T18:31:56.593Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.180.237 id=fl88i4tlncsmupgv11ip — pinging...
+2026-03-22T18:32:08.836Z [W3] PING FAIL ip=158.160.180.237, releasing
+2026-03-22T18:32:24.100Z [W2] SKIP zone=ru-central1-b ip=213.165.209.157
+2026-03-22T18:32:24.109Z [W4] 158.160 FOUND zone=ru-central1-a ip=158.160.101.131 id=e9bfkebc72dcvp5homn6 — pinging...
+2026-03-22T18:32:36.356Z [W4] PING FAIL ip=158.160.101.131, releasing
+2026-03-22T18:32:48.582Z [W1] SKIP zone=ru-central1-a ip=93.77.188.208
+2026-03-22T18:32:48.636Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.232.219 id=fl8mi1nfpn9mu68cjhut — pinging...
+2026-03-22T18:33:00.867Z [W3] PING FAIL ip=158.160.232.219, releasing
+2026-03-22T18:33:17.596Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.98.63 id=e9b3ikp578lc046prh9n — pinging...
+2026-03-22T18:33:29.796Z [W1] PING FAIL ip=158.160.98.63, releasing
+2026-03-22T18:33:42.056Z [W2] SKIP zone=ru-central1-b ip=213.165.210.184
+2026-03-22T18:33:42.060Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.237.40 id=fl8f7o0kbc60obbg0egq — pinging...
+2026-03-22T18:33:54.308Z [W3] PING FAIL ip=158.160.237.40, releasing
+2026-03-22T18:34:06.534Z [W4] 158.160 FOUND zone=ru-central1-a ip=158.160.126.70 id=e9bch85bos5ms8o09iue — pinging...
+2026-03-22T18:34:18.756Z [W4] PING FAIL ip=158.160.126.70, releasing
+2026-03-22T18:34:35.540Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.108.85 id=e9b8g7h4ui2c77stt68c — pinging...
+2026-03-22T18:34:47.748Z [W1] PING FAIL ip=158.160.108.85, releasing
+2026-03-22T18:35:00.029Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.235.183 id=fl8hb4vv258m2i00b4a3 — pinging...
+2026-03-22T18:35:12.260Z [W3] PING FAIL ip=158.160.235.183, releasing
+2026-03-22T18:35:24.486Z [W4] SKIP zone=ru-central1-a ip=93.77.181.3
+2026-03-22T18:35:24.487Z [W2] SKIP zone=ru-central1-b ip=213.165.217.109
+2026-03-22T18:35:30.130Z [W4] SKIP zone=ru-central1-a ip=93.77.188.208
+2026-03-22T18:35:31.033Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.226.2 id=fl8sae3r8arp4aufdjqe — pinging...
+2026-03-22T18:35:43.236Z [W3] PING FAIL ip=158.160.226.2, releasing
+2026-03-22T18:35:55.582Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.127.40 id=e9b166ugiru9on0i2lbv — pinging...
+2026-03-22T18:36:07.812Z [W1] PING FAIL ip=158.160.127.40, releasing
+2026-03-22T18:36:20.037Z [W2] SKIP zone=ru-central1-b ip=130.193.42.212
+2026-03-22T18:36:23.093Z [W4] 158.160 FOUND zone=ru-central1-a ip=158.160.50.239 id=e9b7m3i32b3g4nhc3u7a — pinging...
+2026-03-22T18:36:35.331Z [W4] PING FAIL ip=158.160.50.239, releasing
+2026-03-22T18:36:47.654Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.239.37 id=fl81hg5sug8kbp8sg5bf — pinging...
+2026-03-22T18:36:59.908Z [W3] PING FAIL ip=158.160.239.37, releasing
+2026-03-22T18:37:12.133Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.54.141 id=e9ba9meb0f9bvr0v2aiv — pinging...
+2026-03-22T18:37:24.356Z [W1] PING FAIL ip=158.160.54.141, releasing
+2026-03-22T18:37:36.582Z [W2] SKIP zone=ru-central1-b ip=213.165.215.202
+2026-03-22T18:37:41.386Z [W3] 158.160 FOUND zone=ru-central1-d ip=158.160.231.178 id=fl8p2j5qdjvh0gjovd8c — pinging...
+2026-03-22T18:37:53.604Z [W3] PING FAIL ip=158.160.231.178, releasing
+2026-03-22T18:38:05.880Z [W1] SKIP zone=ru-central1-a ip=89.169.149.141
+2026-03-22T18:38:05.927Z [W4] 158.160 FOUND zone=ru-central1-a ip=158.160.121.57 id=e9b9fslav7cqjnjkaojv — pinging...
+2026-03-22T18:38:18.179Z [W4] PING FAIL ip=158.160.121.57, releasing
+2026-03-22T18:38:30.571Z [W2] SKIP zone=ru-central1-b ip=178.154.217.118
+2026-03-22T18:38:34.755Z [W4] 158.160 FOUND zone=ru-central1-a ip=158.160.125.52 id=e9b8hreg84q8ckbv1fog — pinging...
+2026-03-22T18:38:46.980Z [W4] PING FAIL ip=158.160.125.52, releasing
+2026-03-22T18:38:59.252Z [W1] 158.160 FOUND zone=ru-central1-a ip=158.160.127.198 id=e9blufnjr5elpp3udchi — pinging...

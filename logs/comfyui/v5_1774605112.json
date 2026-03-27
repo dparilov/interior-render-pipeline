@@ -1,0 +1,329 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "front.jpg"
+    }
+  },
+  "2": {
+    "class_type": "CannyEdgePreprocessor",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "low_threshold": 100,
+      "high_threshold": 200,
+      "resolution": 1024
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "depth_map.png"
+    }
+  },
+  "4": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "5": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "4",
+        1
+      ],
+      "text": "A modern compact bathroom interior, photorealistic photograph, 8K resolution, \nwarm natural lighting from small window, magazine quality interior design photo.\nDark charcoal gray floating vanity with white ceramic sink.\nBlue and white geometric pattern floor tiles, Mediterranean style.\nWhite glossy wavy textured wall tiles.\nChrome faucet and fixtures.\nWhite towel warmer on left wall.\nRectangular mirror with LED backlight above vanity.\nWhite acrylic bathtub on right with glass partition."
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "4",
+        1
+      ],
+      "text": "low quality, blurry, watermark, text, deformed, brass faucet, gold fixtures, black towel warmer, cartoon, anime, illustration, white vanity, beige tiles"
+    }
+  },
+  "7": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-canny-sdxl.safetensors"
+    }
+  },
+  "8": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "5",
+        0
+      ],
+      "negative": [
+        "6",
+        0
+      ],
+      "control_net": [
+        "7",
+        0
+      ],
+      "image": [
+        "2",
+        0
+      ],
+      "strength": 0.7,
+      "start_percent": 0,
+      "end_percent": 0.8
+    }
+  },
+  "9": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-depth-sdxl.safetensors"
+    }
+  },
+  "10": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "8",
+        1
+      ],
+      "control_net": [
+        "9",
+        0
+      ],
+      "image": [
+        "3",
+        0
+      ],
+      "strength": 0.5,
+      "start_percent": 0,
+      "end_percent": 0.6
+    }
+  },
+  "11": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+      "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+    }
+  },
+  "12": {
+    "class_type": "IPAdapterModelLoader",
+    "inputs": {
+      "ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"
+    }
+  },
+  "13": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks/mask_floor.png"
+    }
+  },
+  "13a": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "13",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "14": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks/mask_vanity.png"
+    }
+  },
+  "14a": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "14",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "15": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks/mask_wall.png"
+    }
+  },
+  "15a": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "15",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "16": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "seg_map.png"
+    }
+  },
+  "20": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "4",
+        0
+      ],
+      "ipadapter": [
+        "12",
+        0
+      ],
+      "clip_vision": [
+        "11",
+        0
+      ],
+      "image": [
+        "16",
+        0
+      ],
+      "weight": 0.4,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "13a",
+        0
+      ]
+    }
+  },
+  "21": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "20",
+        0
+      ],
+      "ipadapter": [
+        "12",
+        0
+      ],
+      "clip_vision": [
+        "11",
+        0
+      ],
+      "image": [
+        "16",
+        0
+      ],
+      "weight": 0.4,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "14a",
+        0
+      ]
+    }
+  },
+  "22": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "21",
+        0
+      ],
+      "ipadapter": [
+        "12",
+        0
+      ],
+      "clip_vision": [
+        "11",
+        0
+      ],
+      "image": [
+        "16",
+        0
+      ],
+      "weight": 0.3,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.5,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "15a",
+        0
+      ]
+    }
+  },
+  "30": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "31": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "22",
+        0
+      ],
+      "positive": [
+        "10",
+        0
+      ],
+      "negative": [
+        "10",
+        1
+      ],
+      "latent_image": [
+        "30",
+        0
+      ],
+      "seed": 42,
+      "steps": 50,
+      "cfg": 7.5,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 1.0
+    }
+  },
+  "32": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "31",
+        0
+      ],
+      "vae": [
+        "4",
+        2
+      ]
+    }
+  },
+  "33": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "32",
+        0
+      ],
+      "filename_prefix": "bathroom_v5"
+    }
+  }
+}

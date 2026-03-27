@@ -1,0 +1,839 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8"><title>Culture SPB - Spec v0.3</title>
+<style>
+@page { size: A4; margin: 18mm; }
+body { font-family: system-ui, -apple-system, sans-serif; font-size: 10.5pt; line-height: 1.6; color: #1a1a1a; }
+h1 { font-size: 22pt; text-align: center; margin-top: 20px; color: #1a1a2e; }
+h2 { font-size: 15pt; color: #1a1a2e; border-bottom: 2px solid #e0e0e0; padding-bottom: 4px; margin-top: 24px; }
+h3 { font-size: 12pt; color: #16213e; margin-top: 16px; }
+h4 { font-size: 11pt; color: #0f3460; margin-top: 12px; }
+table { border-collapse: collapse; width: 100%; margin: 8px 0; font-size: 9pt; }
+th, td { border: 1px solid #ccc; padding: 3px 6px; text-align: left; vertical-align: top; }
+th { background: #e8e8e8; font-weight: bold; }
+code { font-family: 'Courier New', monospace; font-size: 8.5pt; background: #f5f5f5; padding: 1px 3px; border-radius: 2px; }
+pre { background: #f5f5f5; padding: 8px; border-radius: 4px; font-size: 8pt; overflow-x: auto; line-height: 1.3; white-space: pre-wrap; word-wrap: break-word; }
+pre code { background: none; padding: 0; }
+ul, ol { margin: 4px 0; padding-left: 20px; }
+li { margin: 2px 0; }
+p { margin: 6px 0; }
+hr { border: none; border-top: 1px solid #ddd; margin: 16px 0; }
+blockquote { border-left: 3px solid #1a1a2e; margin: 10px 0; padding: 6px 16px; color: #333; font-style: italic; background: #f9f9f9; }
+</style></head><body><h1>Culture SPB — Спецификация требований и архитектуры</h1>
+
+<b>Версия:</b> 0.3 (draft)
+<b>Дата:</b> 2026-03-07
+<b>Авторы:</b> Clawdributors + C-3PO
+
+<hr>
+
+<h2>Содержание</h2>
+
+<ul><li>[Обзор проекта](#1-обзор-проекта)</li>
+<li>[Глоссарий](#2-глоссарий)</li>
+<li>[Фаза 1 — Scope](#3-фаза-1--scope)</li>
+<li>[Модель данных (НСИ)](#4-модель-данных-нси)</li>
+<li>[Источники данных](#5-источники-данных)</li>
+<li>[Пайплайн сбора и обработки](#6-пайплайн-сбора-и-обработки)</li>
+<li>[Автообнаружение источников и bootstrap каталога](#7-автообнаружение-источников-и-bootstrap-каталога)</li>
+<li>[Телеграм-канал (News Feed)](#8-телеграм-канал-news-feed)</li>
+<li>[Веб-портал](#9-веб-портал)</li>
+<li>[Админ-интерфейс](#10-админ-интерфейс)</li>
+<li>[Архитектура системы](#11-архитектура-системы)</li>
+<li>[Стек технологий](#12-стек-технологий)</li>
+<li>[Нефункциональные требования](#13-нефункциональные-требования)</li>
+<li>[Фаза 2+ — Дорожная карта](#14-фаза-2--дорожная-карта)</li>
+</ul>
+<hr>
+
+<h2>1. Обзор проекта</h2>
+
+<h3>1.1. Проблема</h3>
+
+<p>Информация о выставках изобразительного искусства в Санкт-Петербурге разбросана по десяткам источников: сайты музеев, телеграм-каналы об искусстве, порталы-агрегаторы (Афиша, Собака и т.д.). Нет единого места, где вся эта информация была бы собрана, нормализована и представлена в удобном виде.</p>
+
+<h3>1.2. Решение</h3>
+
+<b>Culture SPB</b> — платформа-агрегатор, которая:
+<ul><li>Автоматически собирает информацию о выставках из множества источников</li>
+<li>Нормализует её в единый формат с помощью LLM</li>
+<li>Дедуплицирует события</li>
+<li>Публикует в телеграм-канал и на веб-портал</li>
+<li>Поддерживает каталог площадок, художников и выставок (НСИ)</li>
+</ul>
+<h3>1.3. Целевая аудитория (фаза 1)</h3>
+
+<p>Ограниченная группа пользователей — любители искусства Санкт-Петербурга, заинтересованные в оперативном получении консолидированной информации о выставках.</p>
+
+<h3>1.4. География и тематика</h3>
+
+<ul><li><b>Город:</b> Санкт-Петербург (архитектура должна допускать расширение на другие города)</li>
+<li><b>Тематика:</b> Выставки изобразительного искусства (живопись, графика, скульптура, фотография, инсталляции, медиа-арт и т.д.)</li>
+</ul>
+<hr>
+
+<h2>2. Глоссарий</h2>
+
+<table><thead><tr><th>Термин</th><th>Определение</th></tr></thead><tbody><tr><td><b>НСИ</b></td><td>Нормативно-справочная информация — каталоги площадок, художников, выставок</td></tr><tr><td><b>Площадка (Venue)</b></td><td>Музей, галерея, выставочное пространство, где проходят выставки</td></tr><tr><td><b>Выставка (Exhibition)</b></td><td>Культурное событие — экспозиция работ в определённой площадке в определённый период</td></tr><tr><td><b>Художник (Artist)</b></td><td>Автор или авторы работ, представленных на выставке</td></tr><tr><td><b>Источник (Source)</b></td><td>Сайт, телеграм-канал или портал, откуда собирается информация</td></tr><tr><td><b>Пайплайн</b></td><td>Автоматический процесс: сбор → фильтрация → нормализация → дедупликация → публикация</td></tr><tr><td><b>Фид (Feed)</b></td><td>Лента нормализованных новостей о выставках</td></tr></tbody></table>
+<hr>
+
+<h2>3. Фаза 1 — Scope</h2>
+
+<h3>3.1. Что входит (IN)</h3>
+
+<table><thead><tr><th>#</th><th>Компонент</th><th>Описание</th></tr></thead><tbody><tr><td>1</td><td>Пайплайн сбора данных</td><td>Ежедневный автоматический сбор из всех типов источников</td></tr><tr><td>2</td><td>LLM-обработка</td><td>Определение релевантности, нормализация, тегирование, дедупликация</td></tr><tr><td>3</td><td>НСИ</td><td>Каталоги площадок, художников, выставок</td></tr><tr><td>4</td><td>Телеграм-канал</td><td>Автоматическая публикация нормализованных новостей</td></tr><tr><td>5</td><td>Веб-портал</td><td>Read-only портал с каталогом, поиском, календарём, SEO</td></tr><tr><td>6</td><td>Еженедельный дайджест</td><td>«Заканчивается на этой неделе» — воскресный пост + pinned</td></tr><tr><td>7</td><td>Админ-панель</td><td>Управление НСИ, источниками, модерация, статистика</td></tr><tr><td>8</td><td>Bootstrap-скрипт</td><td>Автоматическое обнаружение источников и наполнение первичного каталога</td></tr></tbody></table>
+<h3>3.2. Что НЕ входит (OUT — фаза 2+)</h3>
+
+<ul><li>Пользовательские аккаунты и авторизация</li>
+<li>Персональные планировщики и календари</li>
+<li>Шеринг календарей между пользователями</li>
+<li>Отзывы и рейтинги</li>
+<li>Карта выставок</li>
+<li>Рекомендательная система</li>
+<li>Мобильные приложения</li>
+<li>Мультигородность</li>
+</ul>
+<hr>
+
+<h2>4. Модель данных (НСИ)</h2>
+
+<h3>4.1. Площадка (Venue)</h3>
+
+<table><thead><tr><th>Поле</th><th>Тип</th><th>Обязательное</th><th>Описание</th></tr></thead><tbody><tr><td><code>id</code></td><td>UUID</td><td>✓</td><td>Уникальный идентификатор</td></tr><tr><td><code>name</code></td><td>string</td><td>✓</td><td>Название (русское)</td></tr><tr><td><code>slug</code></td><td>string</td><td>✓</td><td>URL-friendly идентификатор</td></tr><tr><td><code>type</code></td><td>enum</td><td>✓</td><td><code>museum</code> / <code>gallery</code> / <code>exhibition_space</code> / <code>cultural_center</code> / <code>other</code></td></tr><tr><td><code>address</code></td><td>string</td><td>✓</td><td>Полный адрес</td></tr><tr><td><code>geo_lat</code></td><td>float</td><td>Широта (для будущей карты)</td></tr><tr><td><code>geo_lon</code></td><td>float</td><td>Долгота (для будущей карты)</td></tr><tr><td><code>website</code></td><td>string</td><td>URL официального сайта</td></tr><tr><td><code>description</code></td><td>text</td><td>Описание площадки</td></tr><tr><td><code>working_hours</code></td><td>jsonb</td><td>Часы работы (структурированные)</td></tr><tr><td><code>image_url</code></td><td>string</td><td>URL фото площадки</td></tr><tr><td><code>is_active</code></td><td>bool</td><td>✓</td><td>Активна ли площадка</td></tr><tr><td><code>created_at</code></td><td>timestamp</td><td>✓</td></tr><tr><td><code>updated_at</code></td><td>timestamp</td><td>✓</td></tr></tbody></table>
+<h3>4.2. Художник (Artist)</h3>
+
+<table><thead><tr><th>Поле</th><th>Тип</th><th>Обязательное</th><th>Описание</th></tr></thead><tbody><tr><td><code>id</code></td><td>UUID</td><td>✓</td></tr><tr><td><code>name</code></td><td>string</td><td>✓</td><td>Имя (русское)</td></tr><tr><td><code>slug</code></td><td>string</td><td>✓</td><td>URL-friendly</td></tr><tr><td><code>name_original</code></td><td>string</td><td>Имя на языке оригинала (если не русский)</td></tr><tr><td><code>birth_year</code></td><td>int</td><td>Год рождения</td></tr><tr><td><code>death_year</code></td><td>int</td><td>Год смерти (null = жив)</td></tr><tr><td><code>bio</code></td><td>text</td><td>Краткая биография</td></tr><tr><td><code>image_url</code></td><td>string</td><td>URL фото/портрета</td></tr><tr><td><code>created_at</code></td><td>timestamp</td><td>✓</td></tr><tr><td><code>updated_at</code></td><td>timestamp</td><td>✓</td></tr></tbody></table>
+<h3>4.3. Выставка (Exhibition)</h3>
+
+<table><thead><tr><th>Поле</th><th>Тип</th><th>Обязательное</th><th>Описание</th></tr></thead><tbody><tr><td><code>id</code></td><td>UUID</td><td>✓</td></tr><tr><td><code>title</code></td><td>string</td><td>✓</td><td>Название выставки</td></tr><tr><td><code>slug</code></td><td>string</td><td>✓</td><td>URL-friendly</td></tr><tr><td><code>venue_id</code></td><td>FK → Venue</td><td>✓</td><td>Площадка</td></tr><tr><td><code>date_start</code></td><td>date</td><td>Дата начала (null = неизвестна)</td></tr><tr><td><code>date_end</code></td><td>date</td><td>Дата окончания (null = неизвестна / постоянная)</td></tr><tr><td><code>status</code></td><td>enum</td><td>✓</td><td><code>announced</code> / <code>running</code> / <code>ending_soon</code> / <code>ended</code> / <code>cancelled</code></td></tr><tr><td><code>type</code></td><td>enum</td><td>✓</td><td><code>solo</code> / <code>group</code> / <code>permanent</code> / <code>other</code></td></tr><tr><td><code>description</code></td><td>text</td><td>Описание выставки</td></tr><tr><td><code>description_short</code></td><td>string</td><td>Краткое описание (для поста)</td></tr><tr><td><code>image_url</code></td><td>string</td><td>Постер/обложка выставки</td></tr><tr><td><code>source_urls</code></td><td>string[]</td><td>✓</td><td>URL-ы источников, откуда получена информация</td></tr><tr><td><code>tags</code></td><td>string[]</td><td>Автоматические теги (жанр, стиль, эпоха и т.д.)</td></tr><tr><td><code>is_published</code></td><td>bool</td><td>✓</td><td>Опубликована ли (для модерации)</td></tr><tr><td><code>moderation_status</code></td><td>enum</td><td>✓</td><td><code>pending</code> / <code>approved</code> / <code>rejected</code> / <code>auto_approved</code></td></tr><tr><td><code>created_at</code></td><td>timestamp</td><td>✓</td></tr><tr><td><code>updated_at</code></td><td>timestamp</td><td>✓</td></tr></tbody></table>
+<h3>4.4. Связь Exhibition ↔ Artist (many-to-many)</h3>
+
+<table><thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead><tbody><tr><td><code>exhibition_id</code></td><td>FK → Exhibition</td></tr><tr><td><code>artist_id</code></td><td>FK → Artist</td></tr><tr><td><code>role</code></td><td>enum</td><td><code>main</code> / <code>participant</code> / <code>curator</code></td></tr></tbody></table>
+<h3>4.5. Источник (Source)</h3>
+
+<table><thead><tr><th>Поле</th><th>Тип</th><th>Обязательное</th><th>Описание</th></tr></thead><tbody><tr><td><code>id</code></td><td>UUID</td><td>✓</td></tr><tr><td><code>name</code></td><td>string</td><td>✓</td><td>Человекочитаемое название</td></tr><tr><td><code>type</code></td><td>enum</td><td>✓</td><td><code>website_museum</code> / <code>website_aggregator</code> / <code>telegram_channel</code> / <code>rss</code></td></tr><tr><td><code>url</code></td><td>string</td><td>✓</td><td>URL сайта или <code>t.me/channel_name</code></td></tr><tr><td><code>scraper_config</code></td><td>jsonb</td><td>Конфигурация парсера (CSS-селекторы, API endpoints и т.д.)</td></tr><tr><td><code>is_active</code></td><td>bool</td><td>✓</td><td>Активен ли источник</td></tr><tr><td><code>reliability_score</code></td><td>float</td><td>Оценка качества/полезности (0-1)</td></tr><tr><td><code>last_scraped_at</code></td><td>timestamp</td><td>Когда последний раз собирали</td></tr><tr><td><code>last_success_at</code></td><td>timestamp</td><td>Когда последний раз успешно собрали</td></tr><tr><td><code>items_total</code></td><td>int</td><td>Всего событий получено за всё время</td></tr><tr><td><code>items_relevant</code></td><td>int</td><td>Из них релевантных</td></tr><tr><td><code>created_at</code></td><td>timestamp</td><td>✓</td></tr></tbody></table>
+<h3>4.6. Сырое событие (RawEvent) — staging-таблица</h3>
+
+<table><thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead><tbody><tr><td><code>id</code></td><td>UUID</td></tr><tr><td><code>source_id</code></td><td>FK → Source</td><td>Откуда получено</td></tr><tr><td><code>raw_content</code></td><td>text</td><td>Сырой контент (HTML/текст поста)</td></tr><tr><td><code>raw_image_urls</code></td><td>string[]</td><td>URL-ы изображений из источника</td></tr><tr><td><code>scraped_at</code></td><td>timestamp</td><td>Когда собрано</td></tr><tr><td><code>is_relevant</code></td><td>bool / null</td><td>Результат фильтрации (null = ещё не обработано)</td></tr><tr><td><code>relevance_reason</code></td><td>string</td><td>Пояснение LLM почему релевантно/нет</td></tr><tr><td><code>normalized_data</code></td><td>jsonb / null</td><td>Нормализованные данные (промежуточный результат)</td></tr><tr><td><code>exhibition_id</code></td><td>FK → Exhibition / null</td><td>Связь с созданной/обновлённой выставкой</td></tr><tr><td><code>processing_status</code></td><td>enum</td><td><code>new</code> / <code>filtered</code> / <code>normalized</code> / <code>deduplicated</code> / <code>published</code> / <code>rejected</code></td></tr><tr><td><code>duplicate_of</code></td><td>FK → RawEvent / null</td><td>Если дубликат — ссылка на оригинал</td></tr></tbody></table>
+<h3>4.7. Пост в фиде (FeedPost)</h3>
+
+<table><thead><tr><th>Поле</th><th>Тип</th><th>Описание</th></tr></thead><tbody><tr><td><code>id</code></td><td>UUID</td></tr><tr><td><code>exhibition_id</code></td><td>FK → Exhibition</td><td>К какой выставке относится</td></tr><tr><td><code>type</code></td><td>enum</td><td><code>new_exhibition</code> / <code>update</code> / <code>ending_soon</code> / <code>digest</code></td></tr><tr><td><code>title</code></td><td>string</td><td>Заголовок поста</td></tr><tr><td><code>body_short</code></td><td>text</td><td>Краткий текст (для телеграма и карточки)</td></tr><tr><td><code>body_full</code></td><td>text</td><td>Полный текст (для веб-страницы)</td></tr><tr><td><code>image_url</code></td><td>string</td><td>Изображение поста</td></tr><tr><td><code>telegram_message_id</code></td><td>int / null</td><td>ID опубликованного сообщения в Telegram</td></tr><tr><td><code>is_published</code></td><td>bool</td></tr><tr><td><code>published_at</code></td><td>timestamp / null</td></tr><tr><td><code>is_pinned</code></td><td>bool</td><td>Закреплено ли в канале</td></tr><tr><td><code>created_at</code></td><td>timestamp</td></tr></tbody></table>
+<hr>
+
+<h2>5. Источники данных</h2>
+
+<h3>5.1. Типы источников</h3>
+
+<h4>5.1.1. Сайты музеев и галерей (~100–200 площадок)</h4>
+
+<p>Примеры: hermitagemuseum.org, rusmuseum.ru, erarta.com, bofreyart.com, и т.д.</p>
+
+<b>Метод сбора:</b> HTTP-скрейпинг + LLM-экстракция.
+
+<p>Для каждого сайта хранится конфигурация:</p>
+<ul><li>URL раздела «Выставки» / «Афиша»</li>
+<li>Метод парсинга: <code>llm_extract</code> (страницу целиком отправляем в LLM) или <code>css_selectors</code> (структурированный парсинг + LLM для обогащения)</li>
+<li>На этапе bootstrap — начинаем с <code>llm_extract</code> для всех, оптимизируем по мере необходимости</li>
+</ul>
+<b>Почему LLM-экстракция как дефолт:</b>
+<ul><li>Сайты музеев имеют разную структуру, писать парсер под каждый — дорого</li>
+<li>LLM отлично справляется с извлечением структурированных данных из HTML/текста</li>
+<li>При изменении дизайна сайта LLM-парсер продолжает работать (в отличие от CSS-селекторов)</li>
+</ul>
+<h4>5.1.2. Телеграм-каналы</h4>
+
+<p>Примеры: @spb_afisha, @artpetersburg, каналы конкретных галерей и т.д.</p>
+
+<b>Метод сбора:</b> Telethon (userbot-клиент для чтения публичных каналов).
+
+<p>Процесс:</p>
+<ul><li>Подключаемся к публичным каналам</li>
+<li>Раз в день забираем новые посты за последние 24 часа</li>
+<li>Текст + изображения отправляются в пайплайн обработки</li>
+</ul>
+<b>Важно:</b> Используем только чтение публичных каналов. Не вступаем, не взаимодействуем. User account (не bot API) нужен для чтения каналов без вступления.
+
+<h4>5.1.3. Сайты-агрегаторы</h4>
+
+<p>Список агрегаторов расширяемый — новые источники добавляются через админку или обнаруживаются автоматически (раздел 7). Ниже — примеры известных агрегаторов для начального bootstrap:</p>
+
+<table><thead><tr><th>Сайт</th><th>Раздел</th><th>Метод</th></tr></thead><tbody><tr><td>kudago.com</td><td>Выставки / СПб</td><td>REST API (есть публичный)</td></tr><tr><td>afisha.ru</td><td>Выставки / СПб</td><td>HTTP-скрейпинг</td></tr><tr><td>sobaka.ru</td><td>Культура</td><td>HTTP-скрейпинг</td></tr><tr><td>timeout.ru</td><td>Выставки / СПб</td><td>HTTP-скрейпинг</td></tr><tr><td>the-village.ru</td><td>Город / Культура</td><td>HTTP-скрейпинг</td></tr><tr><td>kuda-spb.ru</td><td>Выставки</td><td>HTTP-скрейпинг</td></tr><tr><td>allexhibitions.ru</td><td>СПб</td><td>HTTP-скрейпинг</td></tr><tr><td>culture.ru</td><td>Афиша / СПб</td><td>HTTP-скрейпинг</td></tr><tr><td>...</td></tr></tbody></table>
+<p>Полный список формируется на этапе bootstrap (раздел 7) и пополняется через процедуру еженедельного обнаружения. Каждый агрегатор — запись в таблице <code>Source</code>, которую можно добавить/отключить/удалить через админку.</p>
+
+<h3>5.2. Приоритизация источников</h3>
+
+<table><thead><tr><th>Приоритет</th><th>Тип</th><th>Обоснование</th></tr></thead><tbody><tr><td>🔴 Высший</td><td>Сайты музеев/галерей</td><td>Первоисточник, наиболее точные даты и описания</td></tr><tr><td>🟡 Средний</td><td>Агрегаторы</td><td>Широкий охват, но могут содержать ошибки</td></tr><tr><td>🟢 Дополнительный</td><td>Телеграм-каналы</td><td>Оперативность, но могут быть неточны; хороши для обнаружения событий</td></tr></tbody></table>
+<p>При конфликте данных — приоритет у первоисточника (сайт площадки).</p>
+
+<hr>
+
+<h2>6. Пайплайн сбора и обработки</h2>
+
+<h3>6.1. Общая схема</h3>
+
+<b>Этапы пайплайна (последовательно):</b>
+
+<table><thead><tr><th>Шаг</th><th>Этап</th><th>Вход</th><th>Выход</th></tr></thead><tbody><tr><td>1</td><td><b>Сбор</b> (Scrapers)</td><td>Источники (сайты, TG-каналы, агрегаторы)</td><td>RawEvent (status: <code>new</code>)</td></tr><tr><td>2</td><td><b>Фильтрация</b> (LLM Relevance)</td><td>RawEvent (<code>new</code>)</td><td>RawEvent (<code>filtered</code>, is_relevant = true/false)</td></tr><tr><td>3</td><td><b>Нормализация + Тегирование</b> (LLM)</td><td>RawEvent (<code>filtered</code>, relevant)</td><td>Normalized data + tags</td></tr><tr><td>4</td><td><b>Обогащение</b> (Proactive Enrichment)</td><td>Normalized data</td><td>Обогащённые данные из первоисточника (сайт площадки)</td></tr><tr><td>5</td><td><b>Дедупликация</b> (эвристика + LLM)</td><td>Normalized data</td><td>Exhibition (create / update / merge)</td></tr><tr><td>6</td><td><b>Модерация</b> (ручная или auto-approve)</td><td>Exhibition (<code>pending</code>)</td><td>Exhibition (<code>approved</code> / <code>rejected</code>)</td></tr><tr><td>7</td><td><b>Формирование поста</b> (Feed Generation)</td><td>Exhibition (<code>approved</code>)</td><td>FeedPost</td></tr><tr><td>8</td><td><b>Публикация</b> (TG + Web)</td><td>FeedPost</td><td>Сообщение в канале + обновление сайта</td></tr></tbody></table>
+<h3>6.2. Этап 1: Сбор (Scraping)</h3>
+
+<b>Расписание:</b> Ежедневно, ночью (03:00–05:00 MSK), чтобы все источники обновились за день.
+
+<b>Для каждого активного Source:</b>
+<ul><li>Скачать контент (HTTP GET / Telethon fetch)</li>
+<li>Сохранить в <code>RawEvent</code> со статусом <code>new</code></li>
+<li>Сохранить изображения (скачать, положить в object storage)</li>
+<li>Записать <code>last_scraped_at</code> в Source</li>
+</ul>
+<b>Обработка ошибок:</b>
+<ul><li>При ошибке HTTP — retry 3 раза с exponential backoff</li>
+<li>При 3+ днях подряд ошибок — пометить Source как проблемный, уведомить в админке</li>
+<li>Rate limiting: пауза 2-5 сек между запросами к одному домену</li>
+</ul>
+<h3>6.3. Этап 2: Фильтрация релевантности (LLM)</h3>
+
+<b>Задача:</b> Определить, относится ли собранный контент к выставкам изобразительного искусства в Санкт-Петербурге.
+
+<b>LLM-промпт (концепт):</b>
+
+<p>``<code></p>
+<p>Ты — классификатор культурных событий. Определи, относится ли следующий текст </p>
+<p>к выставке изобразительного искусства в Санкт-Петербурге.</p>
+
+<p>Релевантно: выставки живописи, графики, скульптуры, фотографии, инсталляций,</p>
+<p>медиа-арта в музеях, галереях и выставочных пространствах Санкт-Петербурга.</p>
+
+<p>НЕ релевантно: концерты, спектакли, лекции (если не привязаны к выставке),</p>
+<p>события в других городах, продажа произведений искусства (аукционы),</p>
+<p>мастер-классы без привязки к выставке.</p>
+
+<p>Текст:</p>
+<hr>
+<p>{raw_content}</p>
+<hr>
+
+<p>Ответ в JSON:</p>
+<p>{</p>
+<p>  "is_relevant": true/false,</p>
+<p>  "confidence": 0.0-1.0,</p>
+<p>  "reason": "краткое пояснение"</p>
+<p>}</p>
+</code>`<code>
+
+<b>Пороги:</b>
+<ul><li></code>confidence >= 0.8<code> → автоматически </code>relevant<code></li>
+<li></code>confidence < 0.3<code> → автоматически </code>not relevant<code></li>
+<li>Между 0.3 и 0.8 → на ручную модерацию (на этапе тестирования — всё на модерацию)</li>
+</ul>
+<b>Результат:</b> Обновление </code>RawEvent.is_relevant<code>, </code>relevance_reason<code>, статус → </code>filtered<code>
+
+<h3>6.4. Этап 3: Нормализация и тегирование (LLM)</h3>
+
+<b>Задача:</b> Из сырого контента извлечь структурированные данные в формате Exhibition.
+
+<b>LLM-промпт (концепт):</b>
+
+</code>`<code>
+<p>Извлеки информацию о выставке из следующего текста.</p>
+<p>Если информация отсутствует — оставь поле null.</p>
+<p>Если в тексте несколько выставок — верни массив.</p>
+
+<p>Текст:</p>
+<hr>
+<p>{raw_content}</p>
+<hr>
+
+<p>Верни JSON:</p>
+<p>{</p>
+<p>  "exhibitions": [</p>
+<p>    {</p>
+<p>      "title": "string",</p>
+<p>      "venue_name": "string — название площадки",</p>
+<p>      "venue_address": "string или null",</p>
+<p>      "date_start": "YYYY-MM-DD или null",</p>
+<p>      "date_end": "YYYY-MM-DD или null",</p>
+<p>      "artists": ["string — имена художников"] или [],</p>
+<p>      "description": "string — полное описание",</p>
+<p>      "description_short": "string — 1-2 предложения",</p>
+<p>      "type": "solo/group/permanent/other",</p>
+<p>      "tags": ["string — жанр, стиль, эпоха, техника"],</p>
+<p>      "image_description": "string — описание главного изображения, если есть"</p>
+<p>    }</p>
+<p>  ]</p>
+<p>}</p>
+
+<p>Правила тегирования:</p>
+<ul><li>Жанр: живопись, графика, скульптура, фотография, инсталляция, медиа-арт, </li>
+</ul>  декоративно-прикладное, смешанная техника
+<ul><li>Стиль (если определим): импрессионизм, авангард, современное искусство, </li>
+</ul>  реализм, абстракция и т.д.
+<ul><li>Эпоха (если определим): античность, средневековье, XVIII век, XIX век, </li>
+</ul>  XX век, современность
+</code>`<code>
+
+<b>Дополнительно:</b>
+<ul><li>Связывание </code>venue_name<code> с существующей площадкой в каталоге (fuzzy match по названию)</li>
+<li>Если площадка не найдена — создать новую запись со статусом </code>pending<code> (требует подтверждения в админке)</li>
+<li>Связывание художников — аналогично: поиск по имени, создание при отсутствии</li>
+</ul>
+<b>Результат:</b> </code>RawEvent.normalized_data<code> заполнен, статус → </code>normalized<code>
+
+<h3>6.5. Этап 4: Проактивное обогащение (Proactive Enrichment)</h3>
+
+<b>Задача:</b> Когда информация о выставке получена из вторичного источника (телеграм-канал, агрегатор), система проактивно обращается к первоисточнику — сайту площадки — для получения полных и достоверных данных.
+
+<b>Процесс:</b>
+
+<ul><li>После нормализации определяется площадка (</code>venue_id<code>)</li>
+<li>Если источник RawEvent — не сайт самой площадки (т.е. </code>Source.type != website_museum<code>):</li>
+</ul>   a. Найти </code>Source<code> типа </code>website_museum<code> для этой площадки
+<p>   b. Загрузить страницу выставок площадки</p>
+<p>   c. LLM-экстракция: найти на странице информацию о конкретной выставке (по названию / датам)</p>
+<p>   d. Мерж данных: дополнить/уточнить нормализованные данные из первоисточника</p>
+<ul><li>Если площадка ещё не имеет привязанного Source — пометить для ручного добавления</li>
+</ul>
+<b>Приоритет данных при мерже:</b>
+<ul><li>Сайт площадки > агрегатор > телеграм-канал</li>
+<li>При конфликте дат — берём с сайта площадки</li>
+<li>Описание — берём самое полное (или мержим)</li>
+<li>Изображение — приоритет у первоисточника (обычно лучшее качество)</li>
+</ul>
+<b>Реактивное обогащение (Enrichment при повторных упоминаниях):</b>
+
+<p>Когда новый RawEvent при дедупликации сопоставляется с уже существующей Exhibition:</p>
+<ul><li>Сравниваем поля: если в новом источнике есть данные, отсутствующие в текущей записи → дополняем</li>
+<li>Если данные конфликтуют → применяем приоритет источников (см. выше)</li>
+<li>Логируем все изменения для аудита</li>
+<li>При существенных изменениях (смена дат, площадки) → создаём FeedPost типа </code>update<code></li>
+</ul>
+<b>Результат:</b> Обогащённые данные с максимальной полнотой и достоверностью.
+
+<h3>6.6. Этап 5: Дедупликация</h3>
+
+<b>Двухуровневая стратегия:</b>
+
+<b>Уровень 1 — Эвристический (быстрый):</b>
+<ul><li>Совпадение </code>venue_id<code> + нечёткое совпадение </code>title<code> (Levenshtein distance ≤ 0.2) + пересечение дат → вероятный дубликат</li>
+<li>Совпадение </code>venue_id<code> + совпадение хотя бы одного художника + пересечение дат → вероятный дубликат</li>
+</ul>
+<b>Уровень 2 — LLM (для неочевидных случаев):</b>
+</code>`<code>
+<p>Определи, описывают ли эти два текста одну и ту же выставку:</p>
+
+<p>Выставка A: {title_a}, {venue_a}, {dates_a}, {description_a}</p>
+<p>Выставка B: {title_b}, {venue_b}, {dates_b}, {description_b}</p>
+
+<p>Ответ: { "is_duplicate": true/false, "confidence": 0.0-1.0, "reason": "..." }</p>
+</code>`<code>
+
+<b>При обнаружении дубликата:</b>
+<ul><li>Мержим данные: дополняем недостающие поля из нового источника</li>
+<li>Добавляем </code>source_url<code> в массив источников выставки</li>
+<li></code>RawEvent.duplicate_of<code> → ссылка на оригинал</li>
+<li>Статус → </code>deduplicated<code></li>
+</ul>
+<h3>6.7. Этап 6: Модерация</h3>
+
+<b>Режим тестирования (начальный):</b>
+<ul><li>Все нормализованные события попадают в очередь модерации</li>
+<li>Модератор в админке: </code>Approve<code> / </code>Reject<code> / </code>Edit & Approve<code></li>
+<li>При Approve → </code>Exhibition.moderation_status = approved<code>, </code>is_published = true<code></li>
+</ul>
+<b>Рабочий режим (после стабилизации):</b>
+<ul><li>Автопубликация для событий с </code>relevance_confidence >= 0.8<code> от надёжных источников (</code>Source.reliability_score >= 0.7<code>)</li>
+<li>Остальное — в очередь модерации</li>
+<li>Возможность скрыть/отредактировать любую выставку через админку в любой момент</li>
+</ul>
+<h3>6.8. Этап 7: Формирование постов (Feed Generation)</h3>
+
+<b>Типы постов:</b>
+
+<table><thead><tr><th>Тип</th><th>Триггер</th><th>Расписание</th></tr></thead><tbody><tr><td></code>new_exhibition<code></td><td>Новая выставка одобрена</td><td>После модерации / автоматически</td></tr><tr><td></code>update<code></td><td>Существенное обновление (изменение дат, площадки)</td><td>После обнаружения</td></tr><tr><td></code>ending_soon<code></td><td>Выставка заканчивается в течение 7 дней</td><td>Воскресенье, утро</td></tr><tr><td></code>digest<code></td><td>Еженедельный дайджест «Заканчивается на этой неделе»</td><td>Воскресенье, 10:00 MSK</td></tr></tbody></table>
+<b>Формат нормализованного поста (для Telegram):</b>
+
+</code>`<code>
+<p>🎨 {Название выставки}</p>
+
+<p>📍 {Площадка}</p>
+<p>📅 {Дата начала} — {Дата окончания}</p>
+<p>👤 {Художник(и)} (если есть)</p>
+
+<p>{Краткое описание — 2-3 предложения}</p>
+
+<p>🏷 {теги через #}</p>
+
+<p>🔗 Подробнее: {canonical_url на веб-портале}</p>
+</code>`<code>
+
+<b>Формат дайджеста «Заканчивается на этой неделе»:</b>
+
+</code>`<code>
+<p>⏰ Заканчиваются на этой неделе</p>
+
+<ul><li>🎨 {Название} — до {дата}</li>
+</ul>   📍 {Площадка}
+
+<ul><li>🎨 {Название} — до {дата}</li>
+</ul>   📍 {Площадка}
+
+<p>...</p>
+
+<p>Не пропустите! Полный список: {url}</p>
+</code>`<code>
+
+<p>Дайджест публикуется и закрепляется (pin) в канале. Предыдущий дайджест открепляется.</p>
+
+<h3>6.9. Этап 8: Публикация</h3>
+
+<b>Телеграм:</b>
+<ul><li>Публикация через Telegram Bot API</li>
+<li>Пост: изображение (если есть) + текст + inline-кнопка «Подробнее» (ссылка на веб)</li>
+<li>Дайджест: текст + pin</li>
+</ul>
+<b>Веб-портал:</b>
+<ul><li>Регенерация статических страниц после завершения пайплайна (SSG build)</li>
+<li>Обновление поискового индекса</li>
+</ul>
+<h3>6.10. Автоматическое обновление статусов выставок</h3>
+
+<p>Ежедневный cron job:</p>
+<ul><li></code>announced<code> → </code>running<code> (если </code>date_start <= today<code>)</li>
+<li></code>running<code> → </code>ending_soon<code> (если </code>date_end - today <= 7 days<code>)</li>
+<li></code>ending_soon<code> → </code>ended<code> (если </code>date_end < today<code>)</li>
+</ul>
+<hr>
+
+<h2>7. Автообнаружение источников и bootstrap каталога</h2>
+
+<p>Разовый процесс при запуске проекта + еженедельное обновление.</p>
+
+<h3>7.1. Шаг 1: Seed-каталог площадок</h3>
+
+<b>Входные данные:</b> LLM-запрос + веб-поиск.
+
+<b>Процесс:</b>
+<ul><li>Запрос к LLM: <i>«Составь максимально полный список музеев, галерей, выставочных пространств Санкт-Петербурга, где проходят выставки изобразительного искусства. Для каждого укажи: название, адрес, сайт (если знаешь), тип (музей/галерея/выставочное пространство).»</i></li>
+<li>Серия web search запросов:</li>
+</ul>   - </code>"галереи современного искусства Санкт-Петербург"<code>
+<p>   - </code>"музеи Санкт-Петербург выставки живописи"<code></p>
+<p>   - </code>"выставочные залы Петербург"<code></p>
+<p>   - </code>"art galleries Saint Petersburg"<code></p>
+<p>   - </code>"все галереи Петербурга список"<code></p>
+<p>   - И т.д.</p>
+<ul><li>Парсинг результатов поиска, извлечение названий и URL-ов</li>
+<li>Мерж LLM-списка и результатов поиска, дедупликация по названию (fuzzy)</li>
+<li>Результат: seed-список ~100-200 площадок</li>
+</ul>
+<h3>7.2. Шаг 2: Обогащение каталога площадок</h3>
+
+<p>Для каждой площадки из seed-списка:</p>
+<ul><li>Загрузить главную страницу сайта</li>
+<li>LLM-экстракция: адрес, часы работы, описание, контакты, ссылка на раздел «Выставки»</li>
+<li>Геокодинг адреса (Яндекс Geocoder API или Nominatim) → </code>geo_lat<code>, </code>geo_lon<code></li>
+<li>Скачать логотип / фото фасада → </code>image_url<code></li>
+<li>Сохранить в таблицу </code>Venue<code> + создать </code>Source<code> с типом </code>website_museum<code> и URL раздела выставок</li>
+</ul>
+<h3>7.3. Шаг 3: Обнаружение телеграм-каналов</h3>
+
+<b>Процесс:</b>
+<ul><li>Запрос к tgstat.ru (если доступен API) или ручной веб-поиск: каналы с ключевыми словами:</li>
+</ul>   - </code>искусство Петербург<code>, </code>выставки СПб<code>, </code>галерея<code>, </code>музей Петербург<code>
+<p>   - Также: каналы конкретных площадок из каталога</p>
+<ul><li>Для каждого найденного канала:</li>
+</ul>   - Забрать описание + последние 30 постов
+<p>   - LLM оценивает релевантность: <i>«Этот канал публикует информацию о выставках изобразительного искусства в Санкт-Петербурге?»</i></p>
+<p>   - Оценка 0-1, порог 0.5 для включения</p>
+<ul><li>Ранжирование по: релевантность × количество подписчиков × частота публикаций</li>
+<li>Топ-N каналов → таблица </code>Source<code> с типом </code>telegram_channel<code></li>
+</ul>
+<h3>7.4. Шаг 4: Каталог агрегаторов</h3>
+
+<p>Фиксированный список (kudago, afisha, sobaka, timeout, the-village) — вносим вручную, т.к. их мало.</p>
+
+<p>Для каждого:</p>
+<ul><li>Определяем URL раздела «Выставки / СПб»</li>
+<li>Проверяем наличие API (kudago имеет публичный REST API)</li>
+<li>Для остальных — анализ структуры страницы (LLM помогает определить CSS-селекторы или паттерны)</li>
+<li>Создаём </code>Source<code> с </code>scraper_config<code></li>
+</ul>
+<h3>7.5. Еженедельное обновление</h3>
+
+<p>Каждое воскресенье:</p>
+<ul><li>Повторить веб-поиск на предмет новых площадок/каналов</li>
+<li>Сравнить с текущим каталогом</li>
+<li>Новые кандидаты → в админку на подтверждение</li>
+<li>Неактивные источники (нет обновлений 30+ дней) → пометить для проверки</li>
+</ul>
+<hr>
+
+<h2>8. Телеграм-канал (News Feed)</h2>
+
+<h3>8.1. Общие параметры</h3>
+
+<table><thead><tr><th>Параметр</th><th>Значение</th></tr></thead><tbody><tr><td>Тип</td><td>Публичный канал</td></tr><tr><td>Бот</td><td>Dedicated bot, публикует от имени канала</td></tr><tr><td>Частота публикаций</td><td>Ежедневно, после завершения пайплайна (утро)</td></tr><tr><td>Формат поста</td><td>Изображение + текст + inline-кнопка</td></tr></tbody></table>
+<h3>8.2. Типы публикаций</h3>
+
+<ul><li><b>Новая выставка</b> — пост с обложкой, кратким описанием, кнопкой «Подробнее»</li>
+<li><b>Обновление</b> — изменение дат, площадки (редкий тип)</li>
+<li><b>Еженедельный дайджест</b> — «Заканчиваются на этой неделе», pinned-пост по воскресеньям</li>
+</ul>
+<h3>8.3. Inline-кнопки</h3>
+
+<table><thead><tr><th>Кнопка</th><th>Действие</th></tr></thead><tbody><tr><td></code>Подробнее<code></td><td>Ссылка на страницу выставки на веб-портале</td></tr></tbody></table>
+<p><i>(На фазе 2 добавятся: «Хочу пойти», «Не интересно», «В календарь»)</i></p>
+
+<hr>
+
+<h2>9. Веб-портал</h2>
+
+<h3>9.1. Архитектурный подход</h3>
+
+<b>SSG (Static Site Generation) + API для поиска.</b>
+
+<ul><li>Основной контент (страницы выставок, площадок, художников, календарь) — генерируется статически после ежедневного пайплайна</li>
+<li>Поиск и фильтрация — лёгкий API-бэкенд</li>
+<li>Мобильная адаптивность (responsive design) — обязательна</li>
+</ul>
+<h3>9.2. Страницы и разделы</h3>
+
+<h4>9.2.1. Главная (</code>/<code>)</h4>
+<ul><li>Блок «Новые выставки» — последние добавленные</li>
+<li>Блок «Заканчиваются скоро» — топ-5 событий, заканчивающихся в ближайшие 7 дней</li>
+<li>Блок «Сейчас проходят» — общее количество + ссылка на каталог</li>
+</ul>
+<h4>9.2.2. Каталог выставок (</code>/exhibitions<code>)</h4>
+<ul><li>Список выставок с фильтрами:</li>
+</ul>  - Статус: </code>идёт<code> / </code>скоро<code> / </code>анонс<code>
+<p>  - Теги (жанр, стиль)</p>
+<p>  - Площадка</p>
+<p>  - Художник</p>
+<ul><li>Сортировка: по дате начала, по дате окончания, по дате добавления</li>
+<li>Карточки: изображение, название, площадка, даты, теги</li>
+</ul>
+<h4>9.2.3. Страница выставки (</code>/exhibitions/{slug}<code>)</h4>
+<ul><li>Полное описание</li>
+<li>Изображение</li>
+<li>Площадка (ссылка)</li>
+<li>Даты</li>
+<li>Художники (ссылки)</li>
+<li>Теги</li>
+<li>Источники информации</li>
+</ul>
+<h4>9.2.4. Каталог площадок (</code>/venues<code>)</h4>
+<ul><li>Список площадок с фильтром по типу</li>
+<li>Карточки: название, тип, адрес, кол-во текущих выставок</li>
+</ul>
+<h4>9.2.5. Страница площадки (</code>/venues/{slug}<code>)</h4>
+<ul><li>Описание, адрес, часы работы, фото</li>
+<li>Текущие выставки</li>
+<li>Прошедшие выставки (архив)</li>
+</ul>
+<h4>9.2.6. Каталог художников (</code>/artists<code>)</h4>
+<ul><li>Алфавитный список</li>
+<li>Поиск по имени</li>
+</ul>
+<h4>9.2.7. Страница художника (</code>/artists/{slug}<code>)</h4>
+<ul><li>Биография, фото</li>
+<li>Связанные выставки (текущие + архив)</li>
+</ul>
+<h4>9.2.8. Календарь (</code>/calendar<code>)</h4>
+<ul><li>Calendar view (месяц) — визуализация выставок по датам</li>
+<li>Ось Y — площадки, ось X — даты (timeline view, gantt-подобный)</li>
+<li>Read-only, без взаимодействия</li>
+</ul>
+<h4>9.2.9. Заканчиваются скоро (</code>/ending-soon<code>)</h4>
+<ul><li>Список выставок, заканчивающихся в ближайшие 7 дней</li>
+<li>Сортировка по дате окончания (ближайшие первые)</li>
+</ul>
+<h4>9.2.10. Поиск (</code>/search?q=...<code>)</h4>
+<ul><li>Полнотекстовый поиск по: названиям выставок, площадкам, художникам, описаниям, тегам</li>
+<li>Результаты с группировкой по типу (выставки / площадки / художники)</li>
+</ul>
+<h3>9.3. SEO</h3>
+
+<ul><li>Канонические URL для всех сущностей</li>
+<li>Meta-теги (title, description, og:image)</li>
+<li>Structured data (JSON-LD): </code>Event<code>, </code>Place<code>, </code>Person<code></li>
+<li>Sitemap.xml, robots.txt</li>
+</ul>
+<hr>
+
+<h2>10. Админ-интерфейс</h2>
+
+<h3>10.1. Доступ</h3>
+
+<p>Простая авторизация (логин/пароль или Telegram OAuth). На фазе 1 — один-два администратора.</p>
+
+<h3>10.2. Разделы</h3>
+
+<h4>10.2.1. Дашборд</h4>
+
+<ul><li>Всего выставок: running / announced / ended</li>
+<li>Собрано сегодня: raw events → relevant → published</li>
+<li>Источники: активных / с ошибками</li>
+<li>Очередь модерации: N событий ждут проверки</li>
+<li>График: события за последние 30 дней (собрано / опубликовано / отклонено)</li>
+</ul>
+<h4>10.2.2. Единая очередь задач (Pending Queue)</h4>
+
+<p>Единый интерфейс для всех элементов, требующих внимания администратора. Объединяет все типы pending-задач в одном месте с фильтрацией по типу:</p>
+
+<table><thead><tr><th>Тип задачи</th><th>Описание</th><th>Действия</th></tr></thead><tbody><tr><td><b>Модерация выставки</b></td><td>Новая выставка ожидает проверки</td><td>Approve / Reject / Edit & Approve</td></tr><tr><td><b>Новая площадка</b></td><td>Площадка создана автоматически, требует подтверждения</td><td>Confirm / Edit / Delete</td></tr><tr><td><b>Новый художник</b></td><td>Художник создан автоматически</td><td>Confirm / Edit / Merge с существующим</td></tr><tr><td><b>Новый источник</b></td><td>Кандидат обнаружен при еженедельном сканировании</td><td>Add / Ignore</td></tr><tr><td><b>Проблемный источник</b></td><td>Источник не отвечает 3+ дня</td><td>Retry / Disable / Delete</td></tr><tr><td><b>Возможный дубликат</b></td><td>Дедупликация не уверена (confidence 0.5-0.8)</td><td>Merge / Keep separate</td></tr><tr><td><b>Конфликт данных</b></td><td>Противоречивые данные из разных источников</td><td>Выбрать верный вариант</td></tr></tbody></table>
+<p>Для каждой задачи отображается:</p>
+<ul><li>Тип и приоритет</li>
+<li>Дата создания</li>
+<li>Контекст (сырой контент, нормализованный результат, предложенные связи)</li>
+<li>Кнопки действий</li>
+</ul>
+<p>Счётчик нерешённых задач по типам отображается на дашборде и в виде badge на вкладке.</p>
+
+<h4>10.2.3. Очередь модерации выставок (подраздел Pending Queue)</h4>
+
+<ul><li>Список </code>RawEvent<code> со статусом </code>normalized<code> + </code>moderation_status = pending<code></li>
+<li>Для каждого: сырой контент, нормализованный результат, предложенные связи (площадка, художники)</li>
+<li>Действия: </code>Approve<code> / </code>Reject<code> / </code>Edit & Approve<code></li>
+<li>При Edit — возможность исправить любые поля перед публикацией</li>
+</ul>
+<h4>10.2.4. Управление выставками</h4>
+
+<ul><li>CRUD выставок</li>
+<li>Ручное создание выставки</li>
+<li>Изменение статуса, скрытие/показ</li>
+<li>Мерж дубликатов</li>
+</ul>
+<h4>10.2.5. Управление площадками</h4>
+
+<ul><li>CRUD площадок</li>
+<li>Список площадок </code>pending<code> (созданных автоматически, но не подтверждённых)</li>
+<li>Confirm / Edit / Delete</li>
+</ul>
+<h4>10.2.6. Управление художниками</h4>
+
+<ul><li>CRUD художников</li>
+<li>Мерж дубликатов (один художник мог быть создан под разными вариантами имени)</li>
+</ul>
+<h4>10.2.7. Управление источниками</h4>
+
+<ul><li>Список всех источников с метриками:</li>
+</ul>  - Статус (active / error / disabled)
+<p>  - Последний успешный сбор</p>
+<p>  - Всего событий / релевантных (за всё время и за последний месяц)</p>
+<p>  - Reliability score</p>
+<ul><li>Добавление нового источника</li>
+<li>Отключение / удаление источника</li>
+<li>Ручной запуск сбора для конкретного источника</li>
+</ul>
+<h4>10.2.8. Логи пайплайна</h4>
+
+<ul><li>Лог последнего запуска: сколько собрано, отфильтровано, нормализовано, дедуплицировано</li>
+<li>Ошибки с деталями</li>
+<li>Использование LLM API: количество запросов, токенов, стоимость</li>
+</ul>
+<hr>
+
+<h2>11. Архитектура системы</h2>
+
+<h3>11.1. Компоненты</h3>
+
+<b>Сервисы приложения:</b>
+
+<table><thead><tr><th>Сервис</th><th>Функции</th></tr></thead><tbody><tr><td><b>Scraper Service</b></td><td>HTTP fetch, Telethon client, Scheduler (cron)</td></tr><tr><td><b>Processor Service</b></td><td>LLM Relevance, Normalize, Tags, Enrichment, Dedup</td></tr><tr><td><b>Publisher Service</b></td><td>TG Bot, Feed generation, Pin/Unpin, SSG trigger</td></tr><tr><td><b>Web App (Frontend)</b></td><td>SSG pages, Search UI, Calendar, Admin UI</td></tr></tbody></table>
+<b>Инфраструктура:</b>
+
+<table><thead><tr><th>Компонент</th><th>Назначение</th></tr></thead><tbody><tr><td><b>PostgreSQL</b></td><td>venues, artists, exhibitions, sources, raw_events, feed_posts</td></tr><tr><td><b>Object Storage (S3 / MinIO)</b></td><td>Изображения (постеры выставок, фото площадок)</td></tr><tr><td><b>LLM API Gateway</b></td><td>Единый интерфейс к Claude / GPT, retry, fallback, мониторинг</td></tr><tr><td><b>Task Queue (Redis + Celery)</b></td><td>Оркестрация пайплайна, расписание, retry</td></tr></tbody></table>
+<h3>11.2. Описание компонентов</h3>
+
+<table><thead><tr><th>Компонент</th><th>Ответственность</th></tr></thead><tbody><tr><td><b>Scraper Service</b></td><td>Ежедневный сбор данных из всех источников. Планировщик (cron). HTTP-клиент, Telethon-клиент. Сохранение в </code>RawEvent<code>.</td></tr><tr><td><b>Processor Service</b></td><td>LLM-пайплайн: фильтрация → нормализация → тегирование → дедупликация → создание/обновление Exhibition. Модерация.</td></tr><tr><td><b>Publisher Service</b></td><td>Генерация постов. Публикация в Telegram-канал через Bot API. Триггер SSG-rebuild для веб-портала.</td></tr><tr><td><b>Web App</b></td><td>SSG-фронтенд (каталог, календарь, поиск). Админ-панель (SPA). API для поиска и админки.</td></tr><tr><td><b>PostgreSQL</b></td><td>Основное хранилище: НСИ, raw events, feed posts.</td></tr><tr><td><b>Object Storage</b></td><td>Хранение изображений (постеры выставок, фото площадок). S3-совместимое.</td></tr><tr><td><b>LLM API Gateway</b></td><td>Абстракция над API провайдеров LLM. Retry, fallback, мониторинг расхода.</td></tr><tr><td><b>Task Queue</b></td><td>Оркестрация этапов пайплайна. Обеспечение порядка выполнения, retry, мониторинг.</td></tr></tbody></table>
+<h3>11.3. Поток данных (ежедневный цикл)</h3>
+
+</code>`<code>
+<p>03:00  Cron запускает Scraper Service</p>
+<p>        ├─ Для каждого Source → скачать контент → RawEvent (status: new)</p>
+<p>        └─ ~03:30 Все источники обработаны</p>
+
+<p>03:30  Cron запускает Processor Service</p>
+<p>        ├─ RawEvent (new) → LLM Relevance → (filtered)</p>
+<p>        ├─ RawEvent (relevant) → LLM Normalize → (normalized)</p>
+<p>        ├─ Normalized → Dedup → Exhibition create/update</p>
+<p>        └─ Exhibition → Moderation queue (или auto-approve)</p>
+
+<p>       [Ручная модерация — в течение дня через админку]</p>
+
+<p>       После модерации / автоматически:</p>
+<p>        ├─ Publisher: генерация FeedPost → публикация в Telegram</p>
+<p>        └─ Publisher: триггер SSG rebuild → обновление веб-портала</p>
+
+<p>10:00  (Воскресенье) Publisher: дайджест «Заканчиваются» → Telegram + pin</p>
+
+<p>00:00  Cron: обновление статусов Exhibition (announced→running→ending_soon→ended)</p>
+</code>`<code>
+
+<h3>11.4. LLM API Gateway</h3>
+
+<b>Поддерживаемые провайдеры:</b>
+<ul><li>Anthropic Claude (основной)</li>
+<li>OpenAI GPT-4o (fallback)</li>
+</ul>
+<b>Стратегия:</b>
+<ul><li>Primary: Claude (лучше для длинных текстов и экстракции на русском)</li>
+<li>Fallback: GPT-4o (при недоступности основного)</li>
+<li>Для простых задач (классификация relevance): можно использовать более лёгкие модели (Claude Haiku / GPT-4o-mini) для экономии</li>
+</ul>
+<b>Мониторинг:</b>
+<ul><li>Логирование каждого запроса: модель, токены input/output, latency, стоимость</li>
+<li>Дневной/месячный отчёт по расходам в админке</li>
+</ul>
+<hr>
+
+<h2>12. Стек технологий</h2>
+
+<h3>12.1. Рекомендованный стек</h3>
+
+<table><thead><tr><th>Слой</th><th>Технология</th><th>Обоснование</th></tr></thead><tbody><tr><td><b>Язык бэкенда</b></td><td>Python 3.12+</td><td>Лучшая экосистема для скрейпинга, LLM API, Telethon</td></tr><tr><td><b>Веб-фреймворк</b></td><td>FastAPI</td><td>Async, быстрый, OpenAPI spec из коробки</td></tr><tr><td><b>ORM</b></td><td>SQLAlchemy 2.0 + Alembic</td><td>Стандарт для Python, миграции</td></tr><tr><td><b>БД</b></td><td>PostgreSQL 16</td><td>jsonb, full-text search, надёжность</td></tr><tr><td><b>Полнотекстовый поиск</b></td><td>PostgreSQL FTS (pg_trgm)</td><td>Достаточно для масштаба 100-200 площадок. При росте → Meilisearch</td></tr><tr><td><b>Task Queue</b></td><td>Celery + Redis</td><td>Стандарт для Python, cron-расписание через Celery Beat</td></tr><tr><td><b>Скрейпинг</b></td><td>httpx + BeautifulSoup</td><td>Async HTTP + парсинг HTML</td></tr><tr><td><b>Telegram (чтение каналов)</b></td><td>Telethon</td><td>User-клиент для чтения публичных каналов</td></tr><tr><td><b>Telegram (публикация)</b></td><td>aiogram 3</td><td>Async bot framework для публикации в канал</td></tr><tr><td><b>LLM API</b></td><td>LiteLLM</td><td>Единый интерфейс к Claude, GPT, etc.</td></tr><tr><td><b>Object Storage</b></td><td>MinIO (self-hosted) или S3</td><td>S3-совместимый, хранение изображений</td></tr><tr><td><b>Frontend (портал)</b></td><td>Next.js 14 (App Router, SSG)</td><td>SSG + ISR, React, отличная мобильная разработка</td></tr><tr><td><b>Frontend (админка)</b></td><td>React Admin или встроена в Next.js</td><td>Быстрая разработка CRUD-интерфейсов</td></tr><tr><td><b>CSS</b></td><td>Tailwind CSS</td><td>Быстрая адаптивная верстка</td></tr><tr><td><b>Деплой</b></td><td>Docker Compose</td><td>Простой single-server деплой на фазу 1</td></tr><tr><td><b>CI/CD</b></td><td>GitHub Actions</td><td>Автотесты, деплой</td></tr><tr><td><b>Мониторинг</b></td><td>Sentry + простой дашборд</td><td>Ошибки + метрики пайплайна</td></tr></tbody></table>
+<h3>12.2. Структура репозитория (предварительная)</h3>
+
+</code>`<code>
+<p>culture-spb/</p>
+<p>├── backend/</p>
+<p>│   ├── app/</p>
+<p>│   │   ├── models/          # SQLAlchemy models</p>
+<p>│   │   ├── scrapers/        # Scraper implementations per source type</p>
+<p>│   │   ├── processor/       # LLM pipeline (relevance, normalize, dedup)</p>
+<p>│   │   ├── publisher/       # Telegram publisher, SSG trigger</p>
+<p>│   │   ├── api/             # FastAPI routes (search, admin)</p>
+<p>│   │   ├── tasks/           # Celery tasks</p>
+<p>│   │   └── config.py</p>
+<p>│   ├── migrations/          # Alembic</p>
+<p>│   ├── tests/</p>
+<p>│   └── pyproject.toml</p>
+<p>├── frontend/</p>
+<p>│   ├── app/                 # Next.js App Router</p>
+<p>│   │   ├── page.tsx         # Home</p>
+<p>│   │   ├── exhibitions/</p>
+<p>│   │   ├── venues/</p>
+<p>│   │   ├── artists/</p>
+<p>│   │   ├── calendar/</p>
+<p>│   │   ├── ending-soon/</p>
+<p>│   │   ├── search/</p>
+<p>│   │   └── admin/</p>
+<p>│   ├── components/</p>
+<p>│   └── package.json</p>
+<p>├── scripts/</p>
+<p>│   ├── bootstrap_venues.py  # Seed каталога площадок</p>
+<p>│   ├── discover_channels.py # Обнаружение TG-каналов</p>
+<p>│   └── discover_sources.py  # Обнаружение агрегаторов</p>
+<p>├── docker-compose.yml</p>
+<p>├── .env.example</p>
+<p>└── README.md</p>
+</code>`<code>
+
+<hr>
+
+<h2>13. Нефункциональные требования</h2>
+
+<h3>13.1. Производительность</h3>
+
+<table><thead><tr><th>Метрика</th><th>Целевое значение</th></tr></thead><tbody><tr><td>Полный ежедневный пайплайн</td><td>≤ 2 часа</td></tr><tr><td>Загрузка веб-страницы (SSG)</td><td>< 1 сек (TTFB)</td></tr><tr><td>Поиск</td><td>< 500 мс</td></tr><tr><td>SSG rebuild</td><td>< 5 мин</td></tr></tbody></table>
+<h3>13.2. Надёжность</h3>
+
+<ul><li>Пайплайн должен быть идемпотентным (повторный запуск не создаёт дубликатов)</li>
+<li>При падении одного источника — остальные продолжают работать</li>
+<li>Алертинг при: 3+ дней без успешного сбора, аномальное количество нерелевантных событий</li>
+</ul>
+<h3>13.3. Масштабируемость</h3>
+
+<ul><li>Фаза 1: single server (Docker Compose)</li>
+<li>Архитектура позволяет горизонтальное масштабирование Scraper и Processor (через task queue)</li>
+<li>Добавление нового города = добавление Sources + Venues, без изменения кода</li>
+</ul>
+<h3>13.4. Безопасность</h3>
+
+<ul><li>Админка за авторизацией</li>
+<li>API keys LLM-провайдеров — в секретах (.env), не в коде</li>
+<li>Telegram user session — хранить безопасно (encrypted)</li>
+<li>Rate limiting на публичный API (поиск)</li>
+</ul>
+<h3>13.5. Стоимость LLM API — детальная оценка</h3>
+
+<b>Допущения:</b>
+<ul><li>~200 источников, ~300 raw events/день (многие нерелевантные)</li>
+<li>~60% отсеивается на этапе фильтрации → ~120 релевантных событий/день</li>
+<li>~50% дубликаты → ~60 уникальных выставок/день (новых + обновлений)</li>
+<li>Средний размер raw content: ~2,000 токенов (input)</li>
+<li>Средний размер ответа LLM: ~500 токенов (output)</li>
+<li>30 дней в месяце</li>
+</ul>
+<b>LLM-вызовы на одно сырое событие (worst case — все этапы):</b>
+
+<table><thead><tr><th>Этап</th><th>Input tokens</th><th>Output tokens</th><th>Кол-во вызовов/день</th></tr></thead><tbody><tr><td>Фильтрация (все 300 events)</td><td>~2,000</td><td>~100</td><td>300</td></tr><tr><td>Нормализация (120 relevant)</td><td>~2,000</td><td>~500</td><td>120</td></tr><tr><td>Обогащение (60 из вторичных источников)</td><td>~3,000</td><td>~500</td><td>60</td></tr><tr><td>Дедупликация-LLM (30 неочевидных пар)</td><td>~1,500</td><td>~200</td><td>30</td></tr><tr><td><b>Итого в день</b></td><td><b>~510 вызовов</b></td></tr></tbody></table>
+<b>Суммарные токены в день:</b>
+<ul><li>Input: 300×2,000 + 120×2,000 + 60×3,000 + 30×1,500 = 600K + 240K + 180K + 45K = <b>~1,065K input tokens/день</b></li>
+<li>Output: 300×100 + 120×500 + 60×500 + 30×200 = 30K + 60K + 30K + 6K = <b>~126K output tokens/день</b></li>
+</ul>
+<b>Суммарные токены в месяц:</b>
+<ul><li>Input: ~32M tokens/мес</li>
+<li>Output: ~3.8M tokens/мес</li>
+</ul>
+<b>Стоимость по моделям (цены на март 2026, приблизительные):</b>
+
+<table><thead><tr><th>Модель</th><th>Input $/1M</th><th>Output $/1M</th><th>Input/мес</th><th>Output/мес</th><th><b>Итого/мес</b></th></tr></thead><tbody><tr><td><b>Claude 3.5 Haiku</b></td><td>$0.80</td><td>$4.00</td><td>$25.6</td><td>$15.2</td><td><b>$40.8</b></td></tr><tr><td><b>Claude 3.5 Sonnet</b></td><td>$3.00</td><td>$15.00</td><td>$96.0</td><td>$57.0</td><td><b>$153.0</b></td></tr><tr><td><b>Claude Opus 4</b></td><td>$15.00</td><td>$75.00</td><td>$480.0</td><td>$285.0</td><td><b>$765.0</b></td></tr><tr><td><b>GPT-4o mini</b></td><td>$0.15</td><td>$0.60</td><td>$4.8</td><td>$2.3</td><td><b>$7.1</b></td></tr><tr><td><b>GPT-4o</b></td><td>$2.50</td><td>$10.00</td><td>$80.0</td><td>$38.0</td><td><b>$118.0</b></td></tr><tr><td><b>GPT-4.1 mini</b></td><td>$0.40</td><td>$1.60</td><td>$12.8</td><td>$6.1</td><td><b>$18.9</b></td></tr><tr><td><b>GPT-4.1</b></td><td>$2.00</td><td>$8.00</td><td>$64.0</td><td>$30.4</td><td><b>$94.4</b></td></tr></tbody></table>
+<b>Рекомендованная стратегия (оптимум цена/качество):</b>
+
+<table><thead><tr><th>Этап</th><th>Модель</th><th>Обоснование</th></tr></thead><tbody><tr><td>Фильтрация (самый массовый)</td><td>GPT-4o mini / Claude Haiku</td><td>Простая классификация, дешёвая модель достаточна</td></tr><tr><td>Нормализация</td><td>Claude 3.5 Sonnet / GPT-4o</td><td>Нужно хорошее понимание русского текста</td></tr><tr><td>Обогащение</td><td>Claude 3.5 Sonnet / GPT-4o</td><td>Экстракция из HTML, нужна качественная модель</td></tr><tr><td>Дедупликация</td><td>GPT-4o mini / Claude Haiku</td><td>Сравнение двух текстов, дешёвая модель ok</td></tr></tbody></table>
+<b>Оценка при оптимальной стратегии:</b>
+<ul><li>Фильтрация (GPT-4o mini): 300×30 = 9,000 вызовов/мес → ~$2</li>
+<li>Нормализация (Claude Sonnet): 120×30 = 3,600 вызовов/мес → ~$15</li>
+<li>Обогащение (Claude Sonnet): 60×30 = 1,800 вызовов/мес → ~$12</li>
+<li>Дедупликация (GPT-4o mini): 30×30 = 900 вызовов/мес → ~$0.5</li>
+<li><b>LLM итого: ~$30/мес</b> при оптимальной стратегии</li>
+</ul>
+<h3>13.6. Общая стоимость эксплуатации</h3>
+
+<table><thead><tr><th>Статья</th><th>Оценка/мес</th></tr></thead><tbody><tr><td>LLM API (оптимальная стратегия)</td><td>$25–40</td></tr><tr><td>LLM API (всё на Claude Sonnet)</td><td>$120–160</td></tr><tr><td>Сервер (VPS, 4 CPU / 8GB RAM)</td><td>$20–50</td></tr><tr><td>Object Storage (изображения)</td><td>$5–10</td></tr><tr><td>Домен</td><td>~$1 (≈$12/год)</td></tr><tr><td><b>Итого (оптимально)</b></td><td><b>$50–100/мес</b></td></tr><tr><td><b>Итого (premium модели)</b></td><td><b>$150–220/мес</b></td></tr></tbody></table>
+<hr>
+
+<h2>14. Фаза 2+ — Дорожная карта</h2>
+
+<h3>Фаза 2: Пользовательские функции</h3>
+
+<b>Фокус:</b> Персонализация и взаимодействие.
+
+<ul><li><b>Авторизация</b> — Telegram Login / email</li>
+<li><b>Личный календарь</b> — добавление выставок в «Хочу пойти»</li>
+<li><b>Шеринг календаря</b> — публичная ссылка на свой план</li>
+<li><b>Напоминания</b> — персональные напоминания о выбранных выставках (Telegram-бот в ЛС)</li>
+<li><b>Отзывы</b> — короткий отзыв + оценка после посещения</li>
+<li><b>Отметка «Не интересно»</b> — исключение из рекомендаций</li>
+<li><b>Inline-кнопки в Telegram</b> — «Хочу пойти» / «Не интересно» прямо в посте канала</li>
+<li><b>Карта</b> — интерактивная карта площадок с текущими выставками</li>
+</ul>
+<h3>Фаза 3: Рекомендации и аналитика</h3>
+
+<ul><li><b>Рекомендации</b> — на основе тегов, лайков, посещений: «Вам может понравиться»</li>
+<li><b>Аналитика популярности</b> — какие выставки чаще добавляют, какие площадки популярнее</li>
+<li><b>AI-ассистент</b> — чат-бот: «Что посмотреть в эти выходные?», «Есть ли выставки импрессионистов?»</li>
+</ul>
+<h3>Фаза 4: Масштабирование</h3>
+
+<ul><li><b>Мультигородность</b> — Москва, Казань, другие города</li>
+<li><b>Расширение тематики</b> — фотовыставки, перформансы, арт-ярмарки</li>
+<li><b>Мультиязычность</b> — английская версия портала</li>
+<li><b>Партнёрства</b> — интеграция с билетными системами, коллаборации с площадками</li>
+</ul>
+<hr>
+
+<h2>Приложения</h2>
+
+<h3>A. Примеры LLM-промптов</h3>
+
+<p>Полные тексты промптов для каждого этапа пайплайна находятся в разделе 6 (этапы 2, 3, 4).</p>
+
+<h3>B. Первичный список площадок</h3>
+
+<p>Будет сформирован автоматически (раздел 7) и сохранён в </code>culture-spb/data/venues_seed.json<code>.</p>
+
+<h3>C. Первичный список телеграм-каналов</h3>
+
+<p>Будет сформирован автоматически (раздел 7) и сохранён в </code>culture-spb/data/channels_seed.json`.</p>
+
+<hr>
+
+<p><i>Документ будет обновляться по мере уточнения требований. Версионирование через Git.</i></p>
+</body></html>

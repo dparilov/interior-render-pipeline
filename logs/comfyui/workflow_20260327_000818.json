@@ -1,0 +1,457 @@
+{
+  "checkpoint": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "vae": {
+    "class_type": "VAELoader",
+    "inputs": {
+      "vae_name": "sdxl_vae.safetensors"
+    }
+  },
+  "controlnet_canny": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-canny-sdxl.safetensors"
+    }
+  },
+  "load_sketch": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/скетчи/front.jpg"
+    }
+  },
+  "canny_preprocess": {
+    "class_type": "Canny",
+    "inputs": {
+      "image": [
+        "load_sketch",
+        0
+      ],
+      "low_threshold": 0.1,
+      "high_threshold": 0.4
+    }
+  },
+  "positive": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "checkpoint",
+        1
+      ],
+      "text": "MASTERPIECE photorealistic interior photograph for Architectural Digest magazine,\nprofessional architectural photography by Julius Shulman,\nshot on Hasselblad H6D-100c medium format camera,\n8K ultra high resolution, tack sharp focus on all textures and materials,\nwarm natural afternoon sunlight, soft shadows, physically based rendering"
+    }
+  },
+  "negative": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "checkpoint",
+        1
+      ],
+      "text": "cartoon, anime, drawing, sketch, painting, illustration, CGI, 3D render,\nlow quality, blurry, out of focus, distorted, deformed,\nwatermark, text, signature, logo,\noversaturated, underexposed, overexposed,\nplastic look, video game graphics, Blender, Maya,\nwrong colors, color bleeding, jpeg artifacts, brass fixtures, gold fixtures, golden faucet, black towel warmer, black radiator, white vanity, white cabinet"
+    }
+  },
+  "apply_controlnet": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "positive",
+        0
+      ],
+      "negative": [
+        "negative",
+        0
+      ],
+      "control_net": [
+        "controlnet_canny",
+        0
+      ],
+      "image": [
+        "canny_preprocess",
+        0
+      ],
+      "strength": 0.4,
+      "start_percent": 0.0,
+      "end_percent": 0.8
+    }
+  },
+  "empty_latent": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "ipadapter_model": {
+    "class_type": "IPAdapterModelLoader",
+    "inputs": {
+      "ipadapter_file": "ip-adapter_sdxl.safetensors"
+    }
+  },
+  "clip_vision": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+      "clip_name": "CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors"
+    }
+  },
+  "load_ref_floor": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/floor_tiles.jpg"
+    }
+  },
+  "ipadapter_floor": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "checkpoint",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_floor",
+        0
+      ],
+      "weight": 1.0,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_wall_tiles": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/wall_tiles.png"
+    }
+  },
+  "ipadapter_wall_tiles": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_floor",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_wall_tiles",
+        0
+      ],
+      "weight": 0.8160000000000001,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_vanity": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/vanity.jpg"
+    }
+  },
+  "ipadapter_vanity": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_wall_tiles",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_vanity",
+        0
+      ],
+      "weight": 0.9179999999999999,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_faucet": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/faucet.jpg"
+    }
+  },
+  "ipadapter_faucet": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_vanity",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_faucet",
+        0
+      ],
+      "weight": 0.612,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_mirror": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/mirror.jpg"
+    }
+  },
+  "ipadapter_mirror": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_faucet",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_mirror",
+        0
+      ],
+      "weight": 0.612,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_shower": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/shower.jpg"
+    }
+  },
+  "ipadapter_shower": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_mirror",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_shower",
+        0
+      ],
+      "weight": 0.425,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_bathtub": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/bathtub.jpg"
+    }
+  },
+  "ipadapter_bathtub": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_shower",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_bathtub",
+        0
+      ],
+      "weight": 0.34,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_towel_warmer": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/towel_warmer.jpg"
+    }
+  },
+  "ipadapter_towel_warmer": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_bathtub",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_towel_warmer",
+        0
+      ],
+      "weight": 0.51,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "load_ref_basket": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "bathroom_masha/референсы/basket.jpg"
+    }
+  },
+  "ipadapter_basket": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "ipadapter_towel_warmer",
+        0
+      ],
+      "ipadapter": [
+        "ipadapter_model",
+        0
+      ],
+      "clip_vision": [
+        "clip_vision",
+        0
+      ],
+      "image": [
+        "load_ref_basket",
+        0
+      ],
+      "weight": 0.255,
+      "weight_type": "linear",
+      "start_at": 0.0,
+      "end_at": 1.0,
+      "unfold_batch": false,
+      "combine_embeds": "concat",
+      "embeds_scaling": "V only"
+    }
+  },
+  "sampler_base": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "ipadapter_basket",
+        0
+      ],
+      "positive": [
+        "apply_controlnet",
+        0
+      ],
+      "negative": [
+        "apply_controlnet",
+        1
+      ],
+      "latent_image": [
+        "empty_latent",
+        0
+      ],
+      "seed": 1774558958,
+      "steps": 5,
+      "cfg": 7.5,
+      "sampler_name": "dpmpp_2m",
+      "scheduler": "karras",
+      "denoise": 1.0
+    }
+  },
+  "vae_decode": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "sampler_base",
+        0
+      ],
+      "vae": [
+        "vae",
+        0
+      ]
+    }
+  },
+  "save": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "vae_decode",
+        0
+      ],
+      "filename_prefix": "bathroom_masha_render"
+    }
+  }
+}

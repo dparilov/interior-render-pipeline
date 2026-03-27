@@ -1,0 +1,264 @@
+{
+  "timestamp": "2026-03-27T01:46:18.067866",
+  "project_name": "bathroom_masha",
+  "tz_path": "/home/dima/ComfyUI/input/bathroom_masha/ТЗ.md",
+  "sketch": "/home/dima/ComfyUI/input/bathroom_masha/скетчи/front.jpg",
+  "prompt_id": "877f64af-02fc-4571-ad25-d3980edfe698",
+  "output_file": "/home/dima/ComfyUI/output/bathroom_masha_render_00003_.png",
+  "error": null,
+  "duration_seconds": 372,
+  "ip_adapters": [
+    {
+      "element": "Напольная плитка",
+      "key": "floor",
+      "path": "bathroom_masha/референсы/floor_tiles.jpg",
+      "weight": 0.722,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Настенная плитка",
+      "key": "wall",
+      "path": "bathroom_masha/референсы/wall_tiles.png",
+      "weight": 0.722,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Тумба с раковиной",
+      "key": "cabinet",
+      "path": "bathroom_masha/референсы/vanity.jpg",
+      "weight": 0.722,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Смеситель для раковины",
+      "key": "faucet",
+      "path": "bathroom_masha/референсы/faucet.jpg",
+      "weight": 0.722,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Зеркало",
+      "key": "mirror",
+      "path": "bathroom_masha/референсы/mirror.jpg",
+      "weight": 0.722,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Душевая система",
+      "key": "shower",
+      "path": "bathroom_masha/референсы/shower.jpg",
+      "weight": 0.425,
+      "critical": false,
+      "texture": null
+    },
+    {
+      "element": "Ванна",
+      "key": "bathtub",
+      "path": "bathroom_masha/референсы/bathtub.jpg",
+      "weight": 0.425,
+      "critical": false,
+      "texture": null
+    },
+    {
+      "element": "Полотенцесушитель",
+      "key": "towel_warmer",
+      "path": "bathroom_masha/референсы/towel_warmer.jpg",
+      "weight": 0.722,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Корзина для белья",
+      "key": "basket",
+      "path": "bathroom_masha/референсы/basket.jpg",
+      "weight": 0.425,
+      "critical": false,
+      "texture": null
+    }
+  ],
+  "params": {
+    "output": "bathroom_masha_render",
+    "steps": 5,
+    "cfg": 7.5,
+    "cn_strength": 0.4,
+    "ip_strength": 0.85,
+    "no_refiner": true,
+    "two_pass": false,
+    "pass_num": 1,
+    "latent_file": "latent_temp",
+    "size": 1024
+  },
+  "references_count": 9,
+  "constraints": "⛔ **НЕЛЬЗЯ МЕНЯТЬ:**\n- Расположение предметов (строго по скетчу)\n- Размеры помещения\n- Конфигурацию (что где стоит)\n\n⛔ **НЕ ДОЛЖНО ПОЯВИТЬСЯ:**\n- Латунные/золотые смесители (только хром!)\n- Чёрный или хромированный полотенцесушитель (только белый!)\n- Белая или деревянная тумба (только тёмно-серая!)\n- Бежевая или светлая напольная плитка (только синяя с паттерном!)",
+  "memory": {
+    "start": {
+      "total_gb": 29.2,
+      "used_gb": 2.3,
+      "available_gb": 26.8
+    },
+    "end": {
+      "total_gb": 29.2,
+      "used_gb": 25.8,
+      "available_gb": 3.3
+    }
+  },
+  "workflow_file": "/home/dima/.openclaw/workspace/logs/comfyui/workflow_20260327_014618.json",
+  "workflow_analysis": {
+    "total_nodes": 32,
+    "ipadapter_nodes": [
+      {
+        "node_id": "ipadapter_model",
+        "class": "IPAdapterModelLoader",
+        "weight": null,
+        "image_source": null
+      },
+      {
+        "node_id": "ipadapter_floor",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.7224999999999999,
+        "image_source": "load_ref_floor"
+      },
+      {
+        "node_id": "ipadapter_wall",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.7224999999999999,
+        "image_source": "load_ref_wall"
+      },
+      {
+        "node_id": "ipadapter_cabinet",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.7224999999999999,
+        "image_source": "load_ref_cabinet"
+      },
+      {
+        "node_id": "ipadapter_faucet",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.7224999999999999,
+        "image_source": "load_ref_faucet"
+      },
+      {
+        "node_id": "ipadapter_mirror",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.7224999999999999,
+        "image_source": "load_ref_mirror"
+      },
+      {
+        "node_id": "ipadapter_shower",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.425,
+        "image_source": "load_ref_shower"
+      },
+      {
+        "node_id": "ipadapter_bathtub",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.425,
+        "image_source": "load_ref_bathtub"
+      },
+      {
+        "node_id": "ipadapter_towel_warmer",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.7224999999999999,
+        "image_source": "load_ref_towel_warmer"
+      },
+      {
+        "node_id": "ipadapter_basket",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.425,
+        "image_source": "load_ref_basket"
+      }
+    ],
+    "controlnet_nodes": [
+      {
+        "node_id": "controlnet_canny",
+        "class": "ControlNetLoader",
+        "strength": null
+      },
+      {
+        "node_id": "apply_controlnet",
+        "class": "ControlNetApplyAdvanced",
+        "strength": 0.4
+      }
+    ],
+    "loaded_images": [
+      {
+        "node_id": "load_sketch",
+        "image": "bathroom_masha/скетчи/front.jpg"
+      },
+      {
+        "node_id": "load_ref_floor",
+        "image": "bathroom_masha/референсы/floor_tiles.jpg"
+      },
+      {
+        "node_id": "load_ref_wall",
+        "image": "bathroom_masha/референсы/wall_tiles.png"
+      },
+      {
+        "node_id": "load_ref_cabinet",
+        "image": "bathroom_masha/референсы/vanity.jpg"
+      },
+      {
+        "node_id": "load_ref_faucet",
+        "image": "bathroom_masha/референсы/faucet.jpg"
+      },
+      {
+        "node_id": "load_ref_mirror",
+        "image": "bathroom_masha/референсы/mirror.jpg"
+      },
+      {
+        "node_id": "load_ref_shower",
+        "image": "bathroom_masha/референсы/shower.jpg"
+      },
+      {
+        "node_id": "load_ref_bathtub",
+        "image": "bathroom_masha/референсы/bathtub.jpg"
+      },
+      {
+        "node_id": "load_ref_towel_warmer",
+        "image": "bathroom_masha/референсы/towel_warmer.jpg"
+      },
+      {
+        "node_id": "load_ref_basket",
+        "image": "bathroom_masha/референсы/basket.jpg"
+      }
+    ],
+    "models_used": [
+      {
+        "node_id": "checkpoint",
+        "type": "ckpt_name",
+        "file": "RealVisXL_V4.0.safetensors"
+      },
+      {
+        "node_id": "vae",
+        "type": "vae_name",
+        "file": "sdxl_vae.safetensors"
+      },
+      {
+        "node_id": "controlnet_canny",
+        "type": "control_net_name",
+        "file": "controlnet-canny-sdxl.safetensors"
+      },
+      {
+        "node_id": "ipadapter_model",
+        "type": "ipadapter_file",
+        "file": "ip-adapter_sdxl.safetensors"
+      },
+      {
+        "node_id": "clip_vision",
+        "type": "clip_name",
+        "file": "CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors"
+      }
+    ],
+    "verification": {
+      "ipadapter_count": 10,
+      "controlnet_count": 2,
+      "images_loaded": 10,
+      "has_refiner": false,
+      "has_vae": true
+    }
+  }
+}

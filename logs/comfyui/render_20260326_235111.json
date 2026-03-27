@@ -1,0 +1,173 @@
+{
+  "timestamp": "2026-03-26T23:51:11.241040",
+  "project_name": "bathroom_masha",
+  "tz_path": "/home/dima/ComfyUI/input/bathroom_masha/ТЗ-minimal.md",
+  "sketch": "/home/dima/ComfyUI/input/bathroom_masha/скетчи/front.jpg",
+  "prompt_id": "0dbc6088-2043-4a59-8638-1ad0f3b1d635",
+  "output_file": "/home/dima/ComfyUI/output/bathroom_masha_render_00001_.png",
+  "error": null,
+  "duration_seconds": 290,
+  "ip_adapters": [
+    {
+      "element": "Напольная плитка",
+      "key": "floor",
+      "path": "bathroom_masha/референсы/floor_tiles.jpg",
+      "weight": 1.0,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Настенная плитка",
+      "key": "wall_tiles",
+      "path": "bathroom_masha/референсы/wall_tiles.png",
+      "weight": 0.816,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Тумба с раковиной",
+      "key": "vanity",
+      "path": "bathroom_masha/референсы/vanity.jpg",
+      "weight": 0.918,
+      "critical": true,
+      "texture": null
+    },
+    {
+      "element": "Зеркало",
+      "key": "mirror",
+      "path": "bathroom_masha/референсы/mirror.jpg",
+      "weight": 0.612,
+      "critical": true,
+      "texture": null
+    }
+  ],
+  "params": {
+    "output": "bathroom_masha_render",
+    "steps": 5,
+    "cfg": 7.5,
+    "cn_strength": 0.4,
+    "ip_strength": 0.85,
+    "no_refiner": true,
+    "two_pass": false,
+    "pass_num": 1,
+    "latent_file": "latent_temp"
+  },
+  "references_count": 4,
+  "constraints": "- Не добавлять предметы, которых нет в скетче\n- Сохранить расположение как на скетче",
+  "memory": {
+    "start": {
+      "total_gb": 29.2,
+      "used_gb": 2.3,
+      "available_gb": 26.9
+    },
+    "end": {
+      "total_gb": 29.2,
+      "used_gb": 25.7,
+      "available_gb": 3.4
+    }
+  },
+  "workflow_file": "/home/dima/.openclaw/workspace/logs/comfyui/workflow_20260326_235111.json",
+  "workflow_analysis": {
+    "total_nodes": 22,
+    "ipadapter_nodes": [
+      {
+        "node_id": "ipadapter_model",
+        "class": "IPAdapterModelLoader",
+        "weight": null,
+        "image_source": null
+      },
+      {
+        "node_id": "ipadapter_floor",
+        "class": "IPAdapterAdvanced",
+        "weight": 1.0,
+        "image_source": "load_ref_floor"
+      },
+      {
+        "node_id": "ipadapter_wall_tiles",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.8160000000000001,
+        "image_source": "load_ref_wall_tiles"
+      },
+      {
+        "node_id": "ipadapter_vanity",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.9179999999999999,
+        "image_source": "load_ref_vanity"
+      },
+      {
+        "node_id": "ipadapter_mirror",
+        "class": "IPAdapterAdvanced",
+        "weight": 0.612,
+        "image_source": "load_ref_mirror"
+      }
+    ],
+    "controlnet_nodes": [
+      {
+        "node_id": "controlnet_canny",
+        "class": "ControlNetLoader",
+        "strength": null
+      },
+      {
+        "node_id": "apply_controlnet",
+        "class": "ControlNetApplyAdvanced",
+        "strength": 0.4
+      }
+    ],
+    "loaded_images": [
+      {
+        "node_id": "load_sketch",
+        "image": "bathroom_masha/скетчи/front.jpg"
+      },
+      {
+        "node_id": "load_ref_floor",
+        "image": "bathroom_masha/референсы/floor_tiles.jpg"
+      },
+      {
+        "node_id": "load_ref_wall_tiles",
+        "image": "bathroom_masha/референсы/wall_tiles.png"
+      },
+      {
+        "node_id": "load_ref_vanity",
+        "image": "bathroom_masha/референсы/vanity.jpg"
+      },
+      {
+        "node_id": "load_ref_mirror",
+        "image": "bathroom_masha/референсы/mirror.jpg"
+      }
+    ],
+    "models_used": [
+      {
+        "node_id": "checkpoint",
+        "type": "ckpt_name",
+        "file": "RealVisXL_V4.0.safetensors"
+      },
+      {
+        "node_id": "vae",
+        "type": "vae_name",
+        "file": "sdxl_vae.safetensors"
+      },
+      {
+        "node_id": "controlnet_canny",
+        "type": "control_net_name",
+        "file": "controlnet-canny-sdxl.safetensors"
+      },
+      {
+        "node_id": "ipadapter_model",
+        "type": "ipadapter_file",
+        "file": "ip-adapter_sdxl.safetensors"
+      },
+      {
+        "node_id": "clip_vision",
+        "type": "clip_name",
+        "file": "CLIP-ViT-bigG-14-laion2B-39B-b160k.safetensors"
+      }
+    ],
+    "verification": {
+      "ipadapter_count": 5,
+      "controlnet_count": 2,
+      "images_loaded": 5,
+      "has_refiner": false,
+      "has_vae": true
+    }
+  }
+}

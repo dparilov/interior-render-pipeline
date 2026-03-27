@@ -1,0 +1,85 @@
+{
+  "timestamp": "2026-03-27T01:56:54.995460",
+  "project_name": "bathroom_masha",
+  "tz_path": "/home/dima/ComfyUI/input/bathroom_masha/ТЗ.md",
+  "sketch": "/home/dima/ComfyUI/input/bathroom_masha/скетчи/front.jpg",
+  "prompt_id": "20b7888d-02f9-448a-a88a-37de129149f0",
+  "output_file": "/home/dima/ComfyUI/output/bathroom_masha_render_00005_.png",
+  "error": null,
+  "duration_seconds": 220,
+  "ip_adapters": [],
+  "params": {
+    "output": "bathroom_masha_render",
+    "steps": 5,
+    "cfg": 7.5,
+    "cn_strength": 0.4,
+    "ip_strength": 0.85,
+    "no_ipadapter": true,
+    "no_refiner": true,
+    "two_pass": false,
+    "pass_num": 1,
+    "latent_file": "latent_temp",
+    "size": 1024
+  },
+  "references_count": 9,
+  "constraints": "⛔ **НЕЛЬЗЯ МЕНЯТЬ:**\n- Расположение предметов (строго по скетчу)\n- Размеры помещения\n- Конфигурацию (что где стоит)\n\n⛔ **НЕ ДОЛЖНО ПОЯВИТЬСЯ:**\n- Латунные/золотые смесители (только хром!)\n- Чёрный или хромированный полотенцесушитель (только белый!)\n- Белая или деревянная тумба (только тёмно-серая!)\n- Бежевая или светлая напольная плитка (только синяя с паттерном!)",
+  "memory": {
+    "start": {
+      "total_gb": 29.2,
+      "used_gb": 25.2,
+      "available_gb": 3.9
+    },
+    "end": {
+      "total_gb": 29.2,
+      "used_gb": 24.0,
+      "available_gb": 5.1
+    }
+  },
+  "workflow_file": "/home/dima/.openclaw/workspace/logs/comfyui/workflow_20260327_015654.json",
+  "workflow_analysis": {
+    "total_nodes": 12,
+    "ipadapter_nodes": [],
+    "controlnet_nodes": [
+      {
+        "node_id": "controlnet_canny",
+        "class": "ControlNetLoader",
+        "strength": null
+      },
+      {
+        "node_id": "apply_controlnet",
+        "class": "ControlNetApplyAdvanced",
+        "strength": 0.4
+      }
+    ],
+    "loaded_images": [
+      {
+        "node_id": "load_sketch",
+        "image": "bathroom_masha/скетчи/front.jpg"
+      }
+    ],
+    "models_used": [
+      {
+        "node_id": "checkpoint",
+        "type": "ckpt_name",
+        "file": "RealVisXL_V4.0.safetensors"
+      },
+      {
+        "node_id": "vae",
+        "type": "vae_name",
+        "file": "sdxl_vae.safetensors"
+      },
+      {
+        "node_id": "controlnet_canny",
+        "type": "control_net_name",
+        "file": "controlnet-canny-sdxl.safetensors"
+      }
+    ],
+    "verification": {
+      "ipadapter_count": 0,
+      "controlnet_count": 2,
+      "images_loaded": 1,
+      "has_refiner": false,
+      "has_vae": true
+    }
+  }
+}

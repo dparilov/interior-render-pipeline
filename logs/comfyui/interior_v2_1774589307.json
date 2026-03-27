@@ -1,0 +1,371 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "front.jpg"
+    }
+  },
+  "2": {
+    "class_type": "Image Normalize",
+    "inputs": {
+      "images": [
+        "1",
+        0
+      ],
+      "target_size": 512,
+      "multiple": 8,
+      "mode": "bilinear"
+    }
+  },
+  "3": {
+    "class_type": "DownloadAndLoadDepthAnythingV2Model",
+    "inputs": {
+      "model": "depth_anything_v2_vitl_fp32.safetensors",
+      "precision": "auto"
+    }
+  },
+  "4": {
+    "class_type": "DepthAnything_V2",
+    "inputs": {
+      "da_model": [
+        "3",
+        0
+      ],
+      "images": [
+        "2",
+        0
+      ]
+    }
+  },
+  "5": {
+    "class_type": "Control Items",
+    "inputs": {
+      "window": true,
+      "door": true,
+      "staircase": false,
+      "columns": false
+    }
+  },
+  "6": {
+    "class_type": "Interior Design Segmentator",
+    "inputs": {
+      "image": [
+        "2",
+        0
+      ],
+      "control_items": [
+        "5",
+        0
+      ]
+    }
+  },
+  "7": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "SSD-1B.safetensors"
+    }
+  },
+  "8": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "7",
+        1
+      ],
+      "text": "A modern compact bathroom with warm natural lighting from a small window.\nMediterranean-style blue patterned floor tiles with white geometric circles pattern.\nWhite glossy ribbed subway tiles on walls, vertically laid.\nDark charcoal floating vanity with two drawers and white ceramic sink.\nRectangular mirror with rounded corners and warm LED backlight.\nChrome rain shower system. White cast iron bathtub.\nWhite vertical electric towel warmer. Natural rattan laundry basket., interior design, 4K, high resolution, photorealistic"
+    }
+  },
+  "9": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "7",
+        1
+      ],
+      "text": "window, door, low resolution, banner, logo, watermark, text, deformed, blurry, out of focus, surreal, ugly, beginner, brass faucet, gold faucet, black towel warmer, chrome towel warmer,\nwhite vanity, wooden vanity, beige floor tiles, light floor tiles"
+    }
+  },
+  "10": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 512,
+      "height": 512,
+      "batch_size": 1
+    }
+  },
+  "11": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "7",
+        0
+      ],
+      "positive": [
+        "8",
+        0
+      ],
+      "negative": [
+        "9",
+        0
+      ],
+      "latent_image": [
+        "10",
+        0
+      ],
+      "seed": 42,
+      "steps": 25,
+      "cfg": 9,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 0.9
+    }
+  },
+  "12": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "11",
+        0
+      ],
+      "vae": [
+        "7",
+        2
+      ]
+    }
+  },
+  "13": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "Realistic_Vision_V5.1-inpainting.safetensors"
+    }
+  },
+  "14": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "seg/own_controlnet(StableDesign).safetensors"
+    }
+  },
+  "15": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "depth/controlnet_depth(StableDesign).safetensors"
+    }
+  },
+  "16": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "13",
+        1
+      ],
+      "text": "A modern compact bathroom with warm natural lighting from a small window.\nMediterranean-style blue patterned floor tiles with white geometric circles pattern.\nWhite glossy ribbed subway tiles on walls, vertically laid.\nDark charcoal floating vanity with two drawers and white ceramic sink.\nRectangular mirror with rounded corners and warm LED backlight.\nChrome rain shower system. White cast iron bathtub.\nWhite vertical electric towel warmer. Natural rattan laundry basket., interior design, 4K, high resolution, photorealistic"
+    }
+  },
+  "17": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "13",
+        1
+      ],
+      "text": "window, door, low resolution, banner, logo, watermark, text, deformed, blurry, out of focus, surreal, ugly, beginner, brass faucet, gold faucet, black towel warmer, chrome towel warmer,\nwhite vanity, wooden vanity, beige floor tiles, light floor tiles"
+    }
+  },
+  "18": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "16",
+        0
+      ],
+      "negative": [
+        "17",
+        0
+      ],
+      "control_net": [
+        "14",
+        0
+      ],
+      "image": [
+        "6",
+        0
+      ],
+      "strength": 0.5,
+      "start_percent": 0,
+      "end_percent": 1
+    }
+  },
+  "19": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "18",
+        0
+      ],
+      "negative": [
+        "18",
+        1
+      ],
+      "control_net": [
+        "15",
+        0
+      ],
+      "image": [
+        "4",
+        0
+      ],
+      "strength": 0.5,
+      "start_percent": 0,
+      "end_percent": 1
+    }
+  },
+  "20": {
+    "class_type": "GrowMask",
+    "inputs": {
+      "mask": [
+        "6",
+        1
+      ],
+      "expand": 2,
+      "tapered_corners": true
+    }
+  },
+  "21": {
+    "class_type": "VAEEncodeForInpaint",
+    "inputs": {
+      "pixels": [
+        "2",
+        0
+      ],
+      "vae": [
+        "13",
+        2
+      ],
+      "mask": [
+        "20",
+        0
+      ],
+      "grow_mask_by": 0
+    }
+  },
+  "22": {
+    "class_type": "IPAdapterModelLoader",
+    "inputs": {
+      "ipadapter_file": "ip-adapter_sd15.safetensors"
+    }
+  },
+  "23": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+      "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+    }
+  },
+  "24": {
+    "class_type": "InvertMask",
+    "inputs": {
+      "mask": [
+        "20",
+        0
+      ]
+    }
+  },
+  "25": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "13",
+        0
+      ],
+      "ipadapter": [
+        "22",
+        0
+      ],
+      "image": [
+        "12",
+        0
+      ],
+      "attn_mask": [
+        "24",
+        0
+      ],
+      "clip_vision": [
+        "23",
+        0
+      ],
+      "weight": 0.4,
+      "weight_type": "linear",
+      "combine_embeds": "concat",
+      "start_at": 0,
+      "end_at": 1,
+      "embeds_scaling": "V only"
+    }
+  },
+  "26": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "25",
+        0
+      ],
+      "positive": [
+        "19",
+        0
+      ],
+      "negative": [
+        "19",
+        1
+      ],
+      "latent_image": [
+        "21",
+        0
+      ],
+      "seed": 42,
+      "steps": 50,
+      "cfg": 10,
+      "sampler_name": "dpmpp_2m_sde_gpu",
+      "scheduler": "karras",
+      "denoise": 0.9
+    }
+  },
+  "27": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "26",
+        0
+      ],
+      "vae": [
+        "13",
+        2
+      ]
+    }
+  },
+  "28": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "27",
+        0
+      ],
+      "filename_prefix": "interior_design_v2"
+    }
+  },
+  "29": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "4",
+        0
+      ]
+    }
+  },
+  "30": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "6",
+        0
+      ]
+    }
+  }
+}

@@ -1,0 +1,202 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "front.jpg"
+    }
+  },
+  "2": {
+    "class_type": "CannyEdgePreprocessor",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "low_threshold": 100,
+      "high_threshold": 200,
+      "resolution": 1024
+    }
+  },
+  "3": {
+    "class_type": "DownloadAndLoadDepthAnythingV2Model",
+    "inputs": {
+      "model": "depth_anything_v2_vitl_fp32.safetensors",
+      "precision": "auto"
+    }
+  },
+  "4": {
+    "class_type": "DepthAnything_V2",
+    "inputs": {
+      "da_model": [
+        "3",
+        0
+      ],
+      "images": [
+        "1",
+        0
+      ]
+    }
+  },
+  "5": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V5.0.safetensors"
+    }
+  },
+  "6": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "5",
+        1
+      ],
+      "text": "A modern compact bathroom with warm natural lighting, photorealistic interior photograph, 8K resolution. \u041a\u0435\u0440\u0430\u043c\u0438\u0447\u0435\u0441\u043a\u0430\u044f \u043f\u043b\u0438\u0442\u043a\u0430 \u2014 blue \u0444\u043e\u043d \u0441 \u0411\u0415\u041b\u042b\u041c \u0433\u0435\u043e\u043c\u0435\u0442\u0440\u0438\u0447\u0435\u0441\u043a\u0438\u043c \u0443\u0437\u043e\u0440\u043e\u043c (\u043f\u0435\u0440\u0435\u0441\u0435\u043a\u0430\u044e\u0449\u0438\u0435\u0441\u044f \u043a\u0440\u0443\u0433\u0438/\u043b\u0435\u043f\u0435\u0441\u0442\u043a\u0438). \u0421\u0440\u0435\u0434\u0438\u0437\u0435\u043c\u043d\u043e\u043c\u043e\u0440\u0441\u043a\u0438\u0439 \u0441\u0442\u0438\u043b\u044c.. \u0411\u0415\u041b\u0410\u042f glossy \u043f\u043b\u0438\u0442\u043a\u0430 \u0441 \u0432\u043e\u043b\u043d\u0438\u0441\u0442\u043e\u0439 \u0440\u0435\u0431\u0440\u0438\u0441\u0442\u043e\u0439 \u0442\u0435\u043a\u0441\u0442\u0443\u0440\u043e\u0439. \u0423\u043a\u043b\u0430\u0434\u043a\u0430 \u0412\u0415\u0420\u0422\u0418\u041a\u0410\u041b\u042c\u041d\u0410\u042f.. \u041f\u043e\u0434\u0432\u0435\u0441\u043d\u0430\u044f \u0442\u0443\u043c\u0431\u0430 \u0422\u0401\u041c\u041d\u041e-\u0421\u0415\u0420\u041e\u0413\u041e \u0446\u0432\u0435\u0442\u0430 (charcoal/\u0430\u043d\u0442\u0440\u0430\u0446\u0438\u0442) \u0441 \u0434\u0432\u0443\u043c\u044f \u044f\u0449\u0438\u043a\u0430\u043c\u0438. \u0411\u0435\u043b\u0430\u044f ceramic \u0440\u0430\u043a\u043e\u0432\u0438\u043d\u0430 \u0441\u0432\u0435\u0440\u0445\u0443.. \u041e\u0434\u043d\u043e\u0440\u044b\u0447\u0430\u0436\u043d\u044b\u0439 \u0441\u043c\u0435\u0441\u0438\u0442\u0435\u043b\u044c, chrome (\u043d\u0435 \u043b\u0430\u0442\u0443\u043d\u044c, \u043d\u0435 \u0437\u043e\u043b\u043e\u0442\u043e!)"
+    }
+  },
+  "7": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "5",
+        1
+      ],
+      "text": "low resolution, blurry, watermark, text, deformed, bad anatomy, brass faucet, gold faucet, black towel warmer, white vanity"
+    }
+  },
+  "8": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-canny-sdxl.safetensors"
+    }
+  },
+  "9": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "6",
+        0
+      ],
+      "negative": [
+        "7",
+        0
+      ],
+      "control_net": [
+        "8",
+        0
+      ],
+      "image": [
+        "2",
+        0
+      ],
+      "strength": 0.7,
+      "start_percent": 0,
+      "end_percent": 0.8
+    }
+  },
+  "10": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-depth-sdxl.safetensors"
+    }
+  },
+  "11": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "9",
+        0
+      ],
+      "negative": [
+        "9",
+        1
+      ],
+      "control_net": [
+        "10",
+        0
+      ],
+      "image": [
+        "4",
+        0
+      ],
+      "strength": 0.5,
+      "start_percent": 0,
+      "end_percent": 0.6
+    }
+  },
+  "12": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "13": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "5",
+        0
+      ],
+      "positive": [
+        "11",
+        0
+      ],
+      "negative": [
+        "11",
+        1
+      ],
+      "latent_image": [
+        "12",
+        0
+      ],
+      "seed": 42,
+      "steps": 50,
+      "cfg": 7.5,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 1.0
+    }
+  },
+  "14": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "13",
+        0
+      ],
+      "vae": [
+        "5",
+        2
+      ]
+    }
+  },
+  "15": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "14",
+        0
+      ],
+      "filename_prefix": "bathroom_v3"
+    }
+  },
+  "16": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "2",
+        0
+      ]
+    }
+  },
+  "17": {
+    "class_type": "PreviewImage",
+    "inputs": {
+      "images": [
+        "4",
+        0
+      ]
+    }
+  }
+}
