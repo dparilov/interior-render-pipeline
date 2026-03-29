@@ -8,7 +8,7 @@ All parameters are extracted from actual workflow, not hardcoded.
 import json
 import requests
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import sys
 
 from validate import validate_bundle, BundleValidator
@@ -145,6 +145,7 @@ def build_prompt(workflow: Dict, manifest: Dict, bundle_path: Path) -> Dict:
             "inputs": {
                 "model": [last_model, 0],
                 "ipadapter": ["ipadapter_model", 0],
+                "clip_vision": ["clip_vision", 0],
                 "image": [ref_node, 0],
                 "weight": weight,
                 "weight_type": "ease in-out",
