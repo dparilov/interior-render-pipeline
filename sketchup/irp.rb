@@ -61,6 +61,7 @@ module IRP
     temp_dir = File.join(dir, "irp_extract_temp")
     FileUtils.rm_rf(temp_dir)
     FileUtils.mkdir_p(temp_dir)
+    FileUtils.mkdir_p(File.join(temp_dir, 'views'))
     
     begin
       # 1. Scene graph
@@ -69,16 +70,35 @@ module IRP
       File.write(File.join(temp_dir, 'scene_graph.json'), JSON.pretty_generate(scene_graph))
       puts "  ✓ scene_graph.json (#{scene_graph[:entities].length} entities)"
       
-      # 2. Beauty render
+      # 2. Render all scenes (cameras)
       puts ""
-      puts "=== BEAUTY RENDER ==="
+      puts "=== VIEWS (ALL SCENES) ==="
       saved_render = save_rendering_options
       setup_normal_rendering
-      view.refresh
-      sleep(0.3)
-      export_image(File.join(temp_dir, 'beauty.png'))
+      
+      pages = model.pages.to_a
+      if pages.empty?
+        # No scenes - render current view
+        view.refresh
+        sleep(0.3)
+        export_image(File.join(temp_dir, 'views', 'default.png'))
+        puts "  ✓ views/default.png (current view)"
+      else
+        pages.each_with_index do |page, i|
+          next if page.name.start_with?('_')  # Skip hidden scenes
+          
+          page.use_camera = true if page.respond_to?(:use_camera=)
+          model.pages.selected_page = page
+          view.refresh
+          sleep(0.3)
+          
+          safe_name = page.name.gsub(/[^a-zA-Z0-9_-]/, '_')
+          export_image(File.join(temp_dir, 'views', "#{safe_name}.png"))
+          puts "  ✓ views/#{safe_name}.png"
+        end
+      end
+      
       restore_rendering_options(saved_render)
-      puts "  ✓ beauty.png"
       
       # 3. Create zip (overwrite previous)
       zip_path = File.join(dir, "irp_extract.zip")
@@ -92,8 +112,12 @@ module IRP
       puts ""
       puts "Output: #{zip_path}"
       puts ""
+      puts "Contents:"
+      puts "  - scene_graph.json (all entities with PIDs)"
+      puts "  - views/*.png (render from each Scene/camera)"
+      puts ""
       puts "Next steps:"
-      puts "1. Send zip to AI for role mapping"
+      puts "1. Send zip + ТЗ.md to AI for role mapping"
       puts "2. Save role_map.json to: #{dir}"
       puts "3. Run IRP.export"
       
@@ -106,17 +130,26 @@ module IRP
     page = model.pages.selected_page
     camera = view.camera
     
+    # Collect all scenes/cameras
+    scenes = model.pages.to_a.map do |p|
+      cam = p.camera
+      {
+        name: p.name,
+        camera: {
+          eye: cam.eye.to_a,
+          target: cam.target.to_a,
+          up: cam.up.to_a,
+          fov: cam.fov
+        }
+      }
+    end
+    
     {
       version: 'gamma',
       model_name: File.basename(model.path, '.skp'),
-      camera: {
-        eye: camera.eye.to_a,
-        target: camera.target.to_a,
-        up: camera.up.to_a,
-        fov: camera.fov
-      },
       resolution: RESOLUTION,
-      scene_name: page ? page.name : 'Default',
+      current_scene: page ? page.name : 'Default',
+      scenes: scenes,
       entities: collect_entities_recursive(model.entities, 0)
     }
   end
@@ -593,34 +626,40 @@ module IRP
   
   def self.restore_rendering_options(saved)
     ro = model.rendering_options
-    ro['EdgeDisplayMode'] = saved[:edge_mode]
-    ro['DrawSilhouettes'] = saved[:silhouettes]
-    ro['DrawDepthQue'] = saved[:profiles]
-    ro['DrawSky'] = saved[:sky]
-    ro['DrawGround'] = saved[:ground]
-    ro['DisplayFog'] = saved[:fog]
-    ro['DisplaySectionPlanes'] = saved[:section_planes]
+    safe_set(ro, 'EdgeDisplayMode', saved[:edge_mode])
+    safe_set(ro, 'DrawSilhouettes', saved[:silhouettes])
+    safe_set(ro, 'DrawDepthQue', saved[:profiles])
+    safe_set(ro, 'DrawSky', saved[:sky])
+    safe_set(ro, 'DrawGround', saved[:ground])
+    safe_set(ro, 'DisplayFog', saved[:fog])
+    safe_set(ro, 'DisplaySectionPlanes', saved[:section_planes])
   end
   
   def self.setup_normal_rendering
     ro = model.rendering_options
-    ro['EdgeDisplayMode'] = 1
-    ro['DrawSilhouettes'] = true
-    ro['DrawSky'] = false
-    ro['DrawGround'] = false
-    ro['DisplayFog'] = false
-    ro['DisplaySectionPlanes'] = false
+    safe_set(ro, 'EdgeDisplayMode', 1)
+    safe_set(ro, 'DrawSilhouettes', true)
+    safe_set(ro, 'DrawSky', false)
+    safe_set(ro, 'DrawGround', false)
+    safe_set(ro, 'DisplayFog', false)
+    safe_set(ro, 'DisplaySectionPlanes', false)
   end
   
   def self.setup_mask_rendering
     ro = model.rendering_options
-    ro['EdgeDisplayMode'] = 0
-    ro['DrawSilhouettes'] = false
-    ro['DrawSky'] = false
-    ro['DrawGround'] = false
-    ro['DisplayFog'] = false
-    ro['DisplaySectionPlanes'] = false
-    ro['BackgroundColor'] = Sketchup::Color.new(0, 0, 0)
+    safe_set(ro, 'EdgeDisplayMode', 0)
+    safe_set(ro, 'DrawSilhouettes', false)
+    safe_set(ro, 'DrawSky', false)
+    safe_set(ro, 'DrawGround', false)
+    safe_set(ro, 'DisplayFog', false)
+    safe_set(ro, 'DisplaySectionPlanes', false)
+    safe_set(ro, 'BackgroundColor', Sketchup::Color.new(0, 0, 0))
+  end
+  
+  def self.safe_set(ro, key, value)
+    ro[key] = value
+  rescue ArgumentError => e
+    puts "  Warning: #{key} not supported, skipping"
   end
   
   def self.export_image(path, opts = {})

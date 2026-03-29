@@ -24,12 +24,17 @@ IRP.extract
 **Output:** `irp_extract.zip` (next to your .skp file)
 
 Contents:
-- `scene_graph.json` — all entities with PIDs
-- `beauty.png` — current view render
+- `scene_graph.json` — all entities with PIDs + all scenes/cameras
+- `views/*.png` — render from each Scene (camera angle)
 
 ### Step 2: Create Role Map
 
-Send `irp_extract.zip` to AI with your requirements (ТЗ).
+Send to AI:
+- `irp_extract.zip` (scene_graph + views from all cameras)
+- `ТЗ.md` (requirements document with materials) — **REQUIRED**
+- `references/` folder (material photos)
+
+AI analyzes ТЗ first, then matches objects to PIDs.
 
 AI returns `role_map.json`:
 
