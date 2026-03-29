@@ -112,7 +112,7 @@ def submit_job(config: Dict, payload: Dict) -> str:
     return result["id"]
 
 
-def poll_status(config: Dict, job_id: str, timeout: int = 600) -> Dict:
+def poll_status(config: Dict, job_id: str, timeout: int = 900) -> Dict:
     """Poll job status until completion."""
     url = f"https://api.runpod.ai/v2/{config['endpoint_id']}/status/{job_id}"
     
