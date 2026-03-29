@@ -81,7 +81,8 @@ class Experiment:
             "technical_spec_summary": manifest.get("technical_spec", {}).get("summary"),
             "entities_with_prompt_source": sum(1 for e in manifest.get("entities", []) if e.get("prompt_source")),
             "entities_with_reference": sum(1 for e in manifest.get("entities", []) if e.get("reference")),
-            "entities_with_coverage": sum(1 for e in manifest.get("entities", []) if e.get("coverage_pct"))
+            "entities_with_coverage": sum(1 for e in manifest.get("entities", []) if e.get("coverage_pct")),
+            "entities_list": [e["name"] for e in manifest.get("entities", [])]
         }
         
         # Hash key files
@@ -162,10 +163,17 @@ class Experiment:
             import shutil
             shutil.copy(render_path, self.output_dir / "render.png")
     
-    def complete(self, status: str = "success", notes: str = ""):
-        """Mark experiment as complete and save."""
+    def complete(self, status: str = "success", notes: str = "", verdict: str = ""):
+        """Mark experiment as complete and save.
+        
+        Args:
+            status: success/failed/timeout
+            notes: Free-form observations
+            verdict: Structured result (e.g., "passed_structural", "failed_drift", "failed_hallucination")
+        """
         self.data["status"] = status
         self.data["notes"] = notes
+        self.data["verdict"] = verdict
         
         # Calculate duration if we have timing
         if "submitted" in self.data["timing"] and "completed" in self.data["timing"]:
