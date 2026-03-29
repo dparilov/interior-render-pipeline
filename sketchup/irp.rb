@@ -420,7 +420,7 @@ module IRP
       
       view.refresh
       sleep(0.2)
-      export_image(path)
+      export_mask_image(path)  # No antialiasing for binary mask
       
     ensure
       model.abort_operation
@@ -451,7 +451,7 @@ module IRP
       
       view.refresh
       sleep(0.2)
-      export_image(path)
+      export_mask_image(path)  # No antialiasing for binary mask
       
     ensure
       model.abort_operation
@@ -756,7 +756,18 @@ module IRP
       filename: path,
       width: RESOLUTION[0],
       height: RESOLUTION[1],
-      antialias: true,
+      antialias: opts[:antialias] != false,
+      transparent: false
+    }
+    view.write_image(options)
+  end
+  
+  def self.export_mask_image(path)
+    options = {
+      filename: path,
+      width: RESOLUTION[0],
+      height: RESOLUTION[1],
+      antialias: false,  # Critical for binary masks
       transparent: false
     }
     view.write_image(options)
