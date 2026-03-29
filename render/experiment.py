@@ -72,6 +72,18 @@ class Experiment:
             "critical_entities": [e["name"] for e in manifest.get("entities", []) if e.get("critical")]
         }
         
+        # Log manifest field usage
+        self.data["manifest_usage"] = {
+            "depth_map_present": bool(manifest.get("depth_map")),
+            "boundary_mask_present": bool(manifest.get("boundary_mask")),
+            "technical_spec_present": bool(manifest.get("technical_spec")),
+            "technical_spec_hash": manifest.get("technical_spec", {}).get("hash"),
+            "technical_spec_summary": manifest.get("technical_spec", {}).get("summary"),
+            "entities_with_prompt_source": sum(1 for e in manifest.get("entities", []) if e.get("prompt_source")),
+            "entities_with_reference": sum(1 for e in manifest.get("entities", []) if e.get("reference")),
+            "entities_with_coverage": sum(1 for e in manifest.get("entities", []) if e.get("coverage_pct"))
+        }
+        
         # Hash key files
         self.data["hashes"]["beauty"] = self._hash_file(bundle_path / manifest.get("base_image", "beauty.png"))
         self.data["hashes"]["depth"] = self._hash_file(bundle_path / manifest.get("depth_map", "depth.png"))
@@ -119,6 +131,15 @@ class Experiment:
         
         # Store workflow hash
         self.data["hashes"]["workflow"] = self._hash_dict(workflow)
+        
+        # Log depth source
+        depth_source = "skp" if "load_depth" in prompt else "neural"
+        if "depth_preprocess" in prompt:
+            depth_source = "neural"
+        self.data["params"]["depth_source"] = depth_source
+        
+        # Log boundary usage
+        self.data["params"]["boundary_mask_active"] = "set_latent_mask" in prompt
         
         # Store full workflow for reproducibility
         workflow_path = self.output_dir / "workflow.json"
