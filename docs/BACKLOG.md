@@ -1,178 +1,407 @@
-# IRP Backlog
+# Interior Render Pipeline — Backlog
 
-## Epic 1: Multi-View Camera Automation
+## Strategic Direction
 
-### Goal
+Two major expansion tracks:
 
-Автоматическое создание камер и multi-view рендеринг из одной 3D сцены.
+1. **Epic A**: Automatic multi-camera / multi-view scene generation
+2. **Epic B**: Progressive removal of SketchUp dependency via Blender-first path
 
-### Architecture
-
-```
-Scene (GLB/FBX)
-    │
-    ├── Camera Generator
-    │   ├── Auto-placement (room corners, center, etc.)
-    │   ├── Named camera import from model
-    │   └── External camera config (JSON)
-    │
-    └── Multi-View Renderer
-        ├── Per-camera beauty/depth/masks
-        ├── Consistent entity naming across views
-        └── Combined manifest with view index
-```
-
-### Levels
-
-| Level | Scope | Deliverable |
-|-------|-------|-------------|
-| 0 | Single camera (current) | ✅ Done |
-| 1 | Named cameras from model | Import existing cameras |
-| 2 | Auto-placement | Corner + center cameras |
-| 3 | Full automation | Config-driven multi-view |
-
-### Tasks
-
-#### Level 1: Named Cameras
-
-- [ ] C1-1: Parse camera objects from GLB/FBX
-- [ ] C1-2: Iterate cameras and render per-camera outputs
-- [ ] C1-3: Output structure: `views/<camera_name>/beauty.png`
-- [ ] C1-4: Manifest includes `views[]` array
-
-#### Level 2: Auto-placement
-
-- [ ] C2-1: Bounding box calculation for scene
-- [ ] C2-2: Corner camera positions (4 corners + center)
-- [ ] C2-3: Auto look-at center of scene
-- [ ] C2-4: Configurable FOV and height
-
-#### Level 3: Full Automation
-
-- [ ] C3-1: Camera config JSON schema
-- [ ] C3-2: Custom camera positions/rotations
-- [ ] C3-3: Per-camera render settings override
-- [ ] C3-4: Batch CLI: `--views all` or `--views config.json`
-
-### Experiments
-
-| ID | Test | Purpose |
-|----|------|---------|
-| C0 | Current single camera | Baseline |
-| C1 | 4-corner auto cameras | Coverage test |
-| C2 | Named cameras from model | Import test |
-| C3 | Config-driven custom views | Flexibility test |
-
-### Acceptance Criteria
-
-- [ ] All views share same entity masks (by name)
-- [ ] Manifest links views to shared entities
-- [ ] workflow_builder accepts multi-view bundles
-- [ ] Renderer produces one output per view
+**Sequencing:**
+- Phase 1: Multi-view support on current SketchUp pipeline
+- Phase 2: Blender-first alternative with parity
+- Phase 3: Optional full SketchUp removal (only after proven parity)
 
 ---
 
-## Epic 2: Blender-First Pipeline
+# Epic A — Automatic Camera Placement and Multi-View Rendering
 
-### Goal
+## Goal
 
-Постепенный переход от SketchUp к Blender как primary bundle generator.
+Automatically generate multiple useful viewpoints, export masks/depth/beauty for each, optionally combine views for better final render.
 
-### Strategy
+## Why This Matters
 
-**⚠️ НЕ убивать SketchUp сразу.**
+Current single-camera limitation causes:
+- Hidden or partially visible objects
+- Weak masks for important entities
+- Poor spatial understanding
+- Inability to use alternate views as evidence
 
-1. Достичь измеримой parity с SketchUp path
-2. Документировать gaps и workarounds
-3. Переключаться только после validated parity
+Multi-view should improve:
+- Geometry preservation
+- Object completeness
+- Better masks and references
+- More reliable regional IPAdapter behavior
 
-### Levels
+---
 
-| Level | Scope | SketchUp Status |
-|-------|-------|-----------------|
-| 0 | Fallback only (current) | Primary |
-| 1 | Parity achieved | Equivalent |
-| 2 | Blender preferred | Deprecated |
-| 3 | Blender only | Removed |
+## Epic A1 — Automatic Camera Placement in SketchUp
 
-### Tasks
+### Task A1.1 — Define Camera Placement Rules
 
-#### Level 1: Parity
+**Status:** ⏳ TODO
 
-- [ ] BF1-1: Side-by-side comparison (same scene)
-- [ ] BF1-2: Mask alignment validation
-- [ ] BF1-3: Depth map comparison
-- [ ] BF1-4: Entity coverage parity (100%)
-- [ ] BF1-5: Render quality comparison (visual)
-- [ ] BF1-6: Document remaining gaps
+Implement deterministic rules for generating candidate cameras.
 
-#### Level 2: Preference
+**Default camera set:**
+- overview_corner_1..4
+- doorway_view
+- focal_fixture_view
+- vanity_closeup
+- bathtub_closeup
 
-- [ ] BF2-1: Default to Blender in CI/CD
-- [ ] BF2-2: SketchUp as manual fallback only
-- [ ] BF2-3: Migration guide for existing projects
-- [ ] BF2-4: Remove SketchUp from required tools
+**Rules:**
+- Camera height: 140–170 cm
+- FOV: configurable, default 60°
+- Avoid clipping through walls
+- Maximize visible room area
+- Maximize visibility of critical entities
 
-#### Level 3: Removal
+**Acceptance criteria:**
+- [ ] Generated cameras are reproducible
+- [ ] All critical entities visible in at least one view
+- [ ] Camera definitions exported to manifest
 
-- [ ] BF3-1: Archive SketchUp scripts
-- [ ] BF3-2: Update all documentation
-- [ ] BF3-3: Remove SketchUp from ARCHITECTURE.md
-- [ ] BF3-4: Final cleanup
+---
 
-### Parity Metrics
+### Task A1.2 — Camera Scoring and Selection
 
-| Metric | Target | Current |
-|--------|--------|---------|
-| Entity detection | 100% | ~90% |
-| Mask accuracy | 95%+ | Unknown |
-| Depth quality | Comparable | Different (normalized) |
-| Reference support | Automatic | Manual |
-| Tech spec export | Automatic | Manual |
-| Camera scenes | Multiple | Single |
+**Status:** ⏳ TODO
 
-### Experiments
+Automatic scoring of candidate views.
+
+**Scoring inputs:**
+- Visible floor area
+- Visible wall area
+- Number of critical entities visible
+- Mask coverage for each entity
+- Amount of occlusion
+- Image balance / framing
+
+**Output:**
+- Select top N views
+- Save score per camera
+
+**Manifest example:**
+```json
+{
+  "views": [
+    {
+      "id": "overview_corner_1",
+      "score": 0.91,
+      "critical_entities_visible": ["walls", "floor", "bathtub"]
+    }
+  ]
+}
+```
+
+---
+
+### Task A1.3 — Multi-View Bundle Export
+
+**Status:** ⏳ TODO
+
+**Bundle structure:**
+```
+bundle/
+  views/
+    view_01/
+      beauty.png
+      depth.png
+      masks/
+    view_02/
+      ...
+  manifest.json
+```
+
+**Manifest includes:**
+- View metadata
+- Camera transform
+- Image resolution
+- Entity coverage per view
+
+---
+
+### Task A1.4 — Multi-View Rendering Strategy
+
+**Status:** ⏳ TODO
+
+**Rendering modes:**
+1. Best-single-view
+2. Render each view independently
+3. Multi-view fusion
+4. Secondary views only for hidden entities
+
+**Recommended first implementation:**
+- Primary render from best view
+- Additional views only for hidden/weak entities
+
+---
+
+### Task A1.5 — Add Multi-View Experiment Block
+
+**Status:** ⏳ TODO
 
 | ID | Test | Purpose |
 |----|------|---------|
-| BF0 | Current Blender flow | Baseline |
-| BF1 | Same scene comparison | Measure gaps |
-| BF2 | Full pipeline run | End-to-end validation |
-| BF3 | Production render | Quality check |
+| MV1 | Single best view | Baseline |
+| MV2 | Best two views | Coverage improvement |
+| MV3 | Best four views | Full coverage |
+| MV4 | Critical entity guided | Smart selection |
+| MV5 | Multi-view + refiner | Quality test |
 
-### Risks
+**Metrics:**
+- Entity preservation
+- Geometry consistency
+- Visible artifact reduction
+- Overall subjective score
+
+---
+
+# Epic B — Blender-First Import and SketchUp Independence
+
+## Goal
+
+Operate without SketchUp by:
+- Importing 3D formats directly into Blender
+- Generating masks/depth/beauty there
+- Extracting semantic roles automatically
+
+## Maturity Levels
+
+| Level | Description | SketchUp Role |
+|-------|-------------|---------------|
+| 0 | Current | Primary |
+| 1 | Hybrid | Role-map fallback only |
+| 2 | Blender-first | No dependency in normal path |
+| 3 | SketchUp-free | No dependency at all |
+
+**Target:** Level 1 and Level 2 first.
+
+---
+
+## Epic B1 — Evaluate Import Formats and Conversion
+
+### Task B1.1 — Supported Input Format Matrix
+
+**Status:** ⏳ TODO
+
+| Format | Blender Support | Hierarchy | Materials | Notes |
+|--------|-----------------|-----------|-----------|-------|
+| glTF/GLB | Excellent | Yes | Good | **Preferred** |
+| FBX | Good | Usually | Medium | Backup |
+| OBJ | Basic | Weak | Weak | Geometry only |
+| DAE | Medium | Medium | Medium | Possible |
+| IFC | Varies | Strong | Weak | Architectural |
+| USD/USDZ | Emerging | Strong | Medium | Future |
+| SKP direct | Weak | Unknown | Weak | Avoid |
+
+**Canonical format:** GLB + optional sidecar JSON
+
+---
+
+### Task B1.2 — SKP → Blender Conversion Options
+
+**Status:** ⏳ TODO
+
+Evaluate:
+1. SketchUp native export to GLB
+2. SketchUp native export to FBX
+3. SketchUp native export to DAE
+4. Blender SKP import plugins
+5. Third-party conversion tools
+6. Headless conversion path
+
+**For each evaluate:**
+- Geometry fidelity
+- Hierarchy fidelity
+- Material names preserved
+- Object names preserved
+- Layer/tag names preserved
+- Speed
+- Licensing / automation suitability
+
+**Deliverable:** Comparison table and recommendation
+
+**Hypothesis:** SKP → GLB will be preferred path.
+
+---
+
+### Task B1.3 — Headless Conversion Pipeline
+
+**Status:** ⏳ TODO
+
+**Pipeline:**
+```
+SKP → converter → GLB → Blender bundle generator
+```
+
+**Requirements:**
+- Fully scriptable
+- No GUI
+- Reproducible
+- Works on server / cloud
+
+---
+
+## Epic B2 — Automatic Role Extraction in Blender
+
+### Task B2.1 — Recursive Scene Analysis
+
+**Status:** ⏳ TODO
+
+Traverse Blender scene and collect:
+- Object name
+- Collection hierarchy
+- Material names
+- Mesh size
+- Bounding box
+- Location in room
+- Parent-child relationships
+
+**Output:**
+```json
+{
+  "object": "Bathtub_001",
+  "collection": "Bathroom/Fixtures",
+  "materials": ["WhiteCeramic"],
+  "bbox": [1.7, 0.8, 0.6]
+}
+```
+
+---
+
+### Task B2.2 — Heuristic Role Classification
+
+**Status:** ⏳ TODO
+
+**Infer roles:** surface, fixture, decor, opening, appliance
+
+**Using:**
+- Object name
+- Collection path
+- Material names
+- Dimensions
+- Room position
+
+**Examples:**
+- Name contains "wall" → role=surface
+- Large horizontal plane → floor
+- Ceramic object near wall → bathtub/sink
+
+---
+
+### Task B2.3 — Confidence and Human Review
+
+**Status:** ⏳ TODO
+
+Role extraction should include confidence:
+
+```json
+{
+  "name": "Bathtub_001",
+  "predicted_role": "fixture",
+  "confidence": 0.84,
+  "reason": "material contains ceramic; size matches bathtub"
+}
+```
+
+Low-confidence items flagged for manual review.
+
+---
+
+### Task B2.4 — Auto-Generated roles_map.json
+
+**Status:** ⏳ TODO
+
+**Produce:**
+- roles_map.json
+- requires_review list
+- unresolved objects list
+
+Replaces SketchUp role-map export.
+
+---
+
+## Epic B3 — Multi-Format Canonical Bundle
+
+**Status:** ⏳ TODO
+
+Bundle independent of source application.
+
+**Always contains:**
+- base_image
+- depth_map
+- entities[]
+- views[]
+- camera metadata
+- roles_map
+- references
+- technical_spec
+
+**No downstream step should know source:**
+- SketchUp
+- Blender
+- GLB / FBX
+- Converted SKP
+
+---
+
+## Blender Independence Experiments
+
+| ID | Test | Purpose |
+|----|------|---------|
+| BX1 | GLB import parity vs SketchUp | Format comparison |
+| BX2 | FBX import parity vs SketchUp | Format comparison |
+| BX3 | Auto role extraction accuracy | Classification test |
+| BX4 | Full Blender-first render | End-to-end test |
+| BX5 | Multi-view Blender-first | Coverage test |
+| BX6 | SketchUp-free SKP conversion | Independence test |
+
+**Metrics:**
+- Entity detection accuracy
+- Role classification accuracy
+- Mask overlap / IoU
+- Render quality
+- Bundle completeness
+- Required manual corrections
+
+---
+
+# Priority
+
+## Immediate (Next Sprint)
+
+1. A1.1 — Camera placement rules
+2. A1.2 — Camera scoring
+3. A1.3 — Multi-view bundle format
+4. B1.2 — SKP → GLB conversion benchmark
+5. B2.1 — Recursive scene analysis
+6. B2.2 — Heuristic role classification
+
+## Later
+
+- Full multi-view fusion
+- Direct SKP-free path
+- Advanced semantic classification (ML)
+
+---
+
+# Key Risks
 
 | Risk | Mitigation |
 |------|------------|
-| Breaking existing workflows | Keep SketchUp until Level 1 complete |
-| Quality regression | Side-by-side comparison before switch |
-| Entity naming differences | Strict IRP_ convention |
-| Depth interpretation | Document both modes |
-
-### Acceptance Criteria (Level 1 → Level 2)
-
-- [ ] B4 parity test passes
-- [ ] All entity masks align within 5% IoU
-- [ ] Pipeline produces equivalent renders
-- [ ] No manual intervention for standard scenes
-- [ ] Documentation complete
+| Too many views → slow runtime | Limit to top N views |
+| Poor auto camera placement | Manual override option |
+| Blender import loses naming | Strict naming convention |
+| Role extraction accuracy weak | Human review fallback |
+| Full SketchUp removal premature | Keep until parity proven |
 
 ---
 
-## Priority
+# Policy
 
-| Epic | Priority | Reason |
-|------|----------|--------|
-| Epic 2 Level 1 | HIGH | Enables CI/CD, reduces toolchain |
-| Epic 1 Level 1 | MEDIUM | Nice-to-have for coverage |
-| Epic 2 Level 2 | MEDIUM | After parity proven |
-| Epic 1 Level 2-3 | LOW | Future automation |
-| Epic 2 Level 3 | LOW | Only after full migration |
+**Keep SketchUp path canonical until Blender-first path reaches measurable parity.**
 
-## Recommended Order
-
-1. **BF1-1 → BF1-6**: Achieve and document parity
-2. **Block B tests**: Validate Blender flow
-3. **C1-1 → C1-4**: Named camera support
-4. **BF2-***: Switch default to Blender
-5. **C2-*, C3-***: Full camera automation
+Only then consider deprecating SketchUp.
