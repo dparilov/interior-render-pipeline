@@ -2,13 +2,16 @@
 """
 IRP Delta - Canonical Render Script
 
-Renders a bundle using ComfyUI API.
+Renders a bundle using ComfyUI API with experiment tracking.
 """
 
 import argparse
 import json
+import time
 import requests
 from pathlib import Path
+
+from experiment import Experiment, create_experiment
 
 
 def load_manifest(bundle_path: Path) -> dict:
@@ -108,18 +111,48 @@ def build_workflow(manifest: dict, bundle_path: Path) -> dict:
     return workflow
 
 
-def render(bundle_path: Path, host: str = "127.0.0.1", port: int = 8188) -> str:
-    """Submit workflow to ComfyUI and return prompt ID."""
+def render(bundle_path: Path, host: str = "127.0.0.1", port: int = 8188, 
+            seed: int = 42, track: bool = True) -> dict:
+    """Submit workflow to ComfyUI with experiment tracking."""
     
     manifest = load_manifest(bundle_path)
     workflow = build_workflow(manifest, bundle_path)
     
+    # Override seed if specified
+    if "sampler" in workflow.get("prompt", workflow):
+        workflow["prompt"]["sampler"]["inputs"]["seed"] = seed
+    
+    # Create experiment
+    exp = None
+    if track:
+        exp = create_experiment(bundle_path)
+        exp.log_params({
+            "seed": seed,
+            "host": host,
+            "port": port,
+            "canny_strength": 0.8,
+            "depth_strength": 0.9,
+            "steps": 50
+        })
+        exp.log_workflow(workflow)
+        exp.log_bundle()
+    
+    # Submit to ComfyUI
+    start_time = time.time()
     url = f"http://{host}:{port}/prompt"
     response = requests.post(url, json=workflow)
     response.raise_for_status()
     
     result = response.json()
-    return result.get("prompt_id")
+    
+    if exp:
+        exp.log_comfyui_response(result)
+    
+    return {
+        "prompt_id": result.get("prompt_id"),
+        "experiment_id": exp.exp_id if exp else None,
+        "experiment_dir": str(exp.exp_dir) if exp else None
+    }
 
 
 def main():
@@ -128,6 +161,7 @@ def main():
     parser.add_argument("--host", default="127.0.0.1", help="ComfyUI host")
     parser.add_argument("--port", type=int, default=8188, help="ComfyUI port")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--no-track", action="store_true", help="Disable experiment tracking")
     
     args = parser.parse_args()
     
@@ -136,8 +170,12 @@ def main():
         return 1
     
     try:
-        prompt_id = render(args.bundle, args.host, args.port)
-        print(f"Submitted: {prompt_id}")
+        result = render(args.bundle, args.host, args.port, 
+                       seed=args.seed, track=not args.no_track)
+        print(f"Submitted: {result['prompt_id']}")
+        if result.get('experiment_id'):
+            print(f"Experiment: {result['experiment_id']}")
+            print(f"Tracking: {result['experiment_dir']}")
         return 0
     except Exception as e:
         print(f"Error: {e}")
