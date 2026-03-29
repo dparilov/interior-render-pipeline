@@ -1,0 +1,9 @@
+{
+  "experiment_id": "M2",
+  "status": "PASSED",
+  "phase": "B",
+  "test_type": "validation",
+  "regional_ipadapter_count": 4,
+  "test_mode": "critical",
+  "timestamp": "2026-03-29T23:33:46+03:00"
+}

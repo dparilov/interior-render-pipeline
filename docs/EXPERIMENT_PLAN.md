@@ -33,10 +33,10 @@ Required: workflow_builder.py, validators, M1-M6 tests.
 | 1 - Structural | 4 | ✅ | - |
 | 2 - Calibration | 10 | ✅ | - |
 | 3 - Refiner | 8 | ✅ | - |
-| 3.5 - Multi-IPAdapter | 6 | - | ⏳ |
-| 4 - Integration | 5 | ✅ (provisional) | ⏳ -v2 |
-| 5 - Tech Spec | 3 | ✅ (provisional) | ⏳ -v2 |
-| 6 - Production | 5 | ✅ (provisional) | ⏳ -v2 |
+| 3.5 - Multi-IPAdapter | 6 | - | ✅ |
+| 4 - Integration | 5 | ✅ (provisional) | ✅ -v2 |
+| 5 - Tech Spec | 3 | ✅ (provisional) | ✅ -v2 |
+| 6 - Production | 5 | ✅ (provisional) | ✅ -v2 |
 
 ---
 

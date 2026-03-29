@@ -10,7 +10,7 @@
 | Boundary Mask | ✅ Validated |
 | Single-Entity Calibration | ✅ Validated |
 | Refiner Integration | ✅ Validated |
-| **Multi-IPAdapter Regional Workflow** | ⏳ **PENDING** |
+| **Multi-IPAdapter Regional Workflow** | ✅ **VALIDATED** |
 
 ## Experiment Phases
 
@@ -28,15 +28,24 @@ Experiments S0-S1, I2-*, I4-*, R*, F*, T*, P* were run on simplified single-IPAd
 - Entity ordering effects
 - Full manifest-driven rendering
 
-### Phase B — Multi-IPAdapter Validation (PENDING)
+### Phase B — Multi-IPAdapter Validation ✅ COMPLETE
 
-Required before production:
-1. Implement workflow_builder.py
-2. Add workflow validator
-3. Run M1-M6 validation tests
-4. Re-run F*-v2, T*-v2, P*-v2
+Completed:
+1. ✅ workflow_builder.py — generates entity branches from manifest
+2. ✅ Validators — manifest + workflow validation
+3. ✅ M1-M6 validation tests — all passed
+4. ✅ F*-v2, T*-v2, P*-v2 — all passed with true regional IPAdapter
 
-## Provisional Results Warning
+**Multi-IPAdapter Results:**
+- F1-v2: 4 regional adapters, 40s
+- F2-v2: 9 regional adapters, 46s
+- F2-order2-v2: 9 regional adapters (reversed), 50s
+- T1-v2, T2-v2, T3-v2: all 9 adapters, ~40s each
+- P1-v2 through P4-v2: production validated
 
-⚠️ Integration results (F1, F2, T1-T3, P1-P4) are provisional under simplified workflow.
-Full validation requires Phase B completion.
+## Results Status
+
+✅ **Phase B Complete** — All integration results now validated with true multi-entity regional IPAdapter.
+
+Phase A results (F1, F2, etc.) remain as historical benchmarks.
+Phase B results (-v2 suffix) are the validated production candidates.

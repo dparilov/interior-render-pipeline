@@ -138,8 +138,10 @@ class WorkflowBuilder:
                 continue
             
             # Resolve paths relative to bundle
-            mask_full = str(Path(bundle_path) / mask_path)
-            ref_full = str(Path(bundle_path) / ref_path)
+            # For ComfyUI LoadImage: path relative to input folder, using forward slashes
+            bundle_name = Path(bundle_path).name  # e.g., 'irp_bundle_s1'
+            mask_rel = f"{bundle_name}/{mask_path}"
+            ref_rel = f"{bundle_name}/{ref_path}"
             
             # Create entity branch nodes
             branch_prefix = f"entity_{idx}_{name}"
@@ -147,27 +149,30 @@ class WorkflowBuilder:
             # Load reference image
             workflow[f"{branch_prefix}_ref"] = {
                 "class_type": "LoadImage",
-                "inputs": {"image": ref_full}
+                "inputs": {"image": ref_rel}
             }
             
-            # Load mask
+            # Load mask using LoadImageMask for MASK type output
             workflow[f"{branch_prefix}_mask"] = {
-                "class_type": "LoadImage",
-                "inputs": {"image": mask_full}
+                "class_type": "LoadImageMask",
+                "inputs": {"image": mask_rel, "channel": "alpha"}
             }
             
             # Apply IPAdapter with mask (regional)
+            # Using IPAdapterAdvanced for regional mask support
             workflow[f"{branch_prefix}_apply"] = {
-                "class_type": "IPAdapterApply",
+                "class_type": "IPAdapterAdvanced",
                 "inputs": {
                     "model": last_model_output,
                     "ipadapter": ["ipadapter_model", 0],
+                    "clip_vision": ["clip_vision", 0],
                     "image": [f"{branch_prefix}_ref", 0],
                     "weight": weight,
-                    "noise": 0.0,
                     "weight_type": "linear",
+                    "combine_embeds": "concat",
                     "start_at": 0.0,
                     "end_at": 1.0,
+                    "embeds_scaling": "V only",
                     "attn_mask": [f"{branch_prefix}_mask", 0]
                 }
             }
