@@ -70,12 +70,20 @@
       }
     },
     
-    "depth_preprocess": {
-      "class_type": "DepthAnythingV2Preprocessor",
+    "load_depth": {
+      "_comment": "SketchUp depth map - ground truth geometry",
+      "class_type": "LoadImage",
       "inputs": {
-        "image": ["load_beauty", 0],
-        "ckpt_name": "depth_anything_v2_vitl.safetensors",
-        "resolution": 1024
+        "image": "BUNDLE_PATH/depth.png"
+      }
+    },
+    
+    "load_boundary": {
+      "_comment": "Boundary mask - prevents generation outside room",
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "BUNDLE_PATH/boundary_mask.png",
+        "channel": "red"
       }
     },
     
@@ -98,10 +106,19 @@
         "positive": ["apply_controlnet_canny", 0],
         "negative": ["apply_controlnet_canny", 1],
         "control_net": ["controlnet_depth", 0],
-        "image": ["depth_preprocess", 0],
-        "strength": 0.5,
+        "image": ["load_depth", 0],
+        "strength": 0.9,
         "start_percent": 0.0,
-        "end_percent": 0.6
+        "end_percent": 0.8
+      }
+    },
+    
+    "set_latent_mask": {
+      "_comment": "Apply boundary mask to prevent generation outside room",
+      "class_type": "SetLatentNoiseMask",
+      "inputs": {
+        "samples": ["empty_latent", 0],
+        "mask": ["load_boundary", 0]
       }
     },
     
@@ -120,7 +137,7 @@
         "model": ["checkpoint", 0],
         "positive": ["apply_controlnet_depth", 0],
         "negative": ["apply_controlnet_depth", 1],
-        "latent_image": ["empty_latent", 0],
+        "latent_image": ["set_latent_mask", 0],
         "seed": 42,
         "steps": 50,
         "cfg": 7.5,

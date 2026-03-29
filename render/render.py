@@ -59,6 +59,35 @@ def build_workflow(manifest: dict, bundle_path: Path) -> dict:
     full_prompt = base_prompt + "\n\n" + "\n".join(entity_prompts)
     prompt["positive"]["inputs"]["text"] = full_prompt
     
+    # Use SketchUp depth map instead of neural estimation
+    if manifest.get("depth_map"):
+        depth_path = str(bundle_path / manifest["depth_map"])
+        prompt["load_depth"] = {
+            "class_type": "LoadImage",
+            "inputs": {"image": depth_path}
+        }
+        # Replace DepthAnything preprocessor with direct depth load
+        if "depth_preprocess" in prompt:
+            del prompt["depth_preprocess"]
+        prompt["apply_controlnet_depth"]["inputs"]["image"] = ["load_depth", 0]
+    
+    # Use boundary mask for latent masking (no generation outside room)
+    if manifest.get("boundary_mask"):
+        boundary_path = str(bundle_path / manifest["boundary_mask"])
+        prompt["load_boundary"] = {
+            "class_type": "LoadImageMask",
+            "inputs": {"image": boundary_path, "channel": "red"}
+        }
+        prompt["set_latent_mask"] = {
+            "class_type": "SetLatentNoiseMask",
+            "inputs": {
+                "samples": ["empty_latent", 0],
+                "mask": ["load_boundary", 0]
+            }
+        }
+        # Update sampler to use masked latent
+        prompt["sampler"]["inputs"]["latent_image"] = ["set_latent_mask", 0]
+    
     # Add IPAdapters for entities with references
     last_model = "checkpoint"
     for i, entity in enumerate(manifest["entities"]):
