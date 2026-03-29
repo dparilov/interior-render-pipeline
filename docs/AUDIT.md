@@ -94,39 +94,86 @@
 - Генерация за пределами комнаты
 - Изменение архитектуры (стены, проёмы)
 
-## Серия контрольных экспериментов
+## Контрольные эксперименты
 
-### Эксперимент A: Baseline (без IPAdapter)
+### Структурные (геометрия)
+
+#### S1: Structural Baseline (Golden Reference)
 
 ```
-Canny: 0.8, Depth: 0.9
+Canny: 0.8, Depth: 0.9 (SketchUp)
+Boundary: ON
 IPAdapter: OFF
 Seed: 42
 ```
 
-**Ожидание:** Точная геометрия, случайные материалы
+**Ожидание:** Точная геометрия, случайные материалы. Это эталон — если здесь геометрия ломается, проблема в ControlNet.
 
-### Эксперимент B: С IPAdapter (один объект)
+#### S2: Weak Structure
 
 ```
-Canny: 0.8, Depth: 0.9
-IPAdapter: floor only (0.5)
+Canny: 0.5, Depth: 0.5
+Boundary: OFF
+IPAdapter: OFF
 Seed: 42
 ```
 
-**Ожидание:** Пол соответствует референсу, остальное случайное
+**Ожидание:** Модель "додумывает" — покажет где структура слабая.
 
-### Эксперимент C: Полный pipeline
+### Изоляционные (один объект)
+
+#### I1: Floor Only
 
 ```
-Canny: 0.8, Depth: 0.9
-IPAdapter: all entities (0.3-0.5)
+IPAdapter: floor (0.5)
+Остальное: OFF
 Seed: 42
 ```
 
-**Ожидание:** Все материалы соответствуют референсам
+#### I2: Floor Weight Sweep
 
-### Эксперимент D: Граничные условия
+```
+IPAdapter floor: 0.3 / 0.5 / 0.7
+Seed: 42 (три прогона)
+```
+
+**Ожидание:** Найти оптимальный weight для surfaces.
+
+#### I3: Walls Only
+
+```
+IPAdapter: walls (0.5)
+Seed: 42
+```
+
+#### I4: Vanity Only (fixture)
+
+```
+IPAdapter: vanity (0.5)
+Seed: 42
+```
+
+**Ожидание:** Сравнить поведение surface vs fixture.
+
+### Интеграционные
+
+#### F1: Critical Only
+
+```
+IPAdapter: floor, walls, vanity, mirror, bathtub
+Weights: 0.5-0.55
+Seed: 42
+```
+
+#### F2: Full Pipeline
+
+```
+IPAdapter: all entities
+Weights: per entity class
+Seed: 42
+```
+
+#### F3: Degradation Test
 
 ```
 Canny: 0.6, Depth: 0.5
@@ -134,7 +181,7 @@ IPAdapter: all (0.5)
 Seed: 42
 ```
 
-**Ожидание:** Больше "творчества", возможны отклонения
+**Ожидание:** Больше "творчества", определить порог деградации.
 
 ## Воспроизводимость
 

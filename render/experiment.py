@@ -44,6 +44,39 @@ class Experiment:
         self.meta["params"] = params
         self._save_meta()
     
+    def log_environment(self, env: dict = None):
+        """Log environment for full reproducibility."""
+        import subprocess
+        
+        environment = env or {}
+        
+        # Git SHA
+        try:
+            git_sha = subprocess.check_output(
+                ["git", "rev-parse", "HEAD"], 
+                stderr=subprocess.DEVNULL
+            ).decode().strip()
+            environment["git_sha"] = git_sha
+        except:
+            environment["git_sha"] = "unknown"
+        
+        # Python version
+        import sys
+        environment["python_version"] = sys.version
+        
+        self.meta["environment"] = environment
+        self._save_meta()
+    
+    def log_models(self, models: dict):
+        """Log model filenames/hashes."""
+        self.meta["models"] = models
+        self._save_meta()
+    
+    def log_entities_used(self, entities: list):
+        """Log actual entities and weights used."""
+        self.meta["entities_used"] = entities
+        self._save_meta()
+    
     def log_workflow(self, workflow: dict):
         """Save workflow snapshot."""
         workflow_path = self.exp_dir / "workflow.json"
@@ -55,10 +88,36 @@ class Experiment:
         self._save_meta()
     
     def log_bundle(self):
-        """Copy bundle manifest for reference."""
+        """Copy bundle manifest and compute hashes."""
         manifest_src = self.bundle_path / "manifest.json"
         if manifest_src.exists():
             shutil.copy(manifest_src, self.exp_dir / "bundle_manifest.json")
+            
+            # Compute bundle hash
+            manifest_hash = hashlib.md5(manifest_src.read_bytes()).hexdigest()[:8]
+            self.meta["manifest_hash"] = manifest_hash
+        
+        # Hash references directory
+        refs_dir = self.bundle_path / "references"
+        if refs_dir.exists():
+            refs_hash = self._hash_directory(refs_dir)
+            self.meta["references_hash"] = refs_hash
+        
+        # Hash masks directory
+        masks_dir = self.bundle_path / "masks"
+        if masks_dir.exists():
+            masks_hash = self._hash_directory(masks_dir)
+            self.meta["masks_hash"] = masks_hash
+        
+        self._save_meta()
+    
+    def _hash_directory(self, directory: Path) -> str:
+        """Compute hash of all files in directory."""
+        hasher = hashlib.md5()
+        for filepath in sorted(directory.iterdir()):
+            if filepath.is_file():
+                hasher.update(filepath.read_bytes())
+        return hasher.hexdigest()[:8]
     
     def log_output(self, image_path: Path):
         """Copy output image to experiment."""

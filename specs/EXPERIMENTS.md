@@ -40,10 +40,33 @@ experiments/
     "seed": 42,
     "canny_strength": 0.8,
     "depth_strength": 0.9,
-    "steps": 50
+    "steps": 50,
+    "negative_prompt": "..."
   },
   
+  "environment": {
+    "git_sha": "e8969ad",
+    "python_version": "3.12.0",
+    "comfyui_version": "0.3.10"
+  },
+  
+  "models": {
+    "checkpoint": "RealVisXL_V4.0.safetensors",
+    "controlnet_canny": "controlnet-canny-sdxl.safetensors",
+    "controlnet_depth": "controlnet-depth-sdxl.safetensors",
+    "ipadapter": "ip-adapter_sdxl.safetensors"
+  },
+  
+  "entities_used": [
+    {"name": "floor", "weight": 0.55, "render_mode": "regional_ipadapter"},
+    {"name": "walls", "weight": 0.55, "render_mode": "regional_ipadapter"}
+  ],
+  
   "workflow_hash": "a1b2c3d4",
+  "manifest_hash": "b5c6d7e8",
+  "references_hash": "c7d8e9f0",
+  "masks_hash": "d9e0f1a2",
+  
   "prompt_id": "uuid-from-comfyui",
   
   "timing": {
