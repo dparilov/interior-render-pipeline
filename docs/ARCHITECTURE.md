@@ -224,3 +224,57 @@
 **Проблема:** Groups теряют mesh при экспорте в GLB.
 
 **Решение:** Временная конвертация перед экспортом + откат после.
+
+---
+
+## Phase 5B — Multi-Entity Regional IPAdapter Composition
+
+### Key Distinction
+
+- **Shared IPAdapter Model Loader** — single `IPAdapterModelLoader` node loads the model once
+- **Multiple Entity Applications** — each entity gets its own `IPAdapterApply` branch
+
+One shared loader ≠ one adapter application.
+
+### Target Architecture
+
+```
+[Shared IPAdapter Model Loader]
+           │
+           ├── [Entity 1: walls]
+           │      ├── LoadImage(walls_ref.png)
+           │      ├── LoadImage(walls_mask.png)
+           │      └── IPAdapterApply(weight=0.5)
+           │
+           ├── [Entity 2: floor]
+           │      ├── LoadImage(floor_ref.png)
+           │      ├── LoadImage(floor_mask.png)
+           │      └── IPAdapterApply(weight=0.5)
+           │
+           ├── [Entity 3: bathtub]
+           │      └── ...
+           │
+           └── [Entity N: ...]
+                  └── ...
+```
+
+### Graph Layers
+
+1. **Base Layer**
+   - Checkpoint, prompts, canny, depth, boundary, base sampler
+
+2. **Entity Composition Layer**
+   - Per-entity: reference, mask, regional IPAdapter, weight, chaining
+
+3. **Refinement Layer** (optional)
+   - Refiner checkpoint, CLIP encode, refiner sampler, VAE decode
+
+### Entity Ordering Policy
+
+Default order (large → small):
+1. Large surfaces (walls, floor, ceiling)
+2. Large fixtures (bathtub, shower)
+3. Medium fixtures (vanity, toilet)
+4. Small fixtures/decor (towel_warmer, basket, mirror)
+
+Configurable via `order_policy`: default | reverse | custom
