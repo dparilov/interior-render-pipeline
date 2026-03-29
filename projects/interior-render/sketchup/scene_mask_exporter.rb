@@ -25,6 +25,7 @@ module SceneMaskExporter
   
   # Маппинг PID → имя (из нашего анализа)
   ENTITY_MAP = {
+    36696 => 'walls',         # НОВЫЙ PID - группа стен
     36828 => 'floor',
     124416 => 'vanity', 
     352872 => 'towel_warmer',
@@ -36,11 +37,10 @@ module SceneMaskExporter
     424271 => 'basket'
   }
   
-  # Faces с определёнными материалами (для стен)
+  # Faces с определёнными материалами (для отдельных зон стен)
   MATERIAL_MASKS = {
     'wall_tiles' => 'Материал1',      # белая плитка Costa Nova
     'wall_paint' => '[0131_Silver]',  # серая краска
-    'bathtub_screen' => 'Материал1'   # экран ванны (тот же материал что плитка)
   }
 
   def self.model
@@ -177,7 +177,7 @@ module SceneMaskExporter
     begin
       # Сохраняем оригинальные состояния
       original_states = save_visibility_states
-      original_style = view.style
+      original_rendering = save_rendering_options
       
       # Скрываем ВСЁ
       hide_all_entities
@@ -204,7 +204,7 @@ module SceneMaskExporter
       
       # Восстанавливаем
       restore_visibility_states(original_states)
-      view.style = original_style if original_style
+      restore_rendering_options(original_rendering)
       
       model.commit_operation
       true
@@ -237,22 +237,20 @@ module SceneMaskExporter
       end
       
       # Сохраняем состояния
-      original_states = save_visibility_states
-      original_materials = save_face_materials(faces)
+      original_rendering = save_rendering_options
+      original_materials = save_all_materials
       
-      # Скрываем всё
-      hide_all_entities
+      # Применяем чёрный фон
+      apply_mask_style
       
-      # Показываем и красим нужные faces в белый
+      # Красим ВСЁ в чёрный, кроме нужных faces
+      paint_all_black_except(faces)
+      
+      # Красим нужные faces в белый
       faces.each do |face|
-        # Показываем родительский контейнер
-        show_face_parents(face)
         face.material = MASK_WHITE
         face.back_material = MASK_WHITE
       end
-      
-      # Фон чёрный через стиль
-      apply_mask_style
       
       # Экспортируем
       output_path = File.join(OUTPUT_DIR, "mask_#{output_name}.png")
@@ -269,8 +267,8 @@ module SceneMaskExporter
       puts "  Saved: #{output_path}"
       
       # Восстанавливаем
-      restore_face_materials(faces, original_materials)
-      restore_visibility_states(original_states)
+      restore_all_materials(original_materials)
+      restore_rendering_options(original_rendering)
       
       model.commit_operation
       true
@@ -373,6 +371,71 @@ module SceneMaskExporter
     end
   end
 
+  def self.save_all_materials
+    saved = []
+    collect_all_faces(model.entities).each do |face|
+      saved << { face: face, front: face.material, back: face.back_material }
+    end
+    saved
+  end
+
+  def self.restore_all_materials(saved)
+    saved.each do |s|
+      begin
+        s[:face].material = s[:front]
+        s[:face].back_material = s[:back]
+      rescue
+        # Face may have been deleted
+      end
+    end
+  end
+
+  def self.collect_all_faces(entities, faces = [])
+    entities.each do |e|
+      if e.is_a?(Sketchup::Face)
+        faces << e
+      elsif e.is_a?(Sketchup::Group)
+        collect_all_faces(e.entities, faces)
+      elsif e.is_a?(Sketchup::ComponentInstance)
+        collect_all_faces(e.definition.entities, faces)
+      end
+    end
+    faces
+  end
+
+  def self.paint_all_black_except(keep_faces)
+    collect_all_faces(model.entities).each do |face|
+      unless keep_faces.include?(face)
+        face.material = MASK_BLACK
+        face.back_material = MASK_BLACK
+      end
+    end
+  end
+
+  def self.save_rendering_options
+    rendering = model.rendering_options
+    {
+      'BackgroundColor' => rendering['BackgroundColor'],
+      'DrawHorizon' => rendering['DrawHorizon'],
+      'DrawGround' => rendering['DrawGround'],
+      'DrawUnderground' => rendering['DrawUnderground'],
+      'EdgeDisplayMode' => rendering['EdgeDisplayMode'],
+      'DrawSilhouettes' => rendering['DrawSilhouettes'],
+      'DisplayInstanceAxes' => rendering['DisplayInstanceAxes']
+    }
+  end
+
+  def self.restore_rendering_options(saved)
+    rendering = model.rendering_options
+    saved.each do |key, value|
+      begin
+        rendering[key] = value
+      rescue
+        # Some options may not be settable
+      end
+    end
+  end
+
   def self.apply_mask_style
     # Устанавливаем чёрный фон и отключаем всё лишнее
     rendering = model.rendering_options
@@ -384,12 +447,58 @@ module SceneMaskExporter
     rendering['EdgeDisplayMode'] = 0  # без рёбер
     rendering['DrawSilhouettes'] = false
     rendering['DisplayInstanceAxes'] = false
+  end
+
+  # Экспорт базового скетча (цветной вид сцены)
+  def self.export_sketch(output_path = nil)
+    output_path ||= File.join(OUTPUT_DIR, "sketch.png")
+    FileUtils.mkdir_p(OUTPUT_DIR) unless File.exist?(OUTPUT_DIR)
     
-    # Включаем режим Shaded (без текстур)
-    view.camera.perspective = true
+    activate_scene(SCENE_NAME)
+    
+    options = {
+      filename: output_path,
+      width: IMAGE_WIDTH,
+      height: IMAGE_HEIGHT,
+      antialias: true,
+      transparent: false
+    }
+    
+    view.write_image(options)
+    puts "Exported sketch: #{output_path}"
+    output_path
+  end
+
+  # Полный экспорт bundle: скетч + все маски
+  def self.export_bundle
+    puts "=== EXPORTING FULL BUNDLE ==="
+    puts "Output: #{OUTPUT_DIR}"
+    puts ""
+    
+    # 1. Экспорт базового скетча
+    puts "1. Exporting base sketch..."
+    export_sketch
+    
+    # 2. Экспорт всех масок
+    puts ""
+    puts "2. Exporting all masks..."
+    export_all
+    
+    puts ""
+    puts "=== BUNDLE COMPLETE ==="
+    puts "Files:"
+    Dir.glob(File.join(OUTPUT_DIR, "*.png")).sort.each do |f| 
+      size = File.size(f) / 1024
+      puts "  #{File.basename(f)} (#{size} KB)"
+    end
   end
 
 end
 
 puts "Scene Mask Exporter loaded!"
-puts "Run: SceneMaskExporter.preview"
+puts ""
+puts "Commands:"
+puts "  SceneMaskExporter.preview        # показать список"
+puts "  SceneMaskExporter.export_sketch  # только скетч"
+puts "  SceneMaskExporter.export_all     # все маски"
+puts "  SceneMaskExporter.export_bundle  # скетч + маски"
