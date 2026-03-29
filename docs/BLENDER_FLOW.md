@@ -105,25 +105,134 @@ output/
 | One entity | One PNG |
 | Overlapping | Last rendered wins |
 
-## Manifest schema
+## Bundle States
+
+Blender flow produces bundles in two states:
+
+### 1. Raw Bundle (generator output)
+
+Direct output from `blender_masks.py`. **NOT ready for pipeline.**
+
+```
+raw_bundle/
+├── beauty.png           # EEVEE render
+├── depth.png            # Normalized Z-pass
+├── masks/
+│   ├── walls.png
+│   └── ...
+└── manifest.json        # Has requires_enrichment field
+```
+
+**Raw manifest.json:**
 
 ```json
 {
-  "source": "model.glb",
-  "resolution": [1024, 1024],
+  "version": "1.0",
   "generator": "blender_masks.py",
   "blender_version": "4.0.2",
-  "entities": {
-    "walls": {
+  "source": "model.glb",
+  "resolution": [1024, 1024],
+  "base_image": "beauty.png",
+  "depth_map": "depth.png",
+  "depth_type": "normalized_inverted",
+  "entities": [
+    {
+      "name": "walls",
       "mask": "masks/walls.png",
-      "mesh_count": 4
-    },
-    "floor": {
-      "mask": "masks/floor.png", 
-      "mesh_count": 1
+      "mesh_count": 4,
+      "reference": null,
+      "ipadapter_weight": 0.5,
+      "role": "surface",
+      "critical": true,
+      "render_mode": "regional_texture"
     }
-  }
+  ],
+  "requires_enrichment": [
+    "references/ directory with reference images",
+    "technical_spec.md",
+    "ipadapter_weight calibration per entity"
+  ]
 }
+```
+
+### 2. Enriched Bundle (pipeline-ready)
+
+After manual enrichment. **Ready for canonical pipeline.**
+
+```
+enriched_bundle/
+├── beauty.png
+├── depth.png
+├── boundary_mask.png    # ADDED: optional
+├── masks/
+│   ├── walls.png
+│   └── ...
+├── references/          # ADDED
+│   ├── wall_tiles.png
+│   ├── floor_tiles.jpg
+│   └── ...
+├── technical_spec.md    # ADDED
+└── manifest.json        # UPDATED: no requires_enrichment
+```
+
+**Enriched manifest.json:**
+
+```json
+{
+  "version": "1.0",
+  "generator": "blender_masks.py",
+  "blender_version": "4.0.2",
+  "source": "model.glb",
+  "resolution": [1024, 1024],
+  "base_image": "beauty.png",
+  "depth_map": "depth.png",
+  "depth_type": "normalized_inverted",
+  "boundary_mask": "boundary_mask.png",
+  "technical_spec": "technical_spec.md",
+  "entities": [
+    {
+      "name": "walls",
+      "mask": "masks/walls.png",
+      "mesh_count": 4,
+      "reference": "references/wall_tiles.png",
+      "ipadapter_weight": 0.55,
+      "role": "surface",
+      "critical": true,
+      "render_mode": "regional_texture"
+    },
+    {
+      "name": "floor",
+      "mask": "masks/floor.png",
+      "mesh_count": 1,
+      "reference": "references/floor_tiles.jpg",
+      "ipadapter_weight": 0.55,
+      "role": "surface",
+      "critical": true,
+      "render_mode": "regional_texture"
+    },
+    {
+      "name": "bathtub",
+      "mask": "masks/bathtub.png",
+      "mesh_count": 3,
+      "reference": "references/bathtub.jpg",
+      "ipadapter_weight": 0.5,
+      "role": "fixture",
+      "critical": true,
+      "render_mode": "regional_object"
+    }
+  ]
+}
+```
+
+### Enrichment checklist
+
+- [ ] Add `references/` directory with images for each entity
+- [ ] Set `reference` path for each entity in manifest
+- [ ] Add `technical_spec.md` with project requirements
+- [ ] Calibrate `ipadapter_weight` per entity (0.3-0.7 range)
+- [ ] Add `boundary_mask.png` if needed
+- [ ] Remove `requires_enrichment` field from manifest
+- [ ] Validate with `render/validate.py`
 ```
 
 ## Gaps vs SketchUp flow

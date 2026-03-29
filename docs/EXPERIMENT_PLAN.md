@@ -254,15 +254,33 @@ Re-run after M1-M6 pass.
 
 Validates Blender headless fallback path.
 
-| ID | Test | Expected |
-|----|------|----------|
-| B0 | Bundle generation smoke | beauty + depth + masks generated |
-| B1 | Manifest validation | All required fields present |
-| B2 | Size consistency | All images same resolution |
-| B3 | Integration test | Blender bundle → main renderer |
-| B4 | Parity check | Compare vs SketchUp bundle |
+### Test Categories
 
-### B0 — Smoke Test
+| Category | Tests | Purpose |
+|----------|-------|---------|
+| **Generation** | B0, B1, B2 | Blender produces valid raw bundle |
+| **Compatibility** | B3, B4 | Enriched bundle works in main pipeline |
+
+### Generation Tests (Raw Bundle)
+
+| ID | Test | Expected | Validates |
+|----|------|----------|-----------|
+| B0 | Smoke test | Files generated | Blender script runs |
+| B1 | Manifest schema | Required fields present | Contract compliance |
+| B2 | Size consistency | All images match resolution | Output integrity |
+
+### Compatibility Tests (Enriched Bundle)
+
+| ID | Test | Expected | Validates |
+|----|------|----------|-----------|
+| B3 | Integration | Render completes | Pipeline compatibility |
+| B4 | Parity | Similar to SketchUp | Quality equivalence |
+
+---
+
+### B0 — Generation Smoke Test
+
+**Category:** Generation
 
 ```bash
 blender --background --python render/blender_masks.py -- \
@@ -270,35 +288,66 @@ blender --background --python render/blender_masks.py -- \
   --beauty beauty.png --depth depth.png
 ```
 
-Expected: All files generated, no errors.
+**Pass criteria:**
+- [ ] Exit code 0
+- [ ] beauty.png exists
+- [ ] depth.png exists
+- [ ] masks/*.png for each IRP_ entity
+- [ ] manifest.json valid JSON
 
 ### B1 — Manifest Validation
 
-Check manifest contains:
-- version, generator, resolution
-- base_image, depth_map
-- entities[] with name, mask, role, critical
+**Category:** Generation
+
+Check raw manifest contains:
+- [ ] `version`, `generator`, `blender_version`
+- [ ] `resolution` array
+- [ ] `base_image`, `depth_map` paths
+- [ ] `depth_type` = "normalized_inverted"
+- [ ] `entities[]` array with name, mask, role, critical
+- [ ] `requires_enrichment` field present
 
 ### B2 — Size Consistency
 
+**Category:** Generation
+
 All outputs must match `--resolution`:
-- beauty.png
-- depth.png
-- masks/*.png
+- [ ] beauty.png size
+- [ ] depth.png size
+- [ ] Each masks/*.png size
 
-### B3 — Integration
+### B3 — Integration Test
 
-Run full pipeline with Blender-generated bundle:
-- Add references manually
-- Run workflow_builder
-- Verify render completes
+**Category:** Compatibility
 
-### B4 — Parity
+**Precondition:** Raw bundle enriched with references + tech spec.
 
-Compare same scene:
-- SketchUp export vs Blender export
-- Check mask alignment
-- Check entity coverage
+Steps:
+1. Copy raw bundle
+2. Add `references/` with images
+3. Update manifest (set reference paths, remove requires_enrichment)
+4. Run `workflow_builder.py`
+5. Submit to ComfyUI
+
+**Pass criteria:**
+- [ ] Workflow validation passed
+- [ ] Render completes without error
+- [ ] Output image generated
+
+### B4 — Parity Check
+
+**Category:** Compatibility
+
+Compare same scene rendered from both sources:
+
+| Aspect | Check |
+|--------|-------|
+| Entity count | Same entities detected |
+| Mask alignment | Masks cover same geometry |
+| Depth range | Similar near/far distribution |
+| Beauty quality | Visually comparable |
+
+**Note:** Exact pixel match NOT expected due to different renderers.
 
 ---
 
