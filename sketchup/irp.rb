@@ -52,7 +52,8 @@ module IRP
   
   def self.current_scene_name
     page = model.pages.selected_page
-    page ? page.name : 'Default'
+    name = page ? page.name : 'Default'
+    name.encode('UTF-8', invalid: :replace, undef: :replace) rescue 'Default'
   end
   
   def self.switch_to_scene(name)
@@ -70,7 +71,7 @@ module IRP
   
   def self.lock_scene
     @export_scene = current_scene_name
-    puts "  🔒 Locked to scene: #{@export_scene}"
+    puts "  Locked to scene: #{@export_scene.encode('UTF-8', invalid: :replace, undef: :replace)}"
   end
   
   def self.verify_scene
