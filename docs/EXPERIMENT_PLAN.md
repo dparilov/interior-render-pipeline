@@ -104,15 +104,20 @@ Test whether ТЗ-derived prompts improve render accuracy.
 
 ---
 
-## Block 5: Production Candidate
+## Block 5: Production Candidates
 
 After all blocks pass:
 
-| ID | Name | Config | Purpose |
-|----|------|--------|---------|
-| P1 | production-v1 | Best params from S/I/F/T | Final candidate |
-| P1-seed2 | production-seed-test | Same as P1, seed=123 | Verify seed independence |
-| P1-hires | production-hires | Same as P1, 2560x1440 | Resolution test |
+| ID | Name | Config | Entities | Seed | Purpose |
+|----|------|--------|----------|------|---------|
+| P1 | prod-critical | Best structural + weights | Critical only | 42 | Minimal production |
+| P2 | prod-all | Same as P1 | All entities | 42 | Full production |
+| P3 | prod-all-seed2 | Same as P2 | All entities | 123 | Seed independence |
+
+**P1 config derived from:**
+- Structural: S1 baseline (SKP depth 0.9, boundary ON)
+- Weights: Best from I2/I4 sweeps
+- Prompts: Full ТЗ (if T1 > T2)
 
 ---
 
@@ -142,13 +147,23 @@ experiments/<id>_<timestamp>/
 
 ## Execution Order
 
+### Minimal Start Queue (8 experiments)
+
+```
+S1 → S1-neural → S1-no-boundary → I2-05 → I4-05 → F1 → T1 → T2
+```
+
+This validates: structure holds, depth/boundary work, class weights, integration, ТЗ impact.
+
+### Full Order
+
 1. **S1** — must pass before anything else
 2. **S1-neural, S1-no-boundary** — validate H1, H2
-3. **I2, I4 sweeps** — find optimal weights
+3. **I2-05, I4-05** — baseline weights (skip sweep if time-constrained)
 4. **F1** — critical integration gate
 5. **T1, T2** — validate ТЗ impact
-6. **F2, F2-order2** — full scene + H5
-7. **P1** — production candidate
+6. **F2** — full scene (only if F1 passes)
+7. **P1, P2, P3** — production candidates
 
 ---
 
