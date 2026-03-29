@@ -25,6 +25,7 @@ class Experiment:
             "experiment_id": experiment_id,
             "created": datetime.utcnow().isoformat() + "Z",
             "status": "running",
+            "platform": "local",  # local | runpod
             "git_sha": self._get_git_sha(),
             "environment": {},
             "params": {},
@@ -32,7 +33,8 @@ class Experiment:
             "bundle": {},
             "result": {},
             "timing": {},
-            "hashes": {}
+            "hashes": {},
+            "cost": {}  # For cloud platforms
         }
         
     def _get_git_sha(self) -> str:
@@ -54,9 +56,16 @@ class Experiment:
     def _hash_dict(self, d: Dict) -> str:
         return f"sha256:{hashlib.sha256(json.dumps(d, sort_keys=True).encode()).hexdigest()[:16]}"
     
+    def set_platform(self, platform: str, endpoint_id: str = None):
+        """Set compute platform (local | runpod)."""
+        self.data["platform"] = platform
+        if endpoint_id:
+            self.data["environment"]["endpoint_id"] = endpoint_id
+    
     def log_environment(self, comfyui_version: str, models: Dict[str, str]):
         """Log runtime environment."""
         self.data["environment"] = {
+            **self.data.get("environment", {}),
             "comfyui_version": comfyui_version,
             "models": models
         }
@@ -162,6 +171,17 @@ class Experiment:
         if render_path.exists():
             import shutil
             shutil.copy(render_path, self.output_dir / "render.png")
+    
+    def log_cost(self, execution_time_ms: int, cost_usd: float = None):
+        """Log cloud execution cost."""
+        self.data["cost"] = {
+            "execution_time_ms": execution_time_ms,
+            "execution_time_sec": execution_time_ms / 1000,
+            "cost_usd": cost_usd
+        }
+        # Calculate cost if not provided (RunPod serverless: ~$0.00044/sec for 4090)
+        if cost_usd is None and self.data["platform"] == "runpod":
+            self.data["cost"]["cost_usd"] = round((execution_time_ms / 1000) * 0.00044, 4)
     
     def complete(self, status: str = "success", notes: str = "", verdict: str = ""):
         """Mark experiment as complete and save.

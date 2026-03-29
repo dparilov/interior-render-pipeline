@@ -13,6 +13,19 @@ All experiments use **fixed seed=42** for reproducibility.
 
 ---
 
+## Compute Platforms
+
+| Platform | ID | Hardware | PyTorch | Purpose |
+|----------|-----|----------|---------|---------|
+| LOCAL | `local` | AMD Ryzen 9 7940HS, 32GB RAM, CPU-only | torch 2.x CPU | Baseline, debugging |
+| RUNPOD | `runpod` | RTX 4090 24GB, serverless | torch 2.x CUDA | Production, fast iteration |
+
+**Reproducibility requirement:** S1-GPU must match S1-LOCAL (same seed, workflow, weights).
+
+All experiments log `platform` field in experiment.json for traceability.
+
+---
+
 ## Hypotheses
 
 | ID | Hypothesis | Test | Success Criteria |
@@ -30,18 +43,25 @@ All experiments use **fixed seed=42** for reproducibility.
 
 These must pass before any material experiments.
 
-| ID | Name | Depth | Boundary | IPAdapter | Purpose |
-|----|------|-------|----------|-----------|---------|
-| S1 | baseline-structural | SKP 0.9 | ON | OFF | Golden structural reference |
-| S1-neural | neural-depth | Neural 0.7 | ON | OFF | Compare depth sources |
-| S1-no-boundary | no-boundary | SKP 0.9 | OFF | OFF | Verify boundary effect |
-| S1-weak | weak-structure | SKP 0.5, Canny 0.5 | ON | OFF | Minimum viable structure |
+| ID | Name | Platform | Depth | Boundary | IPAdapter | Purpose |
+|----|------|----------|-------|----------|-----------|---------|
+| S1 | baseline-structural | LOCAL | SKP 0.9 | ON | ALL | Golden structural reference |
+| S1-GPU | baseline-gpu | RUNPOD | SKP 0.9 | ON | ALL | Verify GPU reproducibility |
+| S1-neural | neural-depth | RUNPOD | Neural 0.7 | ON | ALL | Compare depth sources |
+| S1-no-boundary | no-boundary | RUNPOD | SKP 0.9 | OFF | ALL | Verify boundary effect |
+| S1-weak | weak-structure | RUNPOD | SKP 0.5, Canny 0.5 | ON | ALL | Minimum viable structure |
 
 **Pass criteria:**
 - S1: All objects in correct positions, room boundaries respected
+- S1-GPU: Output visually identical to S1 (platform reproducibility)
 - S1-neural vs S1: SKP depth should have fewer position errors
 - S1-no-boundary vs S1: Should show hallucinated objects outside room
 - S1-weak: Should show structural drift
+
+**Comparison metrics (S1 vs S1-GPU):**
+- SSIM (Structural Similarity Index) > 0.95
+- LPIPS < 0.1
+- Visual inspection: no structural differences
 
 ---
 
