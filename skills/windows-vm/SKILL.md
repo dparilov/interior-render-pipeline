@@ -1,165 +1,180 @@
-# Windows VM Skill
+# Windows VM Skill (QEMU/KVM)
 
 ## Purpose
 
-Access and control Windows VM (Surface DP) for Windows-specific tasks, SketchUp, and GUI applications.
-
-## Connection Methods
-
-### Priority Order
-1. SSH (preferred for automation)
-2. RDP via Tailscale (for GUI)
-3. VNC (fallback for black screen issues)
+Windows 11 VM for SketchUp, GUI applications, and Windows-specific tasks.
 
 ## VM Details
 
 | Property | Value |
 |----------|-------|
-| Hostname | surfacedp |
-| Tailscale IP | 100.82.18.44 |
-| User | dima |
-| OS | Windows |
+| Name | sketchup |
+| Type | QEMU/KVM with UEFI |
+| OS | Windows 11 |
+| RAM | 8 GB |
+| vCPUs | 4 |
+| Disk | /home/dima/vm-setup/sketchup.qcow2 (80GB) |
+| UEFI | OVMF (GPT boot required) |
 
-## SSH Access
+## Connection Methods
+
+| Method | Port | Status |
+|--------|------|--------|
+| VNC | localhost:5900 | ✅ Primary |
+| RDP | localhost:3389 | ✅ Works |
+| SSH | localhost:2222 | ⚠️ Needs setup |
+
+## Quick Commands
+
+### Start VM
+```bash
+virsh start sketchup
+```
+
+### Stop VM (graceful)
+```bash
+virsh shutdown sketchup
+```
+
+### Force stop
+```bash
+virsh destroy sketchup
+```
+
+### Check status
+```bash
+virsh list --all
+```
+
+### Take screenshot
+```bash
+virsh screenshot sketchup /tmp/vm_screenshot.png
+```
+
+## VNC Access (Primary)
 
 ### Connect
 ```bash
-ssh dima@surfacedp
+vncviewer localhost:5900
 # or
-ssh dima@100.82.18.44
+remmina -c vnc://localhost:5900
 ```
 
-### Ensure SSH persists after reboot
-On Windows (PowerShell as Admin):
-```powershell
-# Check OpenSSH Server installed
-Get-WindowsCapability -Online | Where-Object Name -like 'OpenSSH*'
-
-# Install if needed
-Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
-
-# Start and enable service
-Start-Service sshd
-Set-Service -Name sshd -StartupType 'Automatic'
-
-# Firewall rule
-New-NetFirewallRule -Name 'OpenSSH-Server-In-TCP' -DisplayName 'OpenSSH Server (sshd)' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
+### Via browser (if noVNC installed)
 ```
-
-### Test SSH
-```bash
-ssh -o ConnectTimeout=10 dima@100.82.18.44 "hostname && whoami"
+http://localhost:6080/vnc.html
 ```
 
 ## RDP Access
 
-### From your machine (mstsc)
-```
-Computer: surfacedp
+### Connect from Linux
+```bash
+xfreerdp /v:localhost:3389 /u:dima /p:PASSWORD /f
 # or
-Computer: 100.82.18.44
-Username: dima
+remmina -c rdp://localhost:3389
 ```
 
-### Ensure RDP enabled
-On Windows:
-1. Settings → System → Remote Desktop → Enable
-2. Or PowerShell: `Set-ItemProperty -Path 'HKLM:\System\CurrentControlSet\Control\Terminal Server' -Name "fDenyTSConnections" -Value 0`
+### Connect from another machine
+```
+mstsc /v:<host-ip>:3389
+```
 
-### Firewall for RDP
+## SSH Setup (Required)
+
+SSH is not configured by default. To enable:
+
+### On Windows (PowerShell Admin):
 ```powershell
-Enable-NetFirewallRule -DisplayGroup "Remote Desktop"
+# Install OpenSSH Server
+Add-WindowsCapability -Online -Name OpenSSH.Server~~~~0.0.1.0
+
+# Start and enable
+Start-Service sshd
+Set-Service -Name sshd -StartupType 'Automatic'
+
+# Firewall (if needed)
+New-NetFirewallRule -Name 'SSH' -DisplayName 'SSH' -Enabled True -Direction Inbound -Protocol TCP -Action Allow -LocalPort 22
 ```
 
-## VNC Fallback
-
-### When to use
-- RDP shows black screen
-- Need headless session
-- Multiple simultaneous viewers
-
-### VNC Server Setup (if not installed)
-1. Download TightVNC: https://tightvnc.com/download.php
-2. Install with "TightVNC Server" selected
-3. Set password during install
-4. Default port: 5900
-
-### Connect via VNC
+### Test from host
 ```bash
-# Linux
-vncviewer 100.82.18.44:5900
-
-# Or use Remmina
-remmina -c vnc://100.82.18.44
+ssh -p 2222 dima@localhost
 ```
 
-## Browser Control
+## VM Configuration
 
-### Via OpenClaw
+### Current XML location
 ```
-browser action=open target=node node=surfacedp url=https://example.com
-browser action=snapshot target=node node=surfacedp
+/tmp/sketchup_fixed.xml  # temporary
 ```
 
-### Requirements
-- Chrome/Edge installed on Windows
-- Debugging port enabled
+### Key settings
+- Machine: q35 with UEFI
+- Disk: SATA (not virtio - Windows driver issue)
+- Network: User mode with port forwards
+- Video: QXL
 
-## Health Check
-
-### Quick connectivity test
-```bash
-# Ping
-ping -c 3 100.82.18.44
-
-# SSH
-ssh -o ConnectTimeout=5 dima@100.82.18.44 "echo OK"
-
-# RDP port
-nc -zv 100.82.18.44 3389 -w 5
-
-# VNC port
-nc -zv 100.82.18.44 5900 -w 5
-```
+### Port forwards
+- 3389 → 3389 (RDP)
+- 2222 → 22 (SSH)
 
 ## Troubleshooting
 
-### SSH connection refused
-1. Check OpenSSH Server running: `Get-Service sshd`
-2. Check firewall: `Get-NetFirewallRule -Name *ssh*`
-3. Restart service: `Restart-Service sshd`
+### "No bootable device"
+Windows uses GPT → requires UEFI boot, not SeaBIOS.
 
-### RDP black screen
-1. Try VNC instead
-2. Or: disconnect all sessions, wait 30s, reconnect
-3. Or: `query session` on Windows to see active sessions
-
-### VM not responding to Tailscale
-1. Check Tailscale running on Windows
-2. `tailscale status` should show surfacedp
-3. May need to restart Tailscale service on Windows
-
-### Firewall blocking everything
-Temporary disable for testing:
-```powershell
-Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled False
-# Re-enable after:
-Set-NetFirewallProfile -Profile Domain,Public,Private -Enabled True
+**Fix:** Use OVMF loader in VM config:
+```xml
+<os>
+  <loader readonly='yes' type='pflash'>/usr/share/OVMF/OVMF_CODE_4M.fd</loader>
+  <nvram>/home/dima/vm-setup/sketchup_VARS.fd</nvram>
+</os>
 ```
 
-## Common Tasks
+### PCI slot conflicts
+Error: "slot X not available for Y, in use by Z"
 
-### Run PowerShell command
+**Fix:** Explicitly assign PCI addresses to avoid conflicts:
+```xml
+<video>
+  <address type='pci' domain='0x0000' bus='0x00' slot='0x01' function='0x0'/>
+</video>
+```
+
+### Network not working
+**Fix:** Use -net none and explicit device:
+```xml
+<qemu:commandline>
+  <qemu:arg value='-netdev'/>
+  <qemu:arg value='user,id=net0,hostfwd=tcp::3389-:3389,hostfwd=tcp::2222-:22'/>
+  <qemu:arg value='-device'/>
+  <qemu:arg value='e1000,netdev=net0,addr=0x04'/>
+</qemu:commandline>
+```
+
+### Black screen on RDP
+1. Try VNC first
+2. Check Windows is not on lock screen
+3. May need to unlock via VNC first
+
+### VM won't start after reboot
+Check if libvirtd is running:
 ```bash
-ssh dima@surfacedp "powershell -Command 'Get-Process | Select-Object -First 5'"
+sudo systemctl start libvirtd
+virsh start sketchup
 ```
 
-### Copy file to Windows
+## Autostart
+
+To start VM on host boot:
 ```bash
-scp file.txt dima@surfacedp:C:/Users/dima/Desktop/
+virsh autostart sketchup
 ```
 
-### Copy file from Windows
-```bash
-scp dima@surfacedp:C:/Users/dima/file.txt ./
-```
+## Files
+
+| File | Purpose |
+|------|---------|
+| /home/dima/vm-setup/sketchup.qcow2 | Main disk image |
+| /home/dima/vm-setup/sketchup_VARS.fd | UEFI variables |
+| /usr/share/OVMF/OVMF_CODE_4M.fd | UEFI firmware |
