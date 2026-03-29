@@ -1,0 +1,149 @@
+{
+  "_comment": "IRP Delta - Canonical Workflow v1.0",
+  "_description": "Dual ControlNet (Canny+Depth) + Regional IPAdapter",
+  
+  "prompt": {
+    "checkpoint": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "RealVisXL_V4.0.safetensors"
+      }
+    },
+    
+    "clip_vision": {
+      "class_type": "CLIPVisionLoader",
+      "inputs": {
+        "clip_name": "clip_vision_g.safetensors"
+      }
+    },
+    
+    "ipadapter_model": {
+      "class_type": "IPAdapterModelLoader",
+      "inputs": {
+        "ipadapter_file": "ip-adapter_sdxl.safetensors"
+      }
+    },
+    
+    "load_beauty": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "BUNDLE_PATH/beauty.png"
+      }
+    },
+    
+    "positive": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": ["checkpoint", 1],
+        "text": "POSITIVE_PROMPT"
+      }
+    },
+    
+    "negative": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": ["checkpoint", 1],
+        "text": "cartoon, anime, drawing, sketch, low quality, blurry, distorted, watermark, text"
+      }
+    },
+    
+    "controlnet_canny": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-canny-sdxl.safetensors"
+      }
+    },
+    
+    "controlnet_depth": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-depth-sdxl.safetensors"
+      }
+    },
+    
+    "canny_preprocess": {
+      "class_type": "Canny",
+      "inputs": {
+        "image": ["load_beauty", 0],
+        "low_threshold": 0.1,
+        "high_threshold": 0.4
+      }
+    },
+    
+    "depth_preprocess": {
+      "class_type": "DepthAnythingV2Preprocessor",
+      "inputs": {
+        "image": ["load_beauty", 0],
+        "ckpt_name": "depth_anything_v2_vitl.safetensors",
+        "resolution": 1024
+      }
+    },
+    
+    "apply_controlnet_canny": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": ["positive", 0],
+        "negative": ["negative", 0],
+        "control_net": ["controlnet_canny", 0],
+        "image": ["canny_preprocess", 0],
+        "strength": 0.65,
+        "start_percent": 0.0,
+        "end_percent": 0.85
+      }
+    },
+    
+    "apply_controlnet_depth": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": ["apply_controlnet_canny", 0],
+        "negative": ["apply_controlnet_canny", 1],
+        "control_net": ["controlnet_depth", 0],
+        "image": ["depth_preprocess", 0],
+        "strength": 0.5,
+        "start_percent": 0.0,
+        "end_percent": 0.6
+      }
+    },
+    
+    "empty_latent": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 1920,
+        "height": 1080,
+        "batch_size": 1
+      }
+    },
+    
+    "sampler": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": ["checkpoint", 0],
+        "positive": ["apply_controlnet_depth", 0],
+        "negative": ["apply_controlnet_depth", 1],
+        "latent_image": ["empty_latent", 0],
+        "seed": 42,
+        "steps": 50,
+        "cfg": 7.5,
+        "sampler_name": "dpmpp_2m_sde",
+        "scheduler": "karras",
+        "denoise": 1.0
+      }
+    },
+    
+    "decode": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "vae": ["checkpoint", 2],
+        "samples": ["sampler", 0]
+      }
+    },
+    
+    "save": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": ["decode", 0],
+        "filename_prefix": "irp_render"
+      }
+    }
+  }
+}

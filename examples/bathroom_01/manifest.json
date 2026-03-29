@@ -1,0 +1,89 @@
+{
+  "version": "1.0",
+  "scene_id": "bathroom_01_front",
+  "created": "2026-03-29T12:00:00Z",
+  
+  "base_image": "beauty.png",
+  "image_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  
+  "camera": {
+    "eye": [0.45, -1.75, 0.77],
+    "target": [0.45, 0.25, 0.77],
+    "up": [0, 0, 1],
+    "fov": 35
+  },
+  
+  "entities": [
+    {
+      "name": "floor",
+      "class": "surface",
+      "surface_kind": "floor",
+      "mask": "masks/floor.png",
+      "coverage_pct": 18.4,
+      "reference": "references/floor_tiles.jpg",
+      "prompt": "blue patterned ceramic floor tiles Equipe Rivoli Bergen Azul style with geometric moroccan pattern, 200x200mm",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.55
+    },
+    {
+      "name": "walls",
+      "class": "surface",
+      "surface_kind": "wall_tiles",
+      "mask": "masks/walls.png",
+      "coverage_pct": 30.5,
+      "reference": "references/wall_tiles.png",
+      "prompt": "white glossy wavy subway tiles Costa Nova style with 3D relief texture arranged vertically, 50x200mm",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.55
+    },
+    {
+      "name": "vanity",
+      "class": "fixture",
+      "mask": "masks/vanity.png",
+      "coverage_pct": 8.2,
+      "reference": "references/vanity.jpg",
+      "prompt": "dark charcoal gray wall-mounted vanity cabinet IDDIS Edifice with soft-close drawers and white ceramic sink",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "name": "bathtub",
+      "class": "fixture",
+      "mask": "masks/bathtub.png",
+      "coverage_pct": 12.1,
+      "reference": "references/bathtub.jpg",
+      "prompt": "white classic cast iron bathtub Jacob Delafon Soissons 160x70cm glossy enamel surface",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "name": "mirror",
+      "class": "fixture",
+      "mask": "masks/mirror.png",
+      "coverage_pct": 5.3,
+      "reference": "references/mirror.jpg",
+      "prompt": "large rectangular mirror IDDIS Uniq with integrated warm LED backlight 3000K frameless design",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "name": "window",
+      "class": "opening",
+      "mask": "masks/window.png",
+      "coverage_pct": 2.1,
+      "reference": null,
+      "prompt": "white PVC window frame with frosted glass natural daylight",
+      "critical": false,
+      "render_mode": "structural_controlnet",
+      "ipadapter_weight": 0.0
+    }
+  ]
+}
