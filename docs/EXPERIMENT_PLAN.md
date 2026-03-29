@@ -74,35 +74,29 @@ Isolate weight sensitivity per entity class.
 
 ## Block 3: Refiner Tests
 
-Test refiner impact before full integration (isolate refiner effect from integration complexity).
+Test refiner impact before full integration.
 
-### R1: Structural + Refiner
+**⚠️ REFINER ISSUE:** SDXL Refiner requires separate CLIP encode — direct positive/negative passthrough fails with shape mismatch. Refiner tests (R*b) deferred until workflow is fixed.
 
-| ID | Setup | Refiner | Purpose |
-|----|-------|---------|---------|
-| R1a | Best structural (S1) | OFF | Baseline |
-| R1b | Best structural (S1) | ON | Does refiner improve readability? |
+### Completed (baseline without refiner)
 
-### R2: Floor Entity + Refiner
+| ID | Setup | Refiner | Status |
+|----|-------|---------|--------|
+| R1a | Structural (S1) | OFF | ✅ PASSED |
+| R2a | Floor (weight=0.5) | OFF | ✅ PASSED |
+| R3a | Vanity (weight=0.5) | OFF | ✅ PASSED |
+| R4a | Critical only | OFF | ✅ PASSED |
 
-| ID | Setup | Refiner | Purpose |
-|----|-------|---------|---------|
-| R2a | Best I2 weight | OFF | Baseline |
-| R2b | Best I2 weight | ON | Does refiner help surface transfer? |
+### Deferred (refiner integration needed)
 
-### R3: Vanity Entity + Refiner
+| ID | Setup | Refiner | Status |
+|----|-------|---------|--------|
+| R1b | Structural (S1) | ON | ⏸️ Deferred |
+| R2b | Floor (weight=0.5) | ON | ⏸️ Deferred |
+| R3b | Vanity (weight=0.5) | ON | ⏸️ Deferred |
+| R4b | Critical only | ON | ⏸️ Deferred |
 
-| ID | Setup | Refiner | Purpose |
-|----|-------|---------|---------|
-| R3a | Best I4 weight | OFF | Baseline |
-| R3b | Best I4 weight | ON | Does refiner help fixture detail? |
-
-### R4: Critical-Only + Refiner
-
-| ID | Setup | Refiner | Purpose |
-|----|-------|---------|---------|
-| R4a | Critical entities only | OFF | Bridge to full-scene |
-| R4b | Critical entities only | ON | Refiner on integration |
+**TODO:** Build proper refiner workflow with separate CLIPTextEncode for refiner model.
 
 ---
 
@@ -155,7 +149,7 @@ Final candidates for production recipe.
 | 0 - Infra | 1 | ✅ Complete |
 | 1 - Structural | 4 | ✅ Complete |
 | 2 - Calibration | 10 | ✅ Complete |
-| 3 - Refiner | 8 | ⏳ TODO |
+| 3 - Refiner | 8 | 🔄 Partial (4/8, refiner deferred) |
 | 4 - Integration | 5 | ⏳ TODO |
 | 5 - Tech Spec | 3 | ⏳ TODO |
 | 6 - Production | 5 | ⏳ TODO |
