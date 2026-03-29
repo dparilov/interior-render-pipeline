@@ -1,4 +1,4 @@
-# IRP Gamma — Architecture
+# IRP — Architecture
 
 > Контракты между стадиями pipeline
 

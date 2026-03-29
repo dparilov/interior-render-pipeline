@@ -1,4 +1,4 @@
-# IRP Gamma — Rendering Decisions
+# IRP — Rendering Decisions
 
 > Какие объекты как рендерятся и почему
 

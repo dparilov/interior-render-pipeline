@@ -79,11 +79,17 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed instructions.
 
 **Version:** v1.0-beta (MVP)
 
-- ✅ SketchUp mask export (10/10 entities)
-- ✅ Bundle schema v1.0
-- ✅ Dual ControlNet (Canny + Depth)
-- ✅ Regional IPAdapter with attention masks
-- ⚠️ Single-pass rendering (multi-pass planned)
+See [STATUS.md](STATUS.md) for detailed implementation status.
+
+| Component | Status |
+|-----------|--------|
+| SketchUp scripts | ✅ Works |
+| Bundle schema | ✅ Stable |
+| ComfyUI workflow | ✅ Works |
+| Python orchestrator | 📄 Stub |
+| Example bundle | 📄 Stub (schema only) |
+
+**Next:** Complete bathroom_01 example with real images.
 
 ## License
 
