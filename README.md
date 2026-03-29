@@ -20,7 +20,10 @@ IRP.extract   # → irp_extract.zip (scene-locked)
 # 3. Export bundle
 IRP.export    # → irp_bundle.zip
 
-# 4. Validate and render
+# 4. Post-process (binarize masks)
+python render/postprocess.py <bundle> --refs <refs_dir> --spec <tz_path>
+
+# 5. Validate and render
 python render/validate.py <bundle>
 python render/render.py <bundle>
 ```

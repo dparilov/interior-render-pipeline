@@ -106,6 +106,20 @@ IRP.export
 
 **Output:** `irp_bundle.zip`
 
+## Step 3.5: Post-Process Bundle (REQUIRED)
+
+SketchUp's `write_image` has hardcoded 2X antialiasing ([Issue #545](https://github.com/SketchUp/api-issue-tracker/issues/545)).
+Masks must be binarized in Python before validation:
+
+```bash
+python render/postprocess.py <bundle_path>
+```
+
+This script:
+1. Binarizes all masks (threshold 128 → 0/255)
+2. Adds `references/` from source folder
+3. Adds `technical_spec.md` (ТЗ) and updates manifest hash
+
 Contents:
 - `beauty.png` — SketchUp render
 - `depth.png` — ground truth depth from geometry

@@ -46,6 +46,7 @@
 1. Coverage calculation is approximate (file size based)
 2. Multi-view export disabled pending API fixes
 3. Experiment completion requires manual poll of ComfyUI
+4. **SketchUp antialias hardcoded to 2X** — masks require Python binarization (postprocess.py)
 
 ## File Locations
 
