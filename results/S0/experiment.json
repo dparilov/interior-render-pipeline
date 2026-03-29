@@ -8,12 +8,21 @@
     "id": "m88nqdtocfd818",
     "gpu": "RTX 4090 24GB"
   },
+  "input": {
+    "bundle": "irp_bundle_s1",
+    "manifest_sha256": "3f0f9f6fbe002a1c54d5ff115197ec66feed9b298fee1988e089209f051df156"
+  },
   "workflow": {
-    "controlnet": "Canny 0.8",
+    "snapshot": "workflow_s0.json",
+    "controlnet": "control-lora-canny-rank256.safetensors",
+    "controlnet_strength": 0.8,
     "ipadapter": "OFF",
     "boundary": "OFF",
     "steps": 20,
-    "seed": 42
+    "cfg": 7.0,
+    "seed": 42,
+    "sampler": "euler",
+    "scheduler": "normal"
   },
   "results": {
     "execution_time_sec": 8.0,

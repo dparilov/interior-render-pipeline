@@ -1,0 +1,59 @@
+{
+  "_comment": "S0 runtime workflow snapshot",
+  "checkpoint": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {"ckpt_name": "sd_xl_base_1.0.safetensors"}
+  },
+  "controlnet": {
+    "class_type": "ControlNetLoader",
+    "inputs": {"control_net_name": "control-lora-canny-rank256.safetensors"}
+  },
+  "load_image": {
+    "class_type": "LoadImage",
+    "inputs": {"image": "/workspace/irp_bundle_s1/beauty.png"}
+  },
+  "canny": {
+    "class_type": "Canny",
+    "inputs": {"image": ["load_image", 0], "low_threshold": 0.4, "high_threshold": 0.8}
+  },
+  "empty_latent": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {"width": 1024, "height": 576, "batch_size": 1}
+  },
+  "positive": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {"text": "modern bathroom interior, photorealistic, 8k", "clip": ["checkpoint", 1]}
+  },
+  "negative": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {"text": "cartoon, drawing, low quality", "clip": ["checkpoint", 1]}
+  },
+  "apply_cn": {
+    "class_type": "ControlNetApply",
+    "inputs": {
+      "conditioning": ["positive", 0],
+      "control_net": ["controlnet", 0],
+      "image": ["canny", 0],
+      "strength": 0.8
+    }
+  },
+  "sampler": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": ["checkpoint", 0],
+      "positive": ["apply_cn", 0],
+      "negative": ["negative", 0],
+      "latent_image": ["empty_latent", 0],
+      "seed": 42, "steps": 20, "cfg": 7.0,
+      "sampler_name": "euler", "scheduler": "normal", "denoise": 1.0
+    }
+  },
+  "decode": {
+    "class_type": "VAEDecode",
+    "inputs": {"samples": ["sampler", 0], "vae": ["checkpoint", 2]}
+  },
+  "save": {
+    "class_type": "SaveImage",
+    "inputs": {"images": ["decode", 0], "filename_prefix": "S0"}
+  }
+}
