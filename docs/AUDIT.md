@@ -94,11 +94,11 @@
 - Генерация за пределами комнаты
 - Изменение архитектуры (стены, проёмы)
 
-## Контрольные эксперименты
+## Минимальные проверки
 
-### Структурные (геометрия)
+### Структурный тест (обязательный)
 
-#### S1: Structural Baseline (Golden Reference)
+Запустить S1 (Structural Baseline) из [EXPERIMENT_PLAN.md](EXPERIMENT_PLAN.md):
 
 ```
 Canny: 0.8, Depth: 0.9 (SketchUp)
@@ -107,81 +107,22 @@ IPAdapter: OFF
 Seed: 42
 ```
 
-**Ожидание:** Точная геометрия, случайные материалы. Это эталон — если здесь геометрия ломается, проблема в ControlNet.
+**PASS если:**
+- [ ] Все объекты на своих местах
+- [ ] Нет объектов за пределами комнаты
+- [ ] Нет лишних сущностей (полотенца, декор)
+- [ ] Архитектура не изменена (стены, проёмы)
 
-#### S2: Weak Structure
+**FAIL если:** любой пункт выше нарушен
 
-```
-Canny: 0.5, Depth: 0.5
-Boundary: OFF
-IPAdapter: OFF
-Seed: 42
-```
+### Интеграционный тест
 
-**Ожидание:** Модель "додумывает" — покажет где структура слабая.
+Запустить F2 (Full Pipeline):
 
-### Изоляционные (один объект)
-
-#### I1: Floor Only
-
-```
-IPAdapter: floor (0.5)
-Остальное: OFF
-Seed: 42
-```
-
-#### I2: Floor Weight Sweep
-
-```
-IPAdapter floor: 0.3 / 0.5 / 0.7
-Seed: 42 (три прогона)
-```
-
-**Ожидание:** Найти оптимальный weight для surfaces.
-
-#### I3: Walls Only
-
-```
-IPAdapter: walls (0.5)
-Seed: 42
-```
-
-#### I4: Vanity Only (fixture)
-
-```
-IPAdapter: vanity (0.5)
-Seed: 42
-```
-
-**Ожидание:** Сравнить поведение surface vs fixture.
-
-### Интеграционные
-
-#### F1: Critical Only
-
-```
-IPAdapter: floor, walls, vanity, mirror, bathtub
-Weights: 0.5-0.55
-Seed: 42
-```
-
-#### F2: Full Pipeline
-
-```
-IPAdapter: all entities
-Weights: per entity class
-Seed: 42
-```
-
-#### F3: Degradation Test
-
-```
-Canny: 0.6, Depth: 0.5
-IPAdapter: all (0.5)
-Seed: 42
-```
-
-**Ожидание:** Больше "творчества", определить порог деградации.
+**PASS если:**
+- [ ] Структурный тест пройден
+- [ ] Материалы узнаваемо соответствуют референсам
+- [ ] Нет критических артефактов
 
 ## Воспроизводимость
 

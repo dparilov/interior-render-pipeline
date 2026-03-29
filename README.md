@@ -76,6 +76,7 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed instructions.
 | [QUICKSTART.md](docs/QUICKSTART.md) | Step-by-step guide |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data flow contracts |
 | [AUDIT.md](docs/AUDIT.md) | External review checklist |
+| [EXPERIMENT_PLAN.md](docs/EXPERIMENT_PLAN.md) | Hypotheses & test matrix |
 | [BUNDLE_SPEC.md](specs/BUNDLE_SPEC.md) | Bundle JSON schema v1.0 |
 | [RENDERING.md](specs/RENDERING.md) | Entity classes & render modes |
 | [EXPERIMENTS.md](specs/EXPERIMENTS.md) | Experiment tracking |
