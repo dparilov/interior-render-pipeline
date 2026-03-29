@@ -72,7 +72,7 @@ http://localhost:6080/vnc.html
 
 ### Connect from Linux
 ```bash
-xfreerdp /v:localhost:3389 /u:dima /p:PASSWORD /f
+xfreerdp /v:localhost:3389 /u:dmitrii /p:dmitrii /f
 # or
 remmina -c rdp://localhost:3389
 ```
@@ -101,7 +101,7 @@ New-NetFirewallRule -Name 'SSH' -DisplayName 'SSH' -Enabled True -Direction Inbo
 
 ### Test from host
 ```bash
-ssh -p 2222 dima@localhost
+ssh -p 2222 dmitrii@localhost
 ```
 
 ## VM Configuration
