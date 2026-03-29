@@ -15,23 +15,28 @@ All experiments use **fixed seed=42** for reproducibility.
 
 ## Compute Platform
 
-| Platform | Hardware | PyTorch | Cost |
-|----------|----------|---------|------|
-| RUNPOD | RTX 4090/3090/L4 24GB, serverless | torch 2.x CUDA | ~$0.0004/sec |
+| Platform | Type | Hardware | Cost |
+|----------|------|----------|------|
+| RunPod Pod | Dedicated | RTX 4090 24GB | ~$0.69/hr |
 
-**All experiments run on RunPod GPU.** Local CPU too slow (OOM at 10 IPAdapter).
+**All experiments run on dedicated RunPod Pod** (not serverless).
+- Local CPU: OOM at 10 IPAdapter
+- Serverless: Stock images lack IPAdapter nodes
 
-Expected time per experiment: ~60-90 sec (vs ~2h CPU).
-Expected cost per experiment: ~$0.03-0.04.
+### Pod Setup
 
-### Docker Images
+Pod ID: `m88nqdtocfd818`
+SSH: `ssh root@<ip> -p <port> -i ~/.ssh/id_rsa`
 
-| Image | Custom Nodes | Use For |
-|-------|--------------|---------|
-| `runpod/worker-comfyui:5.8.5-sdxl` | ControlNet only | Block 0 (infra test) |
-| `irp/worker-comfyui:sdxl-ipadapter` | ControlNet + IPAdapter | Blocks 1-6 (full plan) |
+**Installed:**
+- ComfyUI 0.18.1
+- SDXL Base 1.0
+- IPAdapter Plus SDXL + CLIP ViT-H
+- ControlNet Canny/Depth (control-lora-rank256)
 
-**Block 0 uses stock image.** Blocks 1-6 require custom image with IPAdapter.
+**Expected per experiment:**
+- Time: ~30-60 sec (RTX 4090)
+- Cost: ~$0.01-0.02
 
 ---
 
@@ -48,34 +53,26 @@ Expected cost per experiment: ~$0.03-0.04.
 
 ---
 
-## Block 0: Infrastructure Test (RunPod Validation)
+## Block 0: Infrastructure Test (Pod Validation)
 
-Minimal smoke test to validate RunPod pipeline works.
+Minimal smoke test to validate Pod + ComfyUI works.
 
 | ID | Name | ControlNet | IPAdapter | Boundary | Purpose |
 |----|------|------------|-----------|----------|---------|
-| S0 | runpod-smoke | Canny 0.8 | OFF | OFF | Verify RunPod transport + generation |
+| S0 | pod-smoke | Canny 0.8 | OFF | OFF | Verify Pod ComfyUI works |
 
-**Uses:** `runpod/worker-comfyui:5.8.5-sdxl` (stock image)
+**Uses:** Dedicated Pod with manually installed ComfyUI + nodes
 
 **S0 is intentionally minimal:**
 - Single ControlNet (Canny only)
-- No Depth ControlNet
-- No Boundary mask
 - No IPAdapter
-- Generic positive prompt
+- No Boundary mask
+- txt2img with structure guidance
 
-**Pass criteria (hard):**
-- Job completes without error (status: COMPLETED)
-- Output image returned (base64 or S3 URL)
-- Image is valid PNG/JPEG
-
-**Pass criteria (soft, sanity check):**
-- Generated image resembles bathroom layout (not required for pass)
-
-**After S0 passes:** Build custom Docker image with IPAdapter for Blocks 1-6.
-
-**Rollback rule:** If custom image fails on S1, return to stock image with minimal workflow to isolate whether problem is custom nodes vs RunPod endpoint.
+**Pass criteria:**
+- ComfyUI accepts workflow
+- Image generated and saved
+- No OOM or crashes
 
 ---
 
