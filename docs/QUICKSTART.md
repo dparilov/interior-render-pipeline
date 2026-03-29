@@ -129,12 +129,26 @@ Contents:
 - `technical_spec.md` — copy of ТЗ (if found)
 - `model.dae/fbx/glb` — 3D exports
 
-## Step 4: Validate
+## Step 4: Validate (Schema)
 
 ```bash
-cd render
-python validate.py /path/to/irp_bundle/
+python render/validate.py <bundle_path>
 ```
+
+Checks schema, files, binary masks.
+
+## Step 4.5: Validate (Visual) — REQUIRED
+
+```bash
+python render/validate_visual.py <bundle_path>
+```
+
+Uses Vision AI to verify:
+- Each mask covers the correct object
+- PIDs are correctly mapped
+- Critical entities match ТЗ
+
+**DO NOT proceed to render if visual validation fails.**
 
 Checks:
 - All required fields present in manifest

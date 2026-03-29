@@ -23,8 +23,11 @@ IRP.export    # → irp_bundle.zip
 # 4. Post-process (binarize masks)
 python render/postprocess.py <bundle> --refs <refs_dir> --spec <tz_path>
 
-# 5. Validate and render
+# 5. Validate (schema + visual)
 python render/validate.py <bundle>
+python render/validate_visual.py <bundle>  # REQUIRED - checks mask correctness
+
+# 6. Render
 python render/render.py <bundle>
 ```
 
