@@ -212,6 +212,112 @@ def render_all_masks(entities, output_dir):
     return masks
 
 
+def setup_beauty_render():
+    """Configure render settings for beauty pass."""
+    scene = bpy.context.scene
+    
+    # Use EEVEE for faster headless rendering (no GPU required)
+    scene.render.engine = 'BLENDER_EEVEE'
+    scene.eevee.taa_render_samples = 64
+    
+    # Transparent background for compositing
+    scene.render.film_transparent = True
+    
+    scene.render.image_settings.file_format = 'PNG'
+    scene.render.image_settings.color_mode = 'RGBA'
+
+
+def render_beauty(output_path):
+    """Render beauty pass with all objects visible."""
+    scene = bpy.context.scene
+    
+    setup_beauty_render()
+    
+    # Show all meshes
+    for obj in bpy.data.objects:
+        if obj.type == 'MESH':
+            obj.hide_render = False
+    
+    # Add lighting if none exists
+    lights = [o for o in bpy.data.objects if o.type == 'LIGHT']
+    if not lights:
+        # Add sun light
+        bpy.ops.object.light_add(type='SUN', location=(5, 5, 10))
+        sun = bpy.context.object
+        sun.data.energy = 3.0
+        
+        # Add fill light
+        bpy.ops.object.light_add(type='AREA', location=(-3, -3, 5))
+        fill = bpy.context.object
+        fill.data.energy = 100.0
+    
+    scene.render.filepath = str(output_path)
+    bpy.ops.render.render(write_still=True)
+    
+    print(f"  Rendered beauty: {output_path}")
+
+
+def setup_depth_render():
+    """Configure render settings for depth pass."""
+    scene = bpy.context.scene
+    
+    # Use EEVEE for depth - faster and works without GPU
+    scene.render.engine = 'BLENDER_EEVEE'
+    scene.eevee.taa_render_samples = 1
+    
+    # Enable Z pass
+    scene.view_layers["ViewLayer"].use_pass_z = True
+    
+    scene.render.image_settings.file_format = 'PNG'
+    scene.render.image_settings.color_mode = 'BW'
+    scene.render.image_settings.color_depth = '16'
+
+
+def render_depth(output_path):
+    """Render depth pass using compositor."""
+    scene = bpy.context.scene
+    
+    setup_depth_render()
+    
+    # Show all meshes
+    for obj in bpy.data.objects:
+        if obj.type == 'MESH':
+            obj.hide_render = False
+    
+    # Setup compositor for depth output
+    scene.use_nodes = True
+    tree = scene.node_tree
+    
+    # Clear existing nodes
+    for node in tree.nodes:
+        tree.nodes.remove(node)
+    
+    # Create nodes
+    render_layers = tree.nodes.new('CompositorNodeRLayers')
+    normalize = tree.nodes.new('CompositorNodeNormalize')
+    invert = tree.nodes.new('CompositorNodeInvert')
+    composite = tree.nodes.new('CompositorNodeComposite')
+    
+    # Position nodes
+    render_layers.location = (0, 0)
+    normalize.location = (200, 0)
+    invert.location = (400, 0)
+    composite.location = (600, 0)
+    
+    # Link nodes: Depth -> Normalize -> Invert -> Output
+    tree.links.new(render_layers.outputs['Depth'], normalize.inputs[0])
+    tree.links.new(normalize.outputs[0], invert.inputs['Color'])
+    tree.links.new(invert.outputs[0], composite.inputs['Image'])
+    
+    scene.render.filepath = str(output_path)
+    bpy.ops.render.render(write_still=True)
+    
+    # Cleanup compositor
+    scene.use_nodes = False
+    
+    print(f"  Rendered depth: {output_path}")
+
+
 def main():
     args = parse_args()
     
@@ -239,6 +345,16 @@ def main():
     
     # Setup camera
     setup_camera(args.camera, (w, h))
+    
+    # Render beauty pass if requested
+    if args.beauty:
+        print("\nRendering beauty pass...")
+        render_beauty(args.beauty)
+    
+    # Render depth pass if requested
+    if args.depth:
+        print("\nRendering depth pass...")
+        render_depth(args.depth)
     
     # Render masks
     print("\nRendering masks...")
