@@ -178,3 +178,17 @@ After each block, decide:
 - Minor color variations
 - Texture detail differences
 - Edge artifacts
+
+---
+
+## TODOs for Next Phase
+
+### Refiner Prompt Sync
+Current `workflow_refiner.json` has hardcoded prompts for refiner CLIP encode.
+For production: sync refiner positive/negative with base workflow prompts at runtime.
+
+```python
+# Example fix in render.py:
+prompt['refiner_positive']['inputs']['text'] = base_positive_text
+prompt['refiner_negative']['inputs']['text'] = base_negative_text
+```
