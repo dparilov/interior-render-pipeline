@@ -33,22 +33,18 @@ irp_bundle/
 └── model.glb               # Для Blender
 ```
 
-## manifest.json Schema
+## manifest.json Schema (v1.0)
 
 ```json
 {
-  "$schema": "irp-bundle-v1",
-  
-  "version": 1,
+  "version": "1.0",
+  "scene_id": "bathroom_01_front",
   "created": "2026-03-29T11:00:00Z",
-  "scene_name": "Сцена №1",
   
-  "resolution": [1920, 1080],
-  
-  "images": {
-    "beauty": "beauty.png",
-    "surfaces_only": "surfaces_only.png",
-    "fixtures_only": "fixtures_only.png"
+  "base_image": "beauty.png",
+  "image_size": {
+    "width": 1920,
+    "height": 1080
   },
   
   "camera": {
@@ -60,13 +56,38 @@ irp_bundle/
   
   "entities": [
     {
-      "pid": 36696,
       "name": "walls",
-      "role": "walls",
       "class": "surface",
+      "surface_kind": "wall_tiles",
       "mask": "masks/walls.png",
+      "coverage_pct": 30.5,
       "reference": "references/wall_tiles.png",
-      "prompt": "white glossy wavy subway tiles Costa Nova style with 3D relief texture arranged vertically, visible grout lines, 50x200mm"
+      "prompt": "white glossy wavy subway tiles Costa Nova style...",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.55
+    },
+    {
+      "name": "vanity",
+      "class": "fixture",
+      "mask": "masks/vanity.png",
+      "coverage_pct": 8.2,
+      "reference": "references/vanity.jpg",
+      "prompt": "dark charcoal gray wall-mounted vanity cabinet...",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "name": "window",
+      "class": "opening",
+      "mask": "masks/window.png",
+      "coverage_pct": 2.1,
+      "reference": null,
+      "prompt": "white PVC window frame with frosted glass",
+      "critical": false,
+      "render_mode": "structural_controlnet",
+      "ipadapter_weight": 0.0
     }
   ]
 }
@@ -78,11 +99,11 @@ irp_bundle/
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| version | number | ✓ | Schema version (currently 1) |
+| version | string | ✓ | Schema version ("1.0") |
+| scene_id | string | ✓ | Unique scene identifier |
 | created | string | | ISO 8601 timestamp |
-| scene_name | string | ✓ | SketchUp Scene name |
-| resolution | [w, h] | ✓ | Image resolution in pixels |
-| images | object | ✓ | Paths to base images |
+| base_image | string | ✓ | Path to beauty render |
+| image_size | object | ✓ | {width, height} in pixels |
 | camera | object | | Camera parameters from SketchUp |
 | entities | array | ✓ | List of mapped entities |
 
@@ -90,21 +111,33 @@ irp_bundle/
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| pid | number | ✓ | SketchUp persistent_id |
-| name | string | ✓ | Semantic name (IRP export name) |
-| role | string | ✓ | Functional role (walls, floor, etc.) |
+| name | string | ✓ | Semantic name (walls, floor, etc.) |
 | class | string | ✓ | surface / fixture / opening |
+| surface_kind | string | | For surfaces: floor, wall_tiles, wall_paint |
 | mask | string | ✓ | Relative path to mask PNG |
-| reference | string | | Relative path to reference image |
-| prompt | string | | Detailed material description for SD |
+| coverage_pct | number | ✓ | % площади изображения |
+| reference | string | | Path to reference image (null if none) |
+| prompt | string | ✓ | Material description for SD |
+| critical | boolean | ✓ | Priority entity? |
+| render_mode | string | ✓ | regional_ipadapter / structural_controlnet / tiling_projection / local_inpaint |
+| ipadapter_weight | number | | IP-Adapter weight (0.0-1.0) |
 
 ### Entity Classes
 
-| Class | Description | Examples |
-|-------|-------------|----------|
-| surface | Поверхности, покрытия | walls, floor, ceiling |
-| fixture | Мебель, оборудование | bathtub, vanity, mirror |
-| opening | Проёмы | window, door |
+| Class | Description | Examples | Default render_mode |
+|-------|-------------|----------|---------------------|
+| surface | Поверхности, покрытия | walls, floor | regional_ipadapter |
+| fixture | Мебель, оборудование | bathtub, vanity | regional_ipadapter |
+| opening | Проёмы | window, door | structural_controlnet |
+
+### Render Modes
+
+| Mode | Description | IP-Adapter |
+|------|-------------|------------|
+| regional_ipadapter | Стандартный с маской | Да |
+| structural_controlnet | Только структура | Нет |
+| tiling_projection | Проекция паттерна | Future |
+| local_inpaint | Послойный inpaint | Future |
 
 ## Mask Requirements
 

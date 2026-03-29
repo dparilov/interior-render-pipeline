@@ -63,7 +63,8 @@ curl -X POST http://127.0.0.1:8188/prompt \
 |------|----------|
 | [SPEC-v1.0-beta.md](SPEC-v1.0-beta.md) | Полная спецификация |
 | [ARCHITECTURE.md](ARCHITECTURE.md) | Контракты между стадиями |
-| [BUNDLE_SPEC.md](BUNDLE_SPEC.md) | Формат bundle |
+| [BUNDLE_SPEC.md](BUNDLE_SPEC.md) | Формат bundle (v1.0 schema) |
+| [RENDERING_DECISIONS.md](RENDERING_DECISIONS.md) | Стратегии рендера по классам |
 
 ## Rendering Pipeline
 
