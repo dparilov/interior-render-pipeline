@@ -42,47 +42,68 @@ def load_manifest(bundle_path: Path) -> Dict:
 
 
 def encode_image(path: Path) -> str:
-    """Encode image to base64 for RunPod."""
+    """Encode image to base64 data URI for RunPod."""
     with open(path, "rb") as f:
-        return base64.b64encode(f.read()).decode()
+        b64 = base64.b64encode(f.read()).decode()
+    return f"data:image/png;base64,{b64}"
 
 
 def build_runpod_input(workflow: Dict, manifest: Dict, bundle_path: Path) -> Dict:
     """Build RunPod input with workflow and images."""
-    prompt = workflow.get("prompt", workflow)
+    import copy
+    prompt = copy.deepcopy(workflow.get("prompt", workflow))
     
-    # Encode all required images
-    images = {}
+    # Encode all required images as list of {name, image} objects
+    # Use flat names without paths (RunPod uploads to input/ dir)
+    images = []
     
     # Beauty image
     beauty_path = bundle_path / manifest["base_image"]
-    images["beauty.png"] = encode_image(beauty_path)
+    images.append({"name": "beauty.png", "image": encode_image(beauty_path)})
     
     # Depth map
     depth_path = bundle_path / manifest.get("depth_map", "depth.png")
     if depth_path.exists():
-        images["depth.png"] = encode_image(depth_path)
+        images.append({"name": "depth.png", "image": encode_image(depth_path)})
     
     # Boundary mask
     boundary_path = bundle_path / manifest.get("boundary_mask", "boundary_mask.png")
     if boundary_path.exists():
-        images["boundary_mask.png"] = encode_image(boundary_path)
+        images.append({"name": "boundary_mask.png", "image": encode_image(boundary_path)})
     
     # Entity masks and references
     for entity in manifest.get("entities", []):
-        # Mask
+        # Mask - use flat name like "mask_walls.png"
         mask_path = bundle_path / entity["mask"]
         if mask_path.exists():
-            images[f"masks/{entity['name']}.png"] = encode_image(mask_path)
+            flat_name = f"mask_{entity['name']}.png"
+            images.append({"name": flat_name, "image": encode_image(mask_path)})
         
-        # Reference
+        # Reference - use flat name like "ref_walls.png"
         if entity.get("reference"):
             ref_path = bundle_path / entity["reference"]
             if ref_path.exists():
-                images[f"references/{entity['name']}.png"] = encode_image(ref_path)
+                flat_name = f"ref_{entity['name']}.png"
+                images.append({"name": flat_name, "image": encode_image(ref_path)})
     
-    # Update workflow paths to use /input/ (ComfyUI worker convention)
-    # The worker will place uploaded images there
+    # Update workflow paths to use uploaded image names
+    # Replace BUNDLE_PATH/* with just the filename
+    prompt_str = json.dumps(prompt)
+    prompt_str = prompt_str.replace("BUNDLE_PATH/beauty.png", "beauty.png")
+    prompt_str = prompt_str.replace("BUNDLE_PATH/depth.png", "depth.png")
+    prompt_str = prompt_str.replace("BUNDLE_PATH/boundary_mask.png", "boundary_mask.png")
+    
+    for entity in manifest.get("entities", []):
+        old_mask = f"BUNDLE_PATH/masks/{entity['name']}.png"
+        new_mask = f"mask_{entity['name']}.png"
+        prompt_str = prompt_str.replace(old_mask, new_mask)
+        
+        if entity.get("reference"):
+            old_ref = f"BUNDLE_PATH/{entity['reference']}"
+            new_ref = f"ref_{entity['name']}.png"
+            prompt_str = prompt_str.replace(old_ref, new_ref)
+    
+    prompt = json.loads(prompt_str)
     
     return {
         "input": {

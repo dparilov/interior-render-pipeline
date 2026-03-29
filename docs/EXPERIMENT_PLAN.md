@@ -24,6 +24,15 @@ All experiments use **fixed seed=42** for reproducibility.
 Expected time per experiment: ~60-90 sec (vs ~2h CPU).
 Expected cost per experiment: ~$0.03-0.04.
 
+### Docker Images
+
+| Image | Custom Nodes | Use For |
+|-------|--------------|---------|
+| `runpod/worker-comfyui:5.8.5-sdxl` | ControlNet only | Block 0 (infra test) |
+| `irp/worker-comfyui:sdxl-ipadapter` | ControlNet + IPAdapter | Blocks 1-6 (full plan) |
+
+**Block 0 uses stock image.** Blocks 1-6 require custom image with IPAdapter.
+
 ---
 
 ## Hypotheses
@@ -39,7 +48,28 @@ Expected cost per experiment: ~$0.03-0.04.
 
 ---
 
+## Block 0: Infrastructure Test (RunPod Validation)
+
+Validate RunPod pipeline with stock SDXL image (no IPAdapter).
+
+| ID | Name | Depth | Boundary | IPAdapter | ControlNet | Purpose |
+|----|------|-------|----------|-----------|------------|---------|
+| S0 | runpod-test | SKP 0.9 | ON | OFF | Canny 0.8, Depth 0.9 | Verify RunPod works |
+
+**Uses:** `runpod/worker-comfyui:5.8.5-sdxl` (stock image)
+
+**Pass criteria:**
+- Job completes without error
+- Output image generated
+- Room structure roughly correct (no IPAdapter = generic materials)
+
+**After S0 passes:** Build custom Docker image with IPAdapter for Blocks 1-6.
+
+---
+
 ## Block 1: Structural Gate (REQUIRED FIRST)
+
+**Requires:** Custom image `irp/worker-comfyui:sdxl-ipadapter`
 
 These must pass before any material experiments.
 
@@ -160,16 +190,20 @@ experiments/<id>_<timestamp>/
 
 ## Execution Order
 
-### Minimal Start Queue (8 experiments)
+### Execution Order
 
 ```
-S1 → S1-neural → S1-no-boundary → I2-05 → I4-05 → F1 → T1 → T2
+S0 → [build custom image] → S1 → S1-neural → S1-no-boundary → I2-05 → I4-05 → F1 → T1 → T2
 ```
 
-This validates: structure holds, depth/boundary work, class weights, integration, ТЗ impact.
+### Phase 1: Infrastructure (stock image)
+1. **S0** — RunPod infra test, validates pipeline
 
-### Full Order
+### Phase 2: Build Custom Image
+- After S0 passes, build `irp/worker-comfyui:sdxl-ipadapter`
+- Deploy new endpoint with custom image
 
+### Phase 3: Full Experiments (custom image)
 1. **S1** — must pass before anything else
 2. **S1-neural, S1-no-boundary** — validate H1, H2
 3. **I2-05, I4-05** — baseline weights (skip sweep if time-constrained)
@@ -177,6 +211,7 @@ This validates: structure holds, depth/boundary work, class weights, integration
 5. **T1, T2** — validate ТЗ impact
 6. **F2** — full scene (only if F1 passes)
 7. **P1, P2, P3** — production candidates
+8. **R1, R2, R3** — refiner tests (if time permits)
 
 ---
 
