@@ -104,13 +104,15 @@ Test refiner impact before full integration.
 
 Run after Block 2-3 to understand best settings.
 
-| ID | Name | Entities | Refiner | IPAdapter Order |
-|----|------|----------|---------|-----------------|
-| F1 | critical-only | Critical only | OFF | Default |
-| F1-refiner | critical-refiner | Critical only | ON | Default |
-| F2 | all-entities | All (10) | OFF | Default |
-| F2-refiner | all-refiner | All (10) | ON | Default |
-| F2-order2 | reversed-order | All (10) | OFF | Reversed |
+**⚠️ NOTE:** Current workflow uses single IPAdapterModelLoader, not per-entity nodes. Full regional IPAdapter requires workflow enhancement.
+
+| ID | Name | Entities | Refiner | Status |
+|----|------|----------|---------|--------|
+| F1 | critical-only | Critical | OFF | ✅ PASSED |
+| F1-refiner | critical-refiner | Critical | ON | ⏸️ Deferred |
+| F2 | all-entities | All | OFF | ✅ PASSED |
+| F2-refiner | all-refiner | All | ON | ⏸️ Deferred |
+| F2-order2 | reversed-order | All | OFF | ✅ PASSED |
 
 **Critical entities:** walls, floor, bathtub, vanity
 
@@ -150,7 +152,7 @@ Final candidates for production recipe.
 | 1 - Structural | 4 | ✅ Complete |
 | 2 - Calibration | 10 | ✅ Complete |
 | 3 - Refiner | 8 | 🔄 Partial (4/8, refiner deferred) |
-| 4 - Integration | 5 | ⏳ TODO |
+| 4 - Integration | 5 | ✅ Complete (3/5, F1-refiner deferred) |
 | 5 - Tech Spec | 3 | ⏳ TODO |
 | 6 - Production | 5 | ⏳ TODO |
 
