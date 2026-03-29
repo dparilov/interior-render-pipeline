@@ -72,31 +72,26 @@ Isolate weight sensitivity per entity class.
 
 ---
 
-## Block 3: Refiner Tests
+## Block 3: Refiner Tests ✅
 
 Test refiner impact before full integration.
 
-**⚠️ REFINER ISSUE:** SDXL Refiner requires separate CLIP encode — direct positive/negative passthrough fails with shape mismatch. Refiner tests (R*b) deferred until workflow is fixed.
+**Refiner workflow:** `render/workflow_refiner.json`
+- Separate CLIPTextEncode for refiner model
+- Refiner steps: 10, denoise: 0.25
 
-### Completed (baseline without refiner)
+| ID | Setup | Refiner | Time | Status |
+|----|-------|---------|------|--------|
+| R1a | Structural (S1) | OFF | 32s | ✅ PASSED |
+| R1b | Structural (S1) | ON | 90s | ✅ PASSED |
+| R2a | Floor (weight=0.5) | OFF | 36s | ✅ PASSED |
+| R2b | Floor (weight=0.5) | ON | 36s | ✅ PASSED |
+| R3a | Vanity (weight=0.5) | OFF | 34s | ✅ PASSED |
+| R3b | Vanity (weight=0.5) | ON | 38s | ✅ PASSED |
+| R4a | Critical only | OFF | 34s | ✅ PASSED |
+| R4b | Critical only | ON | 36s | ✅ PASSED |
 
-| ID | Setup | Refiner | Status |
-|----|-------|---------|--------|
-| R1a | Structural (S1) | OFF | ✅ PASSED |
-| R2a | Floor (weight=0.5) | OFF | ✅ PASSED |
-| R3a | Vanity (weight=0.5) | OFF | ✅ PASSED |
-| R4a | Critical only | OFF | ✅ PASSED |
-
-### Deferred (refiner integration needed)
-
-| ID | Setup | Refiner | Status |
-|----|-------|---------|--------|
-| R1b | Structural (S1) | ON | ⏸️ Deferred |
-| R2b | Floor (weight=0.5) | ON | ⏸️ Deferred |
-| R3b | Vanity (weight=0.5) | ON | ⏸️ Deferred |
-| R4b | Critical only | ON | ⏸️ Deferred |
-
-**TODO:** Build proper refiner workflow with separate CLIPTextEncode for refiner model.
+**Observation:** First refiner run (R1b) took 90s due to model loading. Subsequent runs ~36s.
 
 ---
 
@@ -109,9 +104,9 @@ Run after Block 2-3 to understand best settings.
 | ID | Name | Entities | Refiner | Status |
 |----|------|----------|---------|--------|
 | F1 | critical-only | Critical | OFF | ✅ PASSED |
-| F1-refiner | critical-refiner | Critical | ON | ⏸️ Deferred |
+| F1-refiner | critical-refiner | Critical | ON | ✅ PASSED |
 | F2 | all-entities | All | OFF | ✅ PASSED |
-| F2-refiner | all-refiner | All | ON | ⏸️ Deferred |
+| F2-refiner | all-refiner | All | ON | ✅ PASSED |
 | F2-order2 | reversed-order | All | OFF | ✅ PASSED |
 
 **Critical entities:** walls, floor, bathtub, vanity
@@ -138,7 +133,7 @@ Final candidates for production recipe.
 |----|------|------|--------|
 | P1 | best-critical | 445 | ✅ PASSED |
 | P2 | best-full | 446 | ✅ PASSED |
-| P2-refiner | best-full-refiner | - | ⏸️ Deferred |
+| P2-refiner | best-full-refiner | 548 | ✅ PASSED |
 | P3 | seed-test-1 | 165 | ✅ PASSED |
 | P4 | seed-test-2 | 498 | ✅ PASSED |
 
@@ -151,12 +146,12 @@ Final candidates for production recipe.
 | 0 - Infra | 1 | ✅ Complete |
 | 1 - Structural | 4 | ✅ Complete |
 | 2 - Calibration | 10 | ✅ Complete |
-| 3 - Refiner | 8 | 🔄 Partial (4/8, refiner deferred) |
-| 4 - Integration | 5 | ✅ Complete (3/5, F1-refiner deferred) |
+| 3 - Refiner | 8 | ✅ Complete |
+| 4 - Integration | 5 | ✅ Complete |
 | 5 - Tech Spec | 3 | ✅ Complete |
-| 6 - Production | 5 | ✅ Complete (4/5, P2-refiner deferred) |
+| 6 - Production | 5 | ✅ Complete |
 
-**Total:** 36 experiments
+**Total:** 36 experiments ✅ ALL COMPLETE
 
 ---
 
