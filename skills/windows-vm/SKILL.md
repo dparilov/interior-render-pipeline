@@ -10,11 +10,14 @@ Windows 11 VM for SketchUp, GUI applications, and Windows-specific tasks.
 |----------|-------|
 | Name | sketchup |
 | Type | QEMU/KVM with UEFI |
-| OS | Windows 11 |
+| OS | Windows 11 Enterprise Evaluation |
 | RAM | 8 GB |
 | vCPUs | 4 |
 | Disk | /home/dima/vm-setup/sketchup.qcow2 (80GB) |
 | UEFI | OVMF (GPT boot required) |
+| User | dmitrii |
+| Password | dmitrii |
+| SketchUp | 2026 (88 days license) |
 
 ## Connection Methods
 
@@ -22,7 +25,7 @@ Windows 11 VM for SketchUp, GUI applications, and Windows-specific tasks.
 |--------|------|--------|
 | VNC | localhost:5900 | ✅ Primary |
 | RDP | localhost:3389 | ✅ Works |
-| SSH | localhost:2222 | ⚠️ Needs setup |
+| SSH | localhost:2222 | ✅ Works |
 
 ## Quick Commands
 
