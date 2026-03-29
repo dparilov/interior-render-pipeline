@@ -50,3 +50,36 @@ For any Phase B (-v2) experiment, the audit MUST verify:
 
 Phase A results are NOT subject to multi-IPAdapter audit.
 They serve as baseline comparison only.
+
+---
+
+## Blender Flow Audit
+
+For bundles generated via Blender headless renderer:
+
+### Required Checks
+
+| Check | Description |
+|-------|-------------|
+| Size match | beauty, depth, all masks same resolution |
+| Depth range | Values span 0-65535 (16-bit) |
+| Mask binary | Only black (0) and white (255) pixels |
+| Entity coverage | Each manifest entity has mask file |
+| Manifest valid | JSON parses, required fields present |
+
+### Parity Checks (vs SketchUp)
+
+| Check | Description |
+|-------|-------------|
+| Entity names | Match expected IRP_ naming |
+| Mask alignment | Masks align with beauty geometry |
+| Depth consistency | Near/far correct (white=near, black=far) |
+
+### Contract Gaps
+
+Blender bundles must be manually enriched with:
+- [ ] `references/` directory
+- [ ] `technical_spec.md`
+- [ ] `ipadapter_weight` per entity
+- [ ] `role` and `critical` flags
+- [ ] `render_mode` per entity

@@ -278,3 +278,34 @@ Default order (large → small):
 4. Small fixtures/decor (towel_warmer, basket, mirror)
 
 Configurable via `order_policy`: default | reverse | custom
+
+---
+
+## Alternative Bundle Generation: Blender Headless
+
+**Status:** FALLBACK PATH (not canonical)
+
+### When to use
+
+- SketchUp unavailable
+- Headless CI/CD pipeline
+- Linux server without GUI
+
+### Capabilities
+
+| Feature | Status |
+|---------|--------|
+| Beauty render | ✅ EEVEE |
+| Depth map | ✅ Normalized Z-pass |
+| Entity masks | ✅ From IRP_ naming |
+| References | ❌ Manual |
+| Tech spec | ❌ Manual |
+
+### Contract parity
+
+Blender output requires manual enrichment:
+- Add `references/` directory
+- Add `technical_spec.md`
+- Extend manifest with role/weight/critical fields
+
+See `docs/BLENDER_FLOW.md` for full specification.

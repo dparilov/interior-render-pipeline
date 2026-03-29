@@ -246,6 +246,62 @@ Re-run after M1-M6 pass.
 
 ---
 
+---
+
+## Block B: Blender Flow Validation
+
+**Status:** ⏳ TODO
+
+Validates Blender headless fallback path.
+
+| ID | Test | Expected |
+|----|------|----------|
+| B0 | Bundle generation smoke | beauty + depth + masks generated |
+| B1 | Manifest validation | All required fields present |
+| B2 | Size consistency | All images same resolution |
+| B3 | Integration test | Blender bundle → main renderer |
+| B4 | Parity check | Compare vs SketchUp bundle |
+
+### B0 — Smoke Test
+
+```bash
+blender --background --python render/blender_masks.py -- \
+  --input model.glb --output masks/ \
+  --beauty beauty.png --depth depth.png
+```
+
+Expected: All files generated, no errors.
+
+### B1 — Manifest Validation
+
+Check manifest contains:
+- version, generator, resolution
+- base_image, depth_map
+- entities[] with name, mask, role, critical
+
+### B2 — Size Consistency
+
+All outputs must match `--resolution`:
+- beauty.png
+- depth.png
+- masks/*.png
+
+### B3 — Integration
+
+Run full pipeline with Blender-generated bundle:
+- Add references manually
+- Run workflow_builder
+- Verify render completes
+
+### B4 — Parity
+
+Compare same scene:
+- SketchUp export vs Blender export
+- Check mask alignment
+- Check entity coverage
+
+---
+
 ## TODOs
 
 ### Refiner Prompt Sync

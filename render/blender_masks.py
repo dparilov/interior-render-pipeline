@@ -318,6 +318,54 @@ def render_depth(output_path):
     print(f"  Rendered depth: {output_path}")
 
 
+def validate_blender_output(masks_dir, beauty_path, depth_path, manifest):
+    """Validate generated output for contract compliance."""
+    errors = []
+    
+    masks_dir = Path(masks_dir)
+    
+    # Check beauty exists
+    if beauty_path and not Path(beauty_path).exists():
+        errors.append(f"Beauty not found: {beauty_path}")
+    
+    # Check depth exists
+    if depth_path and not Path(depth_path).exists():
+        errors.append(f"Depth not found: {depth_path}")
+    
+    # Check all entity masks exist
+    for entity in manifest.get('entities', []):
+        mask_path = masks_dir / f"{entity['name']}.png"
+        if not mask_path.exists():
+            errors.append(f"Mask not found: {mask_path}")
+    
+    # Check resolution consistency (if PIL available)
+    try:
+        from PIL import Image
+        
+        expected_res = tuple(manifest.get('resolution', [0, 0]))
+        
+        if beauty_path and Path(beauty_path).exists():
+            img = Image.open(beauty_path)
+            if img.size != expected_res:
+                errors.append(f"Beauty size mismatch: {img.size} vs {expected_res}")
+        
+        if depth_path and Path(depth_path).exists():
+            img = Image.open(depth_path)
+            if img.size != expected_res:
+                errors.append(f"Depth size mismatch: {img.size} vs {expected_res}")
+        
+        for entity in manifest.get('entities', []):
+            mask_path = masks_dir / f"{entity['name']}.png"
+            if mask_path.exists():
+                img = Image.open(mask_path)
+                if img.size != expected_res:
+                    errors.append(f"Mask {entity['name']} size mismatch: {img.size} vs {expected_res}")
+    except ImportError:
+        errors.append("PIL not available for size validation")
+    
+    return errors
+
+
 def main():
     args = parse_args()
     
@@ -363,19 +411,46 @@ def main():
     # Save manifest if requested
     if args.manifest:
         manifest = {
+            'version': '1.0',
+            'generator': 'blender_masks.py',
+            'blender_version': bpy.app.version_string,
             'source': args.input,
             'resolution': [w, h],
-            'entities': {
-                name: {
+            'base_image': args.beauty if args.beauty else None,
+            'depth_map': args.depth if args.depth else None,
+            'depth_type': 'normalized_inverted',
+            'entities': [
+                {
+                    'name': name,
                     'mask': f"masks/{name}.png",
-                    'mesh_count': len(entities[name]['meshes'])
+                    'mesh_count': len(entities[name]['meshes']),
+                    'reference': None,  # Manual addition required
+                    'ipadapter_weight': 0.5,  # Default, adjust manually
+                    'role': 'surface' if name in ['walls', 'floor', 'ceiling'] else 'fixture',
+                    'critical': name in ['walls', 'floor', 'bathtub', 'vanity'],
+                    'render_mode': 'regional_texture'
                 }
-                for name in entities
-            }
+                for name in sorted(entities.keys())
+            ],
+            'requires_enrichment': [
+                'references/ directory with reference images',
+                'technical_spec.md',
+                'ipadapter_weight calibration per entity'
+            ]
         }
         with open(args.manifest, 'w') as f:
             json.dump(manifest, f, indent=2)
         print(f"\nManifest saved: {args.manifest}")
+        
+        # Validate output
+        print("\nValidating output...")
+        validation_errors = validate_blender_output(args.output, args.beauty, args.depth, manifest)
+        if validation_errors:
+            print("⚠️  Validation warnings:")
+            for err in validation_errors:
+                print(f"  - {err}")
+        else:
+            print("✅ Output validation passed")
     
     print(f"\n=== Done: {len(masks)} masks rendered ===")
 

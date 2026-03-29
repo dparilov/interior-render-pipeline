@@ -11,6 +11,7 @@
 | Single-Entity Calibration | ✅ Validated |
 | Refiner Integration | ✅ Validated |
 | **Multi-IPAdapter Regional Workflow** | ✅ **VALIDATED** |
+| **Blender Fallback Bundle Generation** | ✅ Implemented (partial parity) |
 
 ## Experiment Phases
 
