@@ -54,54 +54,66 @@ def build_runpod_input(workflow: Dict, manifest: Dict, bundle_path: Path) -> Dic
     prompt = copy.deepcopy(workflow.get("prompt", workflow))
     
     # Encode all required images as list of {name, image} objects
-    # Use flat names without paths (RunPod uploads to input/ dir)
+    # Use flat names (RunPod uploads to input/ dir)
+    # Names must match path_map replacements below
     images = []
     
-    # Beauty image
+    # Beauty image (required)
     beauty_path = bundle_path / manifest["base_image"]
-    images.append({"name": "beauty.png", "image": encode_image(beauty_path)})
+    if beauty_path.exists():
+        images.append({"name": "beauty.png", "image": encode_image(beauty_path)})
     
-    # Depth map
-    depth_path = bundle_path / manifest.get("depth_map", "depth.png")
-    if depth_path.exists():
-        images.append({"name": "depth.png", "image": encode_image(depth_path)})
+    # Depth map (optional)
+    if manifest.get("depth_map"):
+        depth_path = bundle_path / manifest["depth_map"]
+        if depth_path.exists():
+            images.append({"name": "depth.png", "image": encode_image(depth_path)})
     
-    # Boundary mask
-    boundary_path = bundle_path / manifest.get("boundary_mask", "boundary_mask.png")
-    if boundary_path.exists():
-        images.append({"name": "boundary_mask.png", "image": encode_image(boundary_path)})
+    # Boundary mask (optional)
+    if manifest.get("boundary_mask"):
+        boundary_path = bundle_path / manifest["boundary_mask"]
+        if boundary_path.exists():
+            images.append({"name": "boundary_mask.png", "image": encode_image(boundary_path)})
     
-    # Entity masks and references
+    # Entity masks and references (use actual paths from manifest)
     for entity in manifest.get("entities", []):
-        # Mask - use flat name like "mask_walls.png"
-        mask_path = bundle_path / entity["mask"]
-        if mask_path.exists():
-            flat_name = f"mask_{entity['name']}.png"
-            images.append({"name": flat_name, "image": encode_image(mask_path)})
+        # Mask
+        if entity.get("mask"):
+            mask_path = bundle_path / entity["mask"]
+            if mask_path.exists():
+                images.append({"name": f"mask_{entity['name']}.png", "image": encode_image(mask_path)})
         
-        # Reference - use flat name like "ref_walls.png"
+        # Reference
         if entity.get("reference"):
             ref_path = bundle_path / entity["reference"]
             if ref_path.exists():
-                flat_name = f"ref_{entity['name']}.png"
-                images.append({"name": flat_name, "image": encode_image(ref_path)})
+                images.append({"name": f"ref_{entity['name']}.png", "image": encode_image(ref_path)})
     
-    # Update workflow paths to use uploaded image names
-    # Replace BUNDLE_PATH/* with just the filename
-    prompt_str = json.dumps(prompt)
-    prompt_str = prompt_str.replace("BUNDLE_PATH/beauty.png", "beauty.png")
-    prompt_str = prompt_str.replace("BUNDLE_PATH/depth.png", "depth.png")
-    prompt_str = prompt_str.replace("BUNDLE_PATH/boundary_mask.png", "boundary_mask.png")
+    # Build path replacement map from manifest (not by naming convention)
+    # Maps original workflow paths to flat uploaded names
+    path_map = {
+        f"BUNDLE_PATH/{manifest['base_image']}": "beauty.png",
+    }
+    
+    if manifest.get("depth_map"):
+        path_map[f"BUNDLE_PATH/{manifest['depth_map']}"] = "depth.png"
+    
+    if manifest.get("boundary_mask"):
+        path_map[f"BUNDLE_PATH/{manifest['boundary_mask']}"] = "boundary_mask.png"
     
     for entity in manifest.get("entities", []):
-        old_mask = f"BUNDLE_PATH/masks/{entity['name']}.png"
-        new_mask = f"mask_{entity['name']}.png"
-        prompt_str = prompt_str.replace(old_mask, new_mask)
+        # Use actual mask path from manifest
+        if entity.get("mask"):
+            path_map[f"BUNDLE_PATH/{entity['mask']}"] = f"mask_{entity['name']}.png"
         
+        # Use actual reference path from manifest
         if entity.get("reference"):
-            old_ref = f"BUNDLE_PATH/{entity['reference']}"
-            new_ref = f"ref_{entity['name']}.png"
-            prompt_str = prompt_str.replace(old_ref, new_ref)
+            path_map[f"BUNDLE_PATH/{entity['reference']}"] = f"ref_{entity['name']}.png"
+    
+    # Apply all replacements
+    prompt_str = json.dumps(prompt)
+    for old_path, new_path in path_map.items():
+        prompt_str = prompt_str.replace(old_path, new_path)
     
     prompt = json.loads(prompt_str)
     

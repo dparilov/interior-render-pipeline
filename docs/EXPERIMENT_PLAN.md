@@ -50,20 +50,32 @@ Expected cost per experiment: ~$0.03-0.04.
 
 ## Block 0: Infrastructure Test (RunPod Validation)
 
-Validate RunPod pipeline with stock SDXL image (no IPAdapter).
+Minimal smoke test to validate RunPod pipeline works.
 
-| ID | Name | Depth | Boundary | IPAdapter | ControlNet | Purpose |
-|----|------|-------|----------|-----------|------------|---------|
-| S0 | runpod-test | SKP 0.9 | ON | OFF | Canny 0.8, Depth 0.9 | Verify RunPod works |
+| ID | Name | ControlNet | IPAdapter | Boundary | Purpose |
+|----|------|------------|-----------|----------|---------|
+| S0 | runpod-smoke | Canny 0.8 | OFF | OFF | Verify RunPod transport + generation |
 
 **Uses:** `runpod/worker-comfyui:5.8.5-sdxl` (stock image)
 
-**Pass criteria:**
-- Job completes without error
-- Output image generated
-- Room structure roughly correct (no IPAdapter = generic materials)
+**S0 is intentionally minimal:**
+- Single ControlNet (Canny only)
+- No Depth ControlNet
+- No Boundary mask
+- No IPAdapter
+- Generic positive prompt
+
+**Pass criteria (hard):**
+- Job completes without error (status: COMPLETED)
+- Output image returned (base64 or S3 URL)
+- Image is valid PNG/JPEG
+
+**Pass criteria (soft, sanity check):**
+- Generated image resembles bathroom layout (not required for pass)
 
 **After S0 passes:** Build custom Docker image with IPAdapter for Blocks 1-6.
+
+**Rollback rule:** If custom image fails on S1, return to stock image with minimal workflow to isolate whether problem is custom nodes vs RunPod endpoint.
 
 ---
 

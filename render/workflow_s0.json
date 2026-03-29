@@ -1,6 +1,6 @@
 {
-  "_comment": "S0 - RunPod Infrastructure Test (no IPAdapter)",
-  "_description": "ControlNet only: Canny + Depth, stock SDXL image",
+  "_comment": "S0 - RunPod Infrastructure Smoke Test",
+  "_description": "Minimal workflow: Canny ControlNet only, no Depth, no Boundary, no IPAdapter",
   
   "prompt": {
     "checkpoint": {
@@ -34,13 +34,6 @@
       }
     },
     
-    "load_depth": {
-      "class_type": "LoadImage",
-      "inputs": {
-        "image": "depth.png"
-      }
-    },
-    
     "empty_latent": {
       "class_type": "EmptyLatentImage",
       "inputs": {
@@ -53,7 +46,7 @@
     "positive": {
       "class_type": "CLIPTextEncode",
       "inputs": {
-        "text": "modern bathroom interior, white walls, marble floor, bathtub, vanity with mirror, natural lighting from window, photorealistic, high quality, 8k",
+        "text": "modern bathroom interior, white walls, floor tiles, bathtub, vanity with mirror, natural lighting, photorealistic, high quality",
         "clip": ["checkpoint", 1]
       }
     },
@@ -61,7 +54,7 @@
     "negative": {
       "class_type": "CLIPTextEncode",
       "inputs": {
-        "text": "cartoon, anime, drawing, sketch, painting, illustration, CGI, low quality, blurry, distorted, watermark, text",
+        "text": "cartoon, anime, drawing, sketch, low quality, blurry, distorted, watermark, text",
         "clip": ["checkpoint", 1]
       }
     },
@@ -108,7 +101,7 @@
       "class_type": "SaveImage",
       "inputs": {
         "images": ["decode", 0],
-        "filename_prefix": "S0_runpod_test"
+        "filename_prefix": "S0_runpod_smoke"
       }
     }
   }
