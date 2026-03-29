@@ -400,6 +400,187 @@ Bundle independent of source application.
 
 ---
 
+# Epic C — Research Best Rendering Strategy for Fixtures and Surfaces
+
+## Goal
+
+Current canonical pipeline uses IPAdapterAdvanced with regional masks for both surfaces and fixtures. This should not be treated as "the final answer."
+
+Create structured research to determine the best rendering strategy separately for:
+- **Surfaces** (walls, floor, tile, marble, countertop)
+- **Fixtures** (bathtub, vanity, sink, towel warmer, shower)
+
+**Hypothesis:** Different object classes need different rendering mechanisms.
+
+---
+
+## Why This Matters
+
+### Surfaces need:
+- Material continuity
+- Texture fidelity
+- Seamless boundaries
+- Preservation of room geometry
+
+### Fixtures need:
+- Shape preservation
+- Object identity
+- Fine detail
+- Correct proportions
+
+Using the same mechanism for both limits quality.
+
+---
+
+## Epic C1 — Define Rendering Strategy Families
+
+### Surface Candidates
+
+| Strategy | Description |
+|----------|-------------|
+| S-IP | Current regional IPAdapterAdvanced |
+| S-IP-LOW | Lower-weight IPAdapter |
+| S-CN-TILE | ControlNet Tile / texture transfer |
+| S-CN-DEPTH | ControlNet depth + text prompt only |
+| S-HYBRID | IPAdapter + ControlNet Tile |
+| S-MASK-I2I | Masked img2img over surface region |
+| S-REFINER | Surface strategy + refiner |
+
+### Fixture Candidates
+
+| Strategy | Description |
+|----------|-------------|
+| F-IP | Current regional IPAdapterAdvanced |
+| F-IP-HIGH | Stronger IPAdapter weight |
+| F-I2I | Regional image-to-image with reference |
+| F-CN-POSE | ControlNet / structural guidance |
+| F-HYBRID | IPAdapter + img2img |
+| F-MULTIREF | Multiple references for same fixture |
+| F-REFINER | Fixture strategy + refiner |
+
+---
+
+## Epic C2 — Add Strategy Abstraction to Manifest
+
+Extend entity contract:
+
+```json
+{
+  "name": "bathtub",
+  "role": "fixture",
+  "render_strategy": "F-IP",
+  "ipadapter_weight": 0.6
+}
+```
+
+Workflow builder chooses branch based on `render_strategy`.
+
+---
+
+## Epic C3 — Extend Workflow Builder
+
+Current builder chooses:
+- Entity order
+- Entity weight
+- Refiner on/off
+
+Future builder should also choose rendering branch type:
+
+```python
+if render_strategy == "S-IP":
+    use regional IPAdapterAdvanced
+if render_strategy == "S-CN-TILE":
+    use Tile ControlNet branch
+if render_strategy == "F-I2I":
+    use masked img2img branch
+```
+
+**Target:** Plug-in architecture for entity rendering.
+
+---
+
+## Block RS — Rendering Strategy Research
+
+### RS1 — Surface Strategy Comparison
+
+Same floor/wall reference, compare: S-IP, S-IP-LOW, S-CN-TILE, S-HYBRID, S-MASK-I2I
+
+**Metrics:** texture continuity, realism, boundary quality, geometry preservation
+
+### RS2 — Fixture Strategy Comparison
+
+Same bathtub/vanity reference, compare: F-IP, F-IP-HIGH, F-I2I, F-HYBRID, F-MULTIREF
+
+**Metrics:** fixture similarity, shape preservation, material accuracy, local detail
+
+### RS3 — Combined Strategy
+
+Find best surface + best fixture strategy, combine:
+```
+floor -> S-HYBRID
+walls -> S-CN-TILE
+bathtub -> F-I2I
+vanity -> F-IP-HIGH
+```
+
+**Goal:** Determine if mixed strategies outperform uniform IPAdapter.
+
+### RS4 — Strategy with Refiner
+
+Best combined strategy ± refiner.
+
+### RS5 — Strategy Stress Test
+
+Hard scene: glossy surfaces, marble, reflective fixtures, multiple competing entities.
+
+---
+
+## Technical Work
+
+### Task C3.1 — Research Alternative Nodes
+
+Evaluate ComfyUI support:
+- IPAdapterAdvanced / Plus
+- Tile ControlNet
+- img2img masked workflow
+- InstantID-like reference mechanisms
+- Multiple reference images
+- Regional prompt control
+
+**Deliverable:** Compatibility matrix.
+
+### Task C3.2 — Strategy Benchmark Matrix
+
+| Entity | Strategy | Quality | Runtime | Stability |
+|--------|----------|---------|---------|-----------|
+| Floor | S-IP | | | |
+| Floor | S-HYBRID | | | |
+| Bathtub | F-I2I | | | |
+
+### Task C3.3 — Add Metrics
+
+**Surfaces:** texture similarity, edge continuity, visible seams
+
+**Fixtures:** perceptual similarity, shape similarity, local detail score
+
+**Also:** runtime, prompt sensitivity, robustness to reference quality
+
+---
+
+## Priority
+
+1. Surface strategy comparison for floor
+2. Fixture strategy comparison for bathtub
+3. Add render_strategy field to manifest
+4. Extend workflow builder
+5. Combined strategy experiments
+
+**Hypothesis:**
+- Surfaces benefit from hybrid texture-transfer approaches
+- Fixtures benefit from stronger reference-based methods
+
+---
+
 # Policy
 
 **Keep SketchUp path canonical until Blender-first path reaches measurable parity.**
