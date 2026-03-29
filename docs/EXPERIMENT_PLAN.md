@@ -65,8 +65,8 @@ Isolate weight sensitivity per entity class.
 | I4-03 | vanity | 0.3 | ✅ PASSED |
 | I4-04 | vanity | 0.4 | ✅ PASSED |
 | I4-05 | vanity | 0.5 | ✅ PASSED |
-| I4-06 | vanity | 0.6 | ⏳ TODO |
-| I4-07 | vanity | 0.7 | ⏳ TODO |
+| I4-06 | vanity | 0.6 | ✅ PASSED |
+| I4-07 | vanity | 0.7 | ✅ PASSED |
 
 **Output:** Best weight for surface, best weight for fixture.
 
@@ -154,7 +154,7 @@ Final candidates for production recipe.
 |-------|-------------|--------|
 | 0 - Infra | 1 | ✅ Complete |
 | 1 - Structural | 4 | ✅ Complete |
-| 2 - Calibration | 10 | 🔄 In Progress (8/10) |
+| 2 - Calibration | 10 | ✅ Complete |
 | 3 - Refiner | 8 | ⏳ TODO |
 | 4 - Integration | 5 | ⏳ TODO |
 | 5 - Tech Spec | 3 | ⏳ TODO |
