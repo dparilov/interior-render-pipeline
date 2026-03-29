@@ -118,29 +118,29 @@ Run after Block 2-3 to understand best settings.
 
 ---
 
-## Block 5: Technical Spec Impact
+## Block 5: Technical Spec Impact ✅
 
 Run on best integration setup from Block 4.
 
-| ID | Name | Refs | Prompts | Purpose |
-|----|------|------|---------|---------|
-| T1 | full-tz | ✅ | ТЗ-derived | Full spec compliance |
-| T2 | refs-only | ✅ | Simplified | Isolate ref impact |
-| T3 | strong-tz | ✅ | Strong ТЗ | Max spec emphasis |
+| ID | Name | Prompts | Status |
+|----|------|---------|--------|
+| T1 | full-tz | ТЗ-derived | ✅ PASSED |
+| T2 | refs-only | Simplified | ✅ PASSED |
+| T3 | strong-tz | Strong ТЗ | ✅ PASSED |
 
 ---
 
-## Block 6: Production Candidate
+## Block 6: Production Candidate ✅
 
 Final candidates for production recipe.
 
-| ID | Name | Config | Seed | Purpose |
-|----|------|--------|------|---------|
-| P1 | best-critical | Best structural + best weights + critical | 42 | Minimal viable |
-| P2 | best-full | Best full integration | 42 | Full scene |
-| P2-refiner | best-full-refiner | Best full + refiner | 42 | With refinement |
-| P3 | seed-test-1 | Best variant | 123 | Seed stability |
-| P4 | seed-test-2 | Best variant | 456 | Seed stability |
+| ID | Name | Seed | Status |
+|----|------|------|--------|
+| P1 | best-critical | 445 | ✅ PASSED |
+| P2 | best-full | 446 | ✅ PASSED |
+| P2-refiner | best-full-refiner | - | ⏸️ Deferred |
+| P3 | seed-test-1 | 165 | ✅ PASSED |
+| P4 | seed-test-2 | 498 | ✅ PASSED |
 
 ---
 
@@ -153,8 +153,8 @@ Final candidates for production recipe.
 | 2 - Calibration | 10 | ✅ Complete |
 | 3 - Refiner | 8 | 🔄 Partial (4/8, refiner deferred) |
 | 4 - Integration | 5 | ✅ Complete (3/5, F1-refiner deferred) |
-| 5 - Tech Spec | 3 | ⏳ TODO |
-| 6 - Production | 5 | ⏳ TODO |
+| 5 - Tech Spec | 3 | ✅ Complete |
+| 6 - Production | 5 | ✅ Complete (4/5, P2-refiner deferred) |
 
 **Total:** 36 experiments
 
