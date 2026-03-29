@@ -186,10 +186,11 @@ module IRP
     puts "Loaded role_map.json (#{@role_map.length} entities)"
     puts ""
     
-    # Load technical spec if exists
+    # Load technical spec if exists (optional - used for traceability, not export)
     tz_path = File.join(dir, 'TZ.md')
     tz_path = File.join(dir, 'ТЗ.md') unless File.exist?(tz_path)
     @technical_spec = load_technical_spec(tz_path)
+    # Note: ТЗ is used in Phase 1 (AI mapping), not required for export
     
     # Create temp folder
     temp_dir = File.join(dir, "irp_bundle_temp")
@@ -302,7 +303,7 @@ module IRP
         summary: summary
       }
     else
-      puts "  ⚠ Technical spec (ТЗ.md) not found"
+      # ТЗ is optional for export - it's used in Phase 1 (AI mapping)
       { exists: false, path: nil, hash: nil, summary: nil }
     end
   end
