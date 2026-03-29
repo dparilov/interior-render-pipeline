@@ -48,6 +48,47 @@
 3. Experiment completion requires manual poll of ComfyUI
 4. **SketchUp antialias hardcoded to 2X** — masks require Python binarization (postprocess.py)
 
+## Current Experiment: S1 (Structural Baseline)
+
+**Status:** 🔄 Running
+
+**Prompt ID:** `d3b4e3a1-c581-449e-b615-8d031e1a21c7`
+**Started:** 2026-03-29 15:45 UTC+3
+**ETA:** ~1.5h (CPU render)
+
+### S1 Parameters
+
+| Parameter | Value |
+|-----------|-------|
+| Checkpoint | RealVisXL_V4.0 |
+| IPAdapter | ip-adapter-plus_sdxl_vit-h |
+| CLIP Vision | CLIP-ViT-H-14-laion2B |
+| ControlNet Canny | 0.8 (end 0.9) |
+| ControlNet Depth | 0.9 (end 0.8) |
+| Sampler | dpmpp_2m_sde + karras |
+| Steps | 50 |
+| CFG | 7.0 |
+| Seed | 42 |
+| Resolution | 1920×1080 |
+
+### IPAdapter Weights (per class)
+
+| Class | Weight | Mode |
+|-------|--------|------|
+| surface | 0.55 | regional_ipadapter |
+| fixture | 0.50 | regional_ipadapter |
+| opening | 0.00 | structural_controlnet |
+
+### Bundle Validation (pre-render)
+
+| Check | Status |
+|-------|--------|
+| Schema | ✅ Valid |
+| Masks binary | ✅ All binarized |
+| References | ✅ 9 files |
+| Technical spec | ✅ sha256:c312... |
+| Visual QA | ✅ 81.8 avg score |
+
 ## File Locations
 
 ```
