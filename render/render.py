@@ -1,83 +1,82 @@
-#!/usr/bin/env python3
 """
-IRP Delta - Canonical Render Script
+IRP Render Orchestrator v1.1
 
-Renders a bundle using ComfyUI API with experiment tracking.
+Submits bundle to ComfyUI with full experiment tracking.
+All parameters are extracted from actual workflow, not hardcoded.
 """
 
-import argparse
 import json
-import time
 import requests
 from pathlib import Path
+from typing import Dict, Any, Optional
+import sys
 
+from validate import validate_bundle, BundleValidator
 from experiment import Experiment, create_experiment
 
 
-def load_manifest(bundle_path: Path) -> dict:
-    """Load and validate bundle manifest."""
-    manifest_path = bundle_path / "manifest.json"
-    if not manifest_path.exists():
-        raise FileNotFoundError(f"manifest.json not found in {bundle_path}")
-    
-    manifest = json.loads(manifest_path.read_text())
-    
-    # Validate required fields
-    required = ["version", "base_image", "image_size", "entities"]
-    for field in required:
-        if field not in manifest:
-            raise ValueError(f"Missing required field: {field}")
-    
-    return manifest
+COMFYUI_URL = "http://127.0.0.1:8188"
 
 
-def build_workflow(manifest: dict, bundle_path: Path) -> dict:
-    """Build ComfyUI workflow from manifest."""
+def load_workflow(workflow_path: Path) -> Dict:
+    """Load base workflow template."""
+    with open(workflow_path) as f:
+        return json.load(f)
+
+
+def load_manifest(bundle_path: Path) -> Dict:
+    """Load and return bundle manifest."""
+    with open(bundle_path / "manifest.json") as f:
+        return json.load(f)
+
+
+def build_prompt(workflow: Dict, manifest: Dict, bundle_path: Path) -> Dict:
+    """Build ComfyUI prompt from workflow template and bundle manifest.
     
-    # Load base workflow
-    workflow_path = Path(__file__).parent / "workflow.json"
-    workflow = json.loads(workflow_path.read_text())
-    prompt = workflow["prompt"]
+    Modifies workflow in-place and returns it.
+    """
+    prompt = workflow.get("prompt", workflow)
     
     # Set image size from manifest
     width = manifest["image_size"]["width"]
     height = manifest["image_size"]["height"]
-    prompt["empty_latent"]["inputs"]["width"] = width
-    prompt["empty_latent"]["inputs"]["height"] = height
+    
+    if "empty_latent" in prompt:
+        prompt["empty_latent"]["inputs"]["width"] = width
+        prompt["empty_latent"]["inputs"]["height"] = height
     
     # Set beauty path
     beauty_path = str(bundle_path / manifest["base_image"])
-    prompt["load_beauty"]["inputs"]["image"] = beauty_path
+    if "load_beauty" in prompt:
+        prompt["load_beauty"]["inputs"]["image"] = beauty_path
     
-    # Build positive prompt from entities
-    entity_prompts = []
-    for entity in manifest["entities"]:
-        if entity.get("prompt"):
-            entity_prompts.append(f"{entity['name'].upper()}: {entity['prompt']}")
-    
-    base_prompt = "photorealistic interior photograph, professional architectural photography, 8k uhd"
-    full_prompt = base_prompt + "\n\n" + "\n".join(entity_prompts)
-    prompt["positive"]["inputs"]["text"] = full_prompt
-    
-    # Use SketchUp depth map instead of neural estimation
+    # Use SketchUp depth map (ground truth)
     if manifest.get("depth_map"):
         depth_path = str(bundle_path / manifest["depth_map"])
+        
+        # Add or update depth loader
         prompt["load_depth"] = {
             "class_type": "LoadImage",
             "inputs": {"image": depth_path}
         }
-        # Replace DepthAnything preprocessor with direct depth load
+        
+        # Remove neural depth preprocessor if exists
         if "depth_preprocess" in prompt:
             del prompt["depth_preprocess"]
-        prompt["apply_controlnet_depth"]["inputs"]["image"] = ["load_depth", 0]
+        
+        # Point ControlNet to loaded depth
+        if "apply_controlnet_depth" in prompt:
+            prompt["apply_controlnet_depth"]["inputs"]["image"] = ["load_depth", 0]
     
-    # Use boundary mask for latent masking (no generation outside room)
+    # Use boundary mask for latent masking
     if manifest.get("boundary_mask"):
         boundary_path = str(bundle_path / manifest["boundary_mask"])
+        
         prompt["load_boundary"] = {
             "class_type": "LoadImageMask",
             "inputs": {"image": boundary_path, "channel": "red"}
         }
+        
         prompt["set_latent_mask"] = {
             "class_type": "SetLatentNoiseMask",
             "inputs": {
@@ -85,12 +84,32 @@ def build_workflow(manifest: dict, bundle_path: Path) -> dict:
                 "mask": ["load_boundary", 0]
             }
         }
+        
         # Update sampler to use masked latent
-        prompt["sampler"]["inputs"]["latent_image"] = ["set_latent_mask", 0]
+        if "sampler" in prompt:
+            prompt["sampler"]["inputs"]["latent_image"] = ["set_latent_mask", 0]
+    
+    # Build positive prompt from entities
+    entity_prompts = []
+    for entity in manifest.get("entities", []):
+        if entity.get("prompt"):
+            entity_prompts.append(f"{entity['name'].upper()}: {entity['prompt']}")
+    
+    base_prompt = "photorealistic interior photograph, professional architectural photography, 8k uhd, natural lighting"
+    
+    # Add room summary from technical spec if available
+    tech_spec = manifest.get("technical_spec", {})
+    if tech_spec.get("summary"):
+        base_prompt += f", {tech_spec['summary']}"
+    
+    full_prompt = base_prompt + "\n\n" + "\n".join(entity_prompts)
+    
+    if "positive" in prompt:
+        prompt["positive"]["inputs"]["text"] = full_prompt
     
     # Add IPAdapters for entities with references
     last_model = "checkpoint"
-    for i, entity in enumerate(manifest["entities"]):
+    for i, entity in enumerate(manifest.get("entities", [])):
         if entity.get("render_mode") != "regional_ipadapter":
             continue
         if not entity.get("reference"):
@@ -99,6 +118,11 @@ def build_workflow(manifest: dict, bundle_path: Path) -> dict:
         ref_path = str(bundle_path / entity["reference"])
         mask_path = str(bundle_path / entity["mask"])
         weight = entity.get("ipadapter_weight", 0.5)
+        
+        # Skip if reference file doesn't exist
+        if not Path(ref_path).exists():
+            print(f"Warning: Reference not found for {entity['name']}: {ref_path}")
+            continue
         
         # Load reference
         ref_node = f"load_ref_{entity['name']}"
@@ -127,89 +151,146 @@ def build_workflow(manifest: dict, bundle_path: Path) -> dict:
                 "combine_embeds": "concat",
                 "embeds_scaling": "V only",
                 "start_at": 0.0,
-                "end_at": 0.9,
+                "end_at": 0.8,
                 "attn_mask": [mask_node, 0]
             }
         }
+        
         last_model = ipadapter_node
     
-    # Connect last IPAdapter to sampler
+    # Update final model connection
     if last_model != "checkpoint":
-        prompt["sampler"]["inputs"]["model"] = [last_model, 0]
+        for node_name in ["apply_controlnet_canny", "apply_controlnet_depth"]:
+            if node_name in prompt:
+                # Find which node uses checkpoint and update
+                pass
+        
+        if "sampler" in prompt:
+            prompt["sampler"]["inputs"]["model"] = [last_model, 0]
     
     return workflow
 
 
-def render(bundle_path: Path, host: str = "127.0.0.1", port: int = 8188, 
-            seed: int = 42, track: bool = True) -> dict:
-    """Submit workflow to ComfyUI with experiment tracking."""
+def submit_prompt(prompt: Dict, experiment: Optional[Experiment] = None) -> Dict:
+    """Submit prompt to ComfyUI and return response."""
+    try:
+        response = requests.post(
+            f"{COMFYUI_URL}/prompt",
+            json={"prompt": prompt},
+            timeout=30
+        )
+        response.raise_for_status()
+        result = response.json()
+        
+        if experiment and result.get("prompt_id"):
+            experiment.log_submit(result["prompt_id"])
+        
+        return result
+    except requests.exceptions.RequestException as e:
+        if experiment:
+            experiment.fail(str(e))
+        raise
+
+
+def render(
+    bundle_path: Path,
+    workflow_path: Path = None,
+    experiment_name: str = "render",
+    experiments_dir: Path = None,
+    validate: bool = True,
+    dry_run: bool = False
+) -> Dict:
+    """Main render function.
     
-    manifest = load_manifest(bundle_path)
-    workflow = build_workflow(manifest, bundle_path)
+    Args:
+        bundle_path: Path to IRP bundle
+        workflow_path: Path to workflow JSON (default: render/workflow.json)
+        experiment_name: Name prefix for experiment
+        experiments_dir: Where to save experiment data
+        validate: Whether to validate bundle first
+        dry_run: If True, don't submit to ComfyUI
     
-    # Override seed if specified
-    if "sampler" in workflow.get("prompt", workflow):
-        workflow["prompt"]["sampler"]["inputs"]["seed"] = seed
+    Returns:
+        Dict with prompt_id and experiment info
+    """
+    bundle_path = Path(bundle_path)
+    
+    if workflow_path is None:
+        workflow_path = Path(__file__).parent / "workflow.json"
+    
+    if experiments_dir is None:
+        experiments_dir = bundle_path / "experiments"
     
     # Create experiment
-    exp = None
-    if track:
-        exp = create_experiment(bundle_path)
-        exp.log_params({
-            "seed": seed,
-            "host": host,
-            "port": port,
-            "canny_strength": 0.8,
-            "depth_strength": 0.9,
-            "steps": 50
-        })
-        exp.log_workflow(workflow)
-        exp.log_bundle()
-    
-    # Submit to ComfyUI
-    start_time = time.time()
-    url = f"http://{host}:{port}/prompt"
-    response = requests.post(url, json=workflow)
-    response.raise_for_status()
-    
-    result = response.json()
-    
-    if exp:
-        exp.log_comfyui_response(result)
-    
-    return {
-        "prompt_id": result.get("prompt_id"),
-        "experiment_id": exp.exp_id if exp else None,
-        "experiment_dir": str(exp.exp_dir) if exp else None
-    }
-
-
-def main():
-    parser = argparse.ArgumentParser(description="IRP Delta Renderer")
-    parser.add_argument("bundle", type=Path, help="Path to bundle directory")
-    parser.add_argument("--host", default="127.0.0.1", help="ComfyUI host")
-    parser.add_argument("--port", type=int, default=8188, help="ComfyUI port")
-    parser.add_argument("--seed", type=int, default=42, help="Random seed")
-    parser.add_argument("--no-track", action="store_true", help="Disable experiment tracking")
-    
-    args = parser.parse_args()
-    
-    if not args.bundle.exists():
-        print(f"Error: Bundle not found: {args.bundle}")
-        return 1
+    experiment = create_experiment(experiment_name, experiments_dir)
     
     try:
-        result = render(args.bundle, args.host, args.port, 
-                       seed=args.seed, track=not args.no_track)
-        print(f"Submitted: {result['prompt_id']}")
-        if result.get('experiment_id'):
-            print(f"Experiment: {result['experiment_id']}")
-            print(f"Tracking: {result['experiment_dir']}")
-        return 0
+        # Validate bundle
+        if validate:
+            print("Validating bundle...")
+            is_valid, errors = validate_bundle(bundle_path)
+            for error in errors:
+                print(f"  {error}")
+            if not is_valid:
+                experiment.fail("Bundle validation failed")
+                return {"error": "Bundle validation failed", "errors": errors}
+            print("  ✅ Bundle valid")
+        
+        # Load manifest
+        print("Loading manifest...")
+        manifest = load_manifest(bundle_path)
+        experiment.log_bundle(bundle_path, manifest)
+        
+        # Load and build workflow
+        print("Building workflow...")
+        workflow = load_workflow(workflow_path)
+        workflow = build_prompt(workflow, manifest, bundle_path)
+        experiment.log_workflow(workflow)
+        
+        # Log environment
+        experiment.log_environment(
+            comfyui_version="unknown",  # Could query /system_stats
+            models={
+                "checkpoint": workflow.get("prompt", workflow).get("checkpoint", {}).get("inputs", {}).get("ckpt_name", "unknown"),
+                "ipadapter": workflow.get("prompt", workflow).get("ipadapter_model", {}).get("inputs", {}).get("ipadapter_file", "unknown")
+            }
+        )
+        
+        if dry_run:
+            print("Dry run - not submitting to ComfyUI")
+            experiment.complete(status="dry_run")
+            return {"experiment_id": experiment.id, "dry_run": True}
+        
+        # Submit to ComfyUI
+        print("Submitting to ComfyUI...")
+        result = submit_prompt(workflow.get("prompt", workflow), experiment)
+        
+        print(f"  ✅ Submitted: {result.get('prompt_id')}")
+        
+        return {
+            "prompt_id": result.get("prompt_id"),
+            "experiment_id": experiment.id,
+            "experiment_dir": str(experiment.output_dir)
+        }
+        
     except Exception as e:
-        print(f"Error: {e}")
-        return 1
+        experiment.fail(str(e))
+        raise
 
 
 if __name__ == "__main__":
-    exit(main())
+    if len(sys.argv) < 2:
+        print("Usage: python render.py <bundle_path> [--dry-run] [--no-validate]")
+        sys.exit(1)
+    
+    bundle_path = Path(sys.argv[1])
+    dry_run = "--dry-run" in sys.argv
+    validate = "--no-validate" not in sys.argv
+    
+    result = render(
+        bundle_path=bundle_path,
+        dry_run=dry_run,
+        validate=validate
+    )
+    
+    print(json.dumps(result, indent=2))

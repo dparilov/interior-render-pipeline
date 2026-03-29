@@ -1,89 +1,138 @@
 {
-  "version": "1.0",
-  "scene_id": "bathroom_01_front",
-  "created": "2026-03-29T12:00:00Z",
+  "version": "1.1",
+  "scene_id": "bathroom_masha_scene_1",
+  "created": "2026-03-29T14:30:00Z",
   
   "base_image": "beauty.png",
+  "depth_map": "depth.png",
+  "boundary_mask": "boundary_mask.png",
+  
   "image_size": {
     "width": 1920,
     "height": 1080
   },
   
   "camera": {
-    "eye": [0.45, -1.75, 0.77],
-    "target": [0.45, 0.25, 0.77],
-    "up": [0, 0, 1],
-    "fov": 35
+    "eye": [0.451, -1.749, 0.767],
+    "target": [0.458, 2.356, 0.629],
+    "up": [0.0, 0.034, 0.999],
+    "fov": 35.0
+  },
+  
+  "technical_spec": {
+    "path": "technical_spec.md",
+    "hash": "sha256:example_hash_will_be_computed",
+    "summary": "Ванная комната для Маши: Costa Nova tiles, IDDIS vanity, white towel warmer"
   },
   
   "entities": [
     {
-      "name": "floor",
-      "class": "surface",
-      "surface_kind": "floor",
-      "mask": "masks/floor.png",
-      "coverage_pct": 18.4,
-      "reference": "references/floor_tiles.jpg",
-      "prompt": "blue patterned ceramic floor tiles Equipe Rivoli Bergen Azul style with geometric moroccan pattern, 200x200mm",
-      "critical": true,
-      "render_mode": "regional_ipadapter",
-      "ipadapter_weight": 0.55
-    },
-    {
+      "pid": 36696,
       "name": "walls",
+      "role": "surface.walls",
       "class": "surface",
       "surface_kind": "wall_tiles",
       "mask": "masks/walls.png",
       "coverage_pct": 30.5,
       "reference": "references/wall_tiles.png",
-      "prompt": "white glossy wavy subway tiles Costa Nova style with 3D relief texture arranged vertically, 50x200mm",
+      "prompt": "white glossy wavy subway tiles, Equipe Costa Nova White style, 3D ribbed texture, vertical orientation, 50x200mm",
+      "prompt_source": "ТЗ.md section 'Настенная плитка'",
       "critical": true,
       "render_mode": "regional_ipadapter",
       "ipadapter_weight": 0.55
     },
     {
-      "name": "vanity",
-      "class": "fixture",
-      "mask": "masks/vanity.png",
-      "coverage_pct": 8.2,
-      "reference": "references/vanity.jpg",
-      "prompt": "dark charcoal gray wall-mounted vanity cabinet IDDIS Edifice with soft-close drawers and white ceramic sink",
+      "pid": 36828,
+      "name": "floor",
+      "role": "surface.floor",
+      "class": "surface",
+      "surface_kind": "floor_tiles",
+      "mask": "masks/floor.png",
+      "coverage_pct": 15.2,
+      "reference": "references/floor_tiles.jpg",
+      "prompt": "blue ceramic floor tiles with white geometric pattern, Equipe Rivoli Bergen Azul style, intersecting circles/petals, mediterranean, 200x200mm",
+      "prompt_source": "ТЗ.md section 'Напольная плитка'",
       "critical": true,
       "render_mode": "regional_ipadapter",
-      "ipadapter_weight": 0.5
+      "ipadapter_weight": 0.55
     },
     {
+      "pid": 43754,
       "name": "bathtub",
+      "role": "fixture.bathtub",
       "class": "fixture",
       "mask": "masks/bathtub.png",
-      "coverage_pct": 12.1,
+      "coverage_pct": 12.8,
       "reference": "references/bathtub.jpg",
-      "prompt": "white classic cast iron bathtub Jacob Delafon Soissons 160x70cm glossy enamel surface",
+      "prompt": "white cast iron bathtub Jacob Delafon Soissons 160x70cm, front panel covered with white Costa Nova tiles",
+      "prompt_source": "ТЗ.md section 'Ванна'",
+      "critical": false,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 124416,
+      "name": "vanity",
+      "role": "fixture.vanity",
+      "class": "fixture",
+      "mask": "masks/vanity.png",
+      "coverage_pct": 8.5,
+      "reference": "references/vanity.jpg",
+      "prompt": "wall-mounted dark charcoal gray vanity cabinet IDDIS Edifice 100cm, two soft-close drawers, white ceramic sink on top",
+      "prompt_source": "ТЗ.md section 'Тумба с раковиной'",
       "critical": true,
       "render_mode": "regional_ipadapter",
       "ipadapter_weight": 0.5
     },
     {
+      "pid": 352872,
+      "name": "towel_warmer",
+      "role": "fixture.towel_warmer",
+      "class": "fixture",
+      "mask": "masks/towel_warmer.png",
+      "coverage_pct": 1.2,
+      "reference": "references/towel_warmer.jpg",
+      "prompt": "WHITE vertical electric heated towel rail Ewrika Penelopa X5 270x1200mm, NOT black NOT chrome",
+      "prompt_source": "ТЗ.md section 'Полотенцесушитель'",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 471300,
       "name": "mirror",
+      "role": "fixture.mirror",
       "class": "fixture",
       "mask": "masks/mirror.png",
       "coverage_pct": 5.3,
       "reference": "references/mirror.jpg",
-      "prompt": "large rectangular mirror IDDIS Uniq with integrated warm LED backlight 3000K frameless design",
+      "prompt": "rectangular mirror IDDIS Uniq with rounded corners and integrated warm LED backlight 3000K around perimeter",
+      "prompt_source": "ТЗ.md section 'Зеркало'",
       "critical": true,
       "render_mode": "regional_ipadapter",
       "ipadapter_weight": 0.5
     },
     {
+      "pid": 359764,
       "name": "window",
+      "role": "opening.window",
       "class": "opening",
       "mask": "masks/window.png",
       "coverage_pct": 2.1,
       "reference": null,
-      "prompt": "white PVC window frame with frosted glass natural daylight",
+      "prompt": "small window with white PVC frame, frosted glass, warm natural daylight source",
+      "prompt_source": "Inferred from beauty.png",
       "critical": false,
       "render_mode": "structural_controlnet",
       "ipadapter_weight": 0.0
+    }
+  ],
+  
+  "excluded": [
+    {
+      "pid": 27700,
+      "name": "Sumele",
+      "reason": "Human figure for scale reference"
     }
   ]
 }

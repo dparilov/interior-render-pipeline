@@ -1,269 +1,186 @@
-#!/usr/bin/env python3
 """
-IRP Experiment Tracker
+IRP Experiment Tracking Module
 
-Tracks each render with full reproducibility:
-- Input parameters
-- Workflow snapshot
-- Output image
-- Logs and metrics
+Provides deterministic, traceable experiment logging.
+All parameters are extracted from actual workflow, not hardcoded.
 """
 
-import argparse
 import json
-import shutil
 import hashlib
+import subprocess
 from datetime import datetime
 from pathlib import Path
+from typing import Dict, Any, Optional, List
 
 
 class Experiment:
-    """Single render experiment."""
+    """Single experiment run with full traceability."""
     
-    def __init__(self, experiments_dir: Path, bundle_path: Path):
-        self.bundle_path = Path(bundle_path)
-        self.experiments_dir = Path(experiments_dir)
-        self.experiments_dir.mkdir(parents=True, exist_ok=True)
+    def __init__(self, experiment_id: str, output_dir: Path):
+        self.id = experiment_id
+        self.output_dir = output_dir
+        self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Generate experiment ID
-        self.timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        self.exp_id = f"exp_{self.timestamp}"
-        self.exp_dir = self.experiments_dir / self.exp_id
-        self.exp_dir.mkdir(parents=True, exist_ok=True)
-        
-        # Metadata
-        self.meta = {
-            "id": self.exp_id,
-            "timestamp": datetime.now().isoformat(),
-            "bundle": str(bundle_path),
-            "status": "created"
+        self.data = {
+            "experiment_id": experiment_id,
+            "created": datetime.utcnow().isoformat() + "Z",
+            "status": "running",
+            "git_sha": self._get_git_sha(),
+            "environment": {},
+            "params": {},
+            "workflow": {},
+            "bundle": {},
+            "result": {},
+            "timing": {},
+            "hashes": {}
         }
-    
-    def log_params(self, params: dict):
-        """Log render parameters."""
-        self.meta["params"] = params
-        self._save_meta()
-    
-    def log_environment(self, env: dict = None):
-        """Log environment for full reproducibility."""
-        import subprocess
         
-        environment = env or {}
-        
-        # Git SHA
+    def _get_git_sha(self) -> str:
         try:
-            git_sha = subprocess.check_output(
-                ["git", "rev-parse", "HEAD"], 
-                stderr=subprocess.DEVNULL
-            ).decode().strip()
-            environment["git_sha"] = git_sha
+            result = subprocess.run(
+                ["git", "rev-parse", "HEAD"],
+                capture_output=True, text=True, timeout=5
+            )
+            return result.stdout.strip()[:8] if result.returncode == 0 else "unknown"
         except:
-            environment["git_sha"] = "unknown"
-        
-        # Python version
-        import sys
-        environment["python_version"] = sys.version
-        
-        self.meta["environment"] = environment
-        self._save_meta()
+            return "unknown"
     
-    def log_models(self, models: dict):
-        """Log model filenames/hashes."""
-        self.meta["models"] = models
-        self._save_meta()
+    def _hash_file(self, path: Path) -> str:
+        if not path.exists():
+            return "missing"
+        with open(path, "rb") as f:
+            return f"sha256:{hashlib.sha256(f.read()).hexdigest()[:16]}"
     
-    def log_entities_used(self, entities: list):
-        """Log actual entities and weights used."""
-        self.meta["entities_used"] = entities
-        self._save_meta()
+    def _hash_dict(self, d: Dict) -> str:
+        return f"sha256:{hashlib.sha256(json.dumps(d, sort_keys=True).encode()).hexdigest()[:16]}"
     
-    def log_workflow(self, workflow: dict):
-        """Save workflow snapshot."""
-        workflow_path = self.exp_dir / "workflow.json"
-        workflow_path.write_text(json.dumps(workflow, indent=2))
-        
-        # Hash for comparison
-        workflow_hash = hashlib.md5(json.dumps(workflow, sort_keys=True).encode()).hexdigest()[:8]
-        self.meta["workflow_hash"] = workflow_hash
-        self._save_meta()
-    
-    def log_bundle(self):
-        """Copy bundle manifest and compute hashes."""
-        manifest_src = self.bundle_path / "manifest.json"
-        if manifest_src.exists():
-            shutil.copy(manifest_src, self.exp_dir / "bundle_manifest.json")
-            
-            # Compute bundle hash
-            manifest_hash = hashlib.md5(manifest_src.read_bytes()).hexdigest()[:8]
-            self.meta["manifest_hash"] = manifest_hash
-        
-        # Hash references directory
-        refs_dir = self.bundle_path / "references"
-        if refs_dir.exists():
-            refs_hash = self._hash_directory(refs_dir)
-            self.meta["references_hash"] = refs_hash
-        
-        # Hash masks directory
-        masks_dir = self.bundle_path / "masks"
-        if masks_dir.exists():
-            masks_hash = self._hash_directory(masks_dir)
-            self.meta["masks_hash"] = masks_hash
-        
-        self._save_meta()
-    
-    def _hash_directory(self, directory: Path) -> str:
-        """Compute hash of all files in directory."""
-        hasher = hashlib.md5()
-        for filepath in sorted(directory.iterdir()):
-            if filepath.is_file():
-                hasher.update(filepath.read_bytes())
-        return hasher.hexdigest()[:8]
-    
-    def log_output(self, image_path: Path):
-        """Copy output image to experiment."""
-        if Path(image_path).exists():
-            shutil.copy(image_path, self.exp_dir / "render.png")
-            self.meta["output"] = "render.png"
-            self._save_meta()
-    
-    def log_comfyui_response(self, response: dict):
-        """Log ComfyUI API response."""
-        self.meta["prompt_id"] = response.get("prompt_id")
-        self.meta["queue_number"] = response.get("number")
-        self._save_meta()
-    
-    def log_timing(self, start_time: float, end_time: float):
-        """Log render timing."""
-        duration = end_time - start_time
-        self.meta["timing"] = {
-            "start": datetime.fromtimestamp(start_time).isoformat(),
-            "end": datetime.fromtimestamp(end_time).isoformat(),
-            "duration_seconds": round(duration, 1),
-            "duration_human": f"{int(duration // 3600)}h {int((duration % 3600) // 60)}m {int(duration % 60)}s"
-        }
-        self._save_meta()
-    
-    def log_error(self, error: str):
-        """Log error."""
-        self.meta["status"] = "failed"
-        self.meta["error"] = error
-        self._save_meta()
-    
-    def complete(self, notes: str = None):
-        """Mark experiment as complete."""
-        self.meta["status"] = "completed"
-        if notes:
-            self.meta["notes"] = notes
-        self._save_meta()
-    
-    def _save_meta(self):
-        """Save metadata to experiment directory."""
-        meta_path = self.exp_dir / "experiment.json"
-        meta_path.write_text(json.dumps(self.meta, indent=2))
-
-
-class ExperimentLog:
-    """Aggregate experiment log."""
-    
-    def __init__(self, experiments_dir: Path):
-        self.experiments_dir = Path(experiments_dir)
-    
-    def list_experiments(self, limit: int = 20) -> list:
-        """List recent experiments."""
-        experiments = []
-        
-        for exp_dir in sorted(self.experiments_dir.iterdir(), reverse=True):
-            if not exp_dir.is_dir():
-                continue
-            
-            meta_path = exp_dir / "experiment.json"
-            if meta_path.exists():
-                meta = json.loads(meta_path.read_text())
-                experiments.append(meta)
-            
-            if len(experiments) >= limit:
-                break
-        
-        return experiments
-    
-    def compare(self, exp_id_1: str, exp_id_2: str) -> dict:
-        """Compare two experiments."""
-        exp1 = self._load_experiment(exp_id_1)
-        exp2 = self._load_experiment(exp_id_2)
-        
-        if not exp1 or not exp2:
-            return {"error": "Experiment not found"}
-        
-        return {
-            "exp1": exp_id_1,
-            "exp2": exp_id_2,
-            "workflow_same": exp1.get("workflow_hash") == exp2.get("workflow_hash"),
-            "params_diff": self._diff_params(exp1.get("params", {}), exp2.get("params", {}))
+    def log_environment(self, comfyui_version: str, models: Dict[str, str]):
+        """Log runtime environment."""
+        self.data["environment"] = {
+            "comfyui_version": comfyui_version,
+            "models": models
         }
     
-    def _load_experiment(self, exp_id: str) -> dict:
-        """Load experiment metadata."""
-        meta_path = self.experiments_dir / exp_id / "experiment.json"
-        if meta_path.exists():
-            return json.loads(meta_path.read_text())
-        return None
-    
-    def _diff_params(self, params1: dict, params2: dict) -> dict:
-        """Find differences between params."""
-        diff = {}
-        all_keys = set(params1.keys()) | set(params2.keys())
+    def log_bundle(self, bundle_path: Path, manifest: Dict):
+        """Log bundle info with hashes."""
+        self.data["bundle"] = {
+            "path": str(bundle_path),
+            "manifest_hash": self._hash_dict(manifest),
+            "technical_spec_hash": manifest.get("technical_spec", {}).get("hash", "none"),
+            "entities_count": len(manifest.get("entities", [])),
+            "entities_used": [e["name"] for e in manifest.get("entities", [])],
+            "critical_entities": [e["name"] for e in manifest.get("entities", []) if e.get("critical")]
+        }
         
-        for key in all_keys:
-            v1 = params1.get(key)
-            v2 = params2.get(key)
-            if v1 != v2:
-                diff[key] = {"exp1": v1, "exp2": v2}
+        # Hash key files
+        self.data["hashes"]["beauty"] = self._hash_file(bundle_path / manifest.get("base_image", "beauty.png"))
+        self.data["hashes"]["depth"] = self._hash_file(bundle_path / manifest.get("depth_map", "depth.png"))
+        self.data["hashes"]["boundary"] = self._hash_file(bundle_path / manifest.get("boundary_mask", "boundary_mask.png"))
+    
+    def log_workflow(self, workflow: Dict):
+        """Extract actual parameters from workflow - NOT hardcoded values."""
+        prompt = workflow.get("prompt", workflow)
         
-        return diff
-
-
-def create_experiment(bundle_path: str, experiments_dir: str = None) -> Experiment:
-    """Create a new experiment."""
-    if experiments_dir is None:
-        experiments_dir = Path(bundle_path).parent / "experiments"
-    
-    return Experiment(Path(experiments_dir), Path(bundle_path))
-
-
-def main():
-    parser = argparse.ArgumentParser(description="IRP Experiment Tracker")
-    subparsers = parser.add_subparsers(dest="command")
-    
-    # List experiments
-    list_parser = subparsers.add_parser("list", help="List experiments")
-    list_parser.add_argument("--dir", type=Path, required=True, help="Experiments directory")
-    list_parser.add_argument("--limit", type=int, default=20, help="Max experiments to show")
-    
-    # Compare experiments
-    compare_parser = subparsers.add_parser("compare", help="Compare two experiments")
-    compare_parser.add_argument("--dir", type=Path, required=True, help="Experiments directory")
-    compare_parser.add_argument("exp1", help="First experiment ID")
-    compare_parser.add_argument("exp2", help="Second experiment ID")
-    
-    args = parser.parse_args()
-    
-    if args.command == "list":
-        log = ExperimentLog(args.dir)
-        experiments = log.list_experiments(args.limit)
+        # Extract ControlNet strengths from actual workflow
+        canny_node = prompt.get("apply_controlnet_canny", {}).get("inputs", {})
+        depth_node = prompt.get("apply_controlnet_depth", {}).get("inputs", {})
+        sampler_node = prompt.get("sampler", {}).get("inputs", {})
         
-        print(f"\n{'ID':<25} {'Status':<12} {'Duration':<15} {'Workflow':<10}")
-        print("-" * 65)
+        self.data["params"] = {
+            "canny_strength": canny_node.get("strength", "unknown"),
+            "canny_start": canny_node.get("start_percent", "unknown"),
+            "canny_end": canny_node.get("end_percent", "unknown"),
+            "depth_strength": depth_node.get("strength", "unknown"),
+            "depth_start": depth_node.get("start_percent", "unknown"),
+            "depth_end": depth_node.get("end_percent", "unknown"),
+            "seed": sampler_node.get("seed", "unknown"),
+            "steps": sampler_node.get("steps", "unknown"),
+            "cfg": sampler_node.get("cfg", "unknown"),
+            "sampler_name": sampler_node.get("sampler_name", "unknown"),
+            "scheduler": sampler_node.get("scheduler", "unknown")
+        }
         
-        for exp in experiments:
-            duration = exp.get("timing", {}).get("duration_human", "-")
-            workflow = exp.get("workflow_hash", "-")
-            print(f"{exp['id']:<25} {exp['status']:<12} {duration:<15} {workflow:<10}")
+        # Extract IPAdapter info
+        ipadapter_nodes = [k for k in prompt.keys() if k.startswith("ipadapter_")]
+        self.data["params"]["ipadapter_count"] = len(ipadapter_nodes)
+        self.data["params"]["ipadapter_entities"] = [n.replace("ipadapter_", "") for n in ipadapter_nodes]
+        
+        # Extract negative prompt
+        negative_node = prompt.get("negative", {}).get("inputs", {})
+        self.data["params"]["negative_prompt"] = negative_node.get("text", "")
+        
+        # Store workflow hash
+        self.data["hashes"]["workflow"] = self._hash_dict(workflow)
+        
+        # Store full workflow for reproducibility
+        workflow_path = self.output_dir / "workflow.json"
+        with open(workflow_path, "w") as f:
+            json.dump(workflow, f, indent=2)
     
-    elif args.command == "compare":
-        log = ExperimentLog(args.dir)
-        result = log.compare(args.exp1, args.exp2)
-        print(json.dumps(result, indent=2))
+    def log_submit(self, prompt_id: str):
+        """Log ComfyUI prompt submission."""
+        self.data["result"]["prompt_id"] = prompt_id
+        self.data["timing"]["submitted"] = datetime.utcnow().isoformat() + "Z"
+    
+    def log_output(self, render_path: Path):
+        """Log render output."""
+        self.data["result"]["render_path"] = str(render_path)
+        self.data["hashes"]["render"] = self._hash_file(render_path)
+        self.data["timing"]["completed"] = datetime.utcnow().isoformat() + "Z"
+        
+        # Copy render to experiment dir
+        if render_path.exists():
+            import shutil
+            shutil.copy(render_path, self.output_dir / "render.png")
+    
+    def complete(self, status: str = "success", notes: str = ""):
+        """Mark experiment as complete and save."""
+        self.data["status"] = status
+        self.data["notes"] = notes
+        
+        # Calculate duration if we have timing
+        if "submitted" in self.data["timing"] and "completed" in self.data["timing"]:
+            start = datetime.fromisoformat(self.data["timing"]["submitted"].rstrip("Z"))
+            end = datetime.fromisoformat(self.data["timing"]["completed"].rstrip("Z"))
+            self.data["timing"]["duration_seconds"] = (end - start).total_seconds()
+        
+        self._save()
+    
+    def fail(self, error: str):
+        """Mark experiment as failed."""
+        self.data["status"] = "failed"
+        self.data["result"]["error"] = error
+        self.data["timing"]["failed"] = datetime.utcnow().isoformat() + "Z"
+        self._save()
+    
+    def _save(self):
+        """Save experiment data to JSON."""
+        path = self.output_dir / "experiment.json"
+        with open(path, "w") as f:
+            json.dump(self.data, f, indent=2)
+        
+        # Also save bundle manifest copy
+        if "bundle" in self.data and self.data["bundle"].get("path"):
+            bundle_path = Path(self.data["bundle"]["path"])
+            manifest_path = bundle_path / "manifest.json"
+            if manifest_path.exists():
+                import shutil
+                shutil.copy(manifest_path, self.output_dir / "bundle_manifest.json")
 
 
-if __name__ == "__main__":
-    main()
+def create_experiment(name: str, base_dir: Path = None) -> Experiment:
+    """Create a new experiment with timestamped ID."""
+    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    experiment_id = f"{name}_{timestamp}"
+    
+    if base_dir is None:
+        base_dir = Path("experiments")
+    
+    output_dir = base_dir / experiment_id
+    return Experiment(experiment_id, output_dir)
+
+
+def load_experiment(path: Path) -> Dict:
+    """Load experiment data from JSON."""
+    with open(path / "experiment.json") as f:
+        return json.load(f)

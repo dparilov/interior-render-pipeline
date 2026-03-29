@@ -1,6 +1,15 @@
 {
-  "_comment": "IRP Delta - Canonical Workflow v1.0",
-  "_description": "Dual ControlNet (Canny+Depth) + Regional IPAdapter",
+  "_comment": "IRP Delta - Canonical Workflow v1.1",
+  "_description": "Dual ControlNet (Canny+Depth) + Regional IPAdapter + Boundary Mask",
+  "_params": {
+    "canny_strength": 0.8,
+    "canny_end": 0.9,
+    "depth_strength": 0.9,
+    "depth_end": 0.8,
+    "seed": 42,
+    "steps": 50,
+    "cfg": 7.0
+  },
   
   "prompt": {
     "checkpoint": {
@@ -31,6 +40,23 @@
       }
     },
     
+    "load_depth": {
+      "_comment": "SketchUp depth map - ground truth geometry",
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "BUNDLE_PATH/depth.png"
+      }
+    },
+    
+    "load_boundary": {
+      "_comment": "Boundary mask - prevents generation outside room",
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "BUNDLE_PATH/boundary_mask.png",
+        "channel": "red"
+      }
+    },
+    
     "positive": {
       "class_type": "CLIPTextEncode",
       "inputs": {
@@ -43,7 +69,7 @@
       "class_type": "CLIPTextEncode",
       "inputs": {
         "clip": ["checkpoint", 1],
-        "text": "cartoon, anime, drawing, sketch, low quality, blurry, distorted, watermark, text"
+        "text": "cartoon, anime, drawing, sketch, low quality, blurry, distorted, watermark, text, objects not in reference, extra fixtures, additional decorations, modified wall structure, added ledges, steps, shelves, extra towels, human figure, person"
       }
     },
     
@@ -70,23 +96,6 @@
       }
     },
     
-    "load_depth": {
-      "_comment": "SketchUp depth map - ground truth geometry",
-      "class_type": "LoadImage",
-      "inputs": {
-        "image": "BUNDLE_PATH/depth.png"
-      }
-    },
-    
-    "load_boundary": {
-      "_comment": "Boundary mask - prevents generation outside room",
-      "class_type": "LoadImageMask",
-      "inputs": {
-        "image": "BUNDLE_PATH/boundary_mask.png",
-        "channel": "red"
-      }
-    },
-    
     "apply_controlnet_canny": {
       "class_type": "ControlNetApplyAdvanced",
       "inputs": {
@@ -94,9 +103,9 @@
         "negative": ["negative", 0],
         "control_net": ["controlnet_canny", 0],
         "image": ["canny_preprocess", 0],
-        "strength": 0.65,
+        "strength": 0.8,
         "start_percent": 0.0,
-        "end_percent": 0.85
+        "end_percent": 0.9
       }
     },
     
@@ -113,21 +122,21 @@
       }
     },
     
-    "set_latent_mask": {
-      "_comment": "Apply boundary mask to prevent generation outside room",
-      "class_type": "SetLatentNoiseMask",
-      "inputs": {
-        "samples": ["empty_latent", 0],
-        "mask": ["load_boundary", 0]
-      }
-    },
-    
     "empty_latent": {
       "class_type": "EmptyLatentImage",
       "inputs": {
         "width": 1920,
         "height": 1080,
         "batch_size": 1
+      }
+    },
+    
+    "set_latent_mask": {
+      "_comment": "Apply boundary mask to prevent generation outside room",
+      "class_type": "SetLatentNoiseMask",
+      "inputs": {
+        "samples": ["empty_latent", 0],
+        "mask": ["load_boundary", 0]
       }
     },
     
@@ -140,26 +149,26 @@
         "latent_image": ["set_latent_mask", 0],
         "seed": 42,
         "steps": 50,
-        "cfg": 7.5,
+        "cfg": 7.0,
         "sampler_name": "dpmpp_2m_sde",
         "scheduler": "karras",
         "denoise": 1.0
       }
     },
     
-    "decode": {
+    "vae_decode": {
       "class_type": "VAEDecode",
       "inputs": {
-        "vae": ["checkpoint", 2],
-        "samples": ["sampler", 0]
+        "samples": ["sampler", 0],
+        "vae": ["checkpoint", 2]
       }
     },
     
-    "save": {
+    "save_image": {
       "class_type": "SaveImage",
       "inputs": {
-        "images": ["decode", 0],
-        "filename_prefix": "irp_render"
+        "images": ["vae_decode", 0],
+        "filename_prefix": "IRP_render"
       }
     }
   }

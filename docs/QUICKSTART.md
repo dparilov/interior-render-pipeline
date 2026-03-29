@@ -1,37 +1,73 @@
-# Quick Start Guide
+# IRP Quick Start Guide v1.1
 
 ## Prerequisites
 
-- SketchUp 2024+
-- ComfyUI with models:
-  - `RealVisXL_V4.0.safetensors`
-  - `controlnet-canny-sdxl.safetensors`
-  - `controlnet-depth-sdxl.safetensors`
-  - `ip-adapter_sdxl.safetensors`
-  - `clip_vision_g.safetensors`
+1. SketchUp 2026 with model open
+2. ComfyUI running on port 8188
+3. Python 3.10+ with PIL, numpy, requests
 
-## Workflow
+## Pipeline Overview
 
-### Step 1: Extract Scene Graph
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  Phase 0: EXTRACT                                               │
+│  SketchUp → scene_graph.json + beauty.png                       │
+│  Output: irp_extract.zip                                        │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Phase 1: MAPPING (AI)                                          │
+│  Input: irp_extract.zip + ТЗ.md + references/                   │
+│  Output: role_map.json                                          │
+│  ⚠️ ТЗ.md is REQUIRED for correct material assignment           │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Phase 2: EXPORT                                                │
+│  SketchUp + role_map.json → irp_bundle.zip                      │
+│  Contains: beauty, depth, boundary, masks, manifest, models     │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Phase 3: VALIDATE                                              │
+│  python render/validate.py <bundle_path>                        │
+│  Checks: schema, files, binary masks, hashes                    │
+└─────────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────────┐
+│  Phase 4: RENDER                                                │
+│  python render/render.py <bundle_path>                          │
+│  Creates: experiment/ with full traceability                    │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+## Step 1: Extract
 
 In SketchUp Ruby Console:
 
 ```ruby
-load 'http://100.96.1.25:9090/irp.rb'
+require 'open-uri'
+eval(URI.open('http://100.96.1.25:9090/irp.rb').read)
+
+# IMPORTANT: Select the correct Scene first!
+# The script will lock to current scene for all exports
+
 IRP.extract
 ```
 
 **Output:** `irp_extract.zip` (next to your .skp file)
 
 Contents:
-- `scene_graph.json` — all entities with PIDs + all scenes/cameras
-- `views/*.png` — render from each Scene (camera angle)
+- `scene_graph.json` — all entities with PIDs + all scenes
+- `beauty.png` — render from current Scene
 
-### Step 2: Create Role Map
+**⚠️ Scene is locked** — all subsequent operations use the same camera.
+
+## Step 2: Create Role Map
 
 Send to AI:
-- `irp_extract.zip` (scene_graph + views from all cameras)
-- `ТЗ.md` (requirements document with materials) — **REQUIRED**
+- `irp_extract.zip`
+- **ТЗ.md** (requirements document) — **REQUIRED**
 - `references/` folder (material photos)
 
 AI analyzes ТЗ first, then matches objects to PIDs.
@@ -42,90 +78,99 @@ AI returns `role_map.json`:
 {
   "version": "1.0",
   "entities": [
-    {"pid": 36696, "name": "walls", "role": "walls", "class": "surface"},
-    {"pid": 43754, "name": "bathtub", "role": "bathtub", "class": "fixture"}
+    {
+      "pid": 36696,
+      "name": "walls",
+      "role": "surface.walls",
+      "class": "surface",
+      "surface_kind": "wall_tiles",
+      "prompt": "white glossy wavy subway tiles Costa Nova style",
+      "prompt_source": "ТЗ.md section 'Настенная плитка'",
+      "reference": "references/wall_tiles.png",
+      "critical": true
+    }
   ],
   "excluded": [
-    {"pid": 27700, "reason": "Human figure (Sumele)"}
+    {"pid": 27700, "name": "Sumele", "reason": "Human figure"}
   ]
 }
 ```
 
-Place `role_map.json` next to your .skp file.
+## Step 3: Export Bundle
 
-### Step 3: Export Bundle
+Place `role_map.json` next to .skp file, then:
 
 ```ruby
 IRP.export
 ```
 
-**Output:** `irp_bundle.zip` (next to your .skp file)
+**Output:** `irp_bundle.zip`
 
 Contents:
-- `beauty.png` — source render
+- `beauty.png` — SketchUp render
 - `depth.png` — ground truth depth from geometry
-- `boundary_mask.png` — room silhouette (white = room, black = outside)
-- `masks/*.png` — binary mask per entity
-- `manifest.json` — bundle metadata
-- `model.dae/fbx/glb` — 3D models for Blender
+- `boundary_mask.png` — binary room silhouette
+- `masks/*.png` — per-entity binary masks
+- `manifest.json` — full metadata v1.1
+- `technical_spec.md` — copy of ТЗ (if found)
+- `model.dae/fbx/glb` — 3D exports
 
-### Step 4: Visual QA
-
-Check masks against beauty.png:
-
-| Criterion | Target |
-|-----------|--------|
-| Coverage | Mask covers entire object |
-| Precision | No overlap with neighbors |
-| Binary | Pure black/white only |
-| Score | ≥ 95 for each entity |
-
-### Step 5: Render
-
-#### Option A: ComfyUI GUI
-
-1. Open `http://localhost:8188`
-2. Load `render/workflow.json`
-3. Set paths to your bundle
-4. Queue prompt
-
-#### Option B: Python Script
+## Step 4: Validate
 
 ```bash
-python render/render.py /path/to/irp_bundle
+cd render
+python validate.py /path/to/irp_bundle/
 ```
 
-## Bundle Structure
+Checks:
+- All required fields present in manifest
+- All referenced files exist
+- Masks are binary (only 0 and 255)
+- Depth has gradient values
+- Technical spec hash matches
+- Coverage percentages valid
 
-```
-irp_bundle/
-├── manifest.json
-├── beauty.png
-├── depth.png           # Ground truth from SketchUp
-├── boundary_mask.png   # Room silhouette
-├── masks/
-│   ├── walls.png
-│   ├── floor.png
-│   └── ...
-├── model.dae
-├── model.fbx
-└── model.glb
+## Step 5: Render
+
+```bash
+python render.py /path/to/irp_bundle/
 ```
 
-## ControlNet Settings
+Options:
+- `--dry-run` — build workflow without submitting
+- `--no-validate` — skip validation
 
-| ControlNet | Source | Strength | End At |
-|------------|--------|----------|--------|
-| Canny | beauty.png | 0.8 | 0.9 |
-| Depth | depth.png (SketchUp) | 0.9 | 0.8 |
+Creates `experiments/<name>_<timestamp>/`:
+- `experiment.json` — full parameters extracted from workflow
+- `workflow.json` — actual workflow submitted
+- `bundle_manifest.json` — copy of manifest
+- `render.png` — output image (when complete)
 
-**Important:** Use `depth.png` from bundle, NOT neural depth estimation. This ensures pixel-perfect geometry.
+## ControlNet Parameters (v1.1)
+
+| ControlNet | Strength | Start | End |
+|------------|----------|-------|-----|
+| Canny | 0.8 | 0.0 | 0.9 |
+| Depth (SketchUp) | 0.9 | 0.0 | 0.8 |
+
+## IPAdapter Weights
+
+| Class | Weight | Mode |
+|-------|--------|------|
+| surface | 0.55 | regional_ipadapter |
+| fixture | 0.50 | regional_ipadapter |
+| opening | 0.00 | structural_controlnet |
 
 ## Troubleshooting
 
-| Issue | Cause | Solution |
-|-------|-------|----------|
-| Objects in wrong place | Using neural depth | Use SketchUp depth.png |
-| Generation outside room | No boundary mask | Add boundary_mask as latent_mask |
-| Extra objects appear | Weak ControlNet | Increase Canny to 0.8+ |
-| Empty mask | Faces not painted | Check recursive painting |
+### "Scene changed" warning
+The script detected scene switch during export. It auto-switches back.
+
+### Boundary mask not binary
+Check that no gray materials are applied. Use `paint_entity_solid()`.
+
+### Missing reference files
+Ensure `references/` folder contains all files from role_map.
+
+### Validation errors
+Run `python validate.py` to get detailed error list.

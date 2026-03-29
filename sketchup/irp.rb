@@ -1,4 +1,4 @@
-# IRP — Interior Render Pipeline
+# IRP — Interior Render Pipeline v1.1
 # 
 # Single script, two commands:
 #   IRP.extract  → irp_extract.zip (scene_graph + beauty)
@@ -16,11 +16,14 @@
 require 'sketchup'
 require 'json'
 require 'fileutils'
+require 'digest/sha2'
 
 module IRP
+  VERSION = '1.1'
   RESOLUTION = [1920, 1080]
   
   @role_map = {}
+  @export_scene = nil  # Locked scene for export
   
   def self.model
     Sketchup.active_model
@@ -44,6 +47,43 @@ module IRP
   end
   
   # ============================================
+  # SCENE CONTROL
+  # ============================================
+  
+  def self.current_scene_name
+    page = model.pages.selected_page
+    page ? page.name : 'Default'
+  end
+  
+  def self.switch_to_scene(name)
+    page = model.pages.find { |p| p.name == name }
+    if page
+      model.pages.selected_page = page
+      view.refresh
+      sleep(0.3)
+      true
+    else
+      puts "  ⚠ Scene '#{name}' not found"
+      false
+    end
+  end
+  
+  def self.lock_scene
+    @export_scene = current_scene_name
+    puts "  🔒 Locked to scene: #{@export_scene}"
+  end
+  
+  def self.verify_scene
+    current = current_scene_name
+    if @export_scene && current != @export_scene
+      puts "  ⚠ Scene changed! Expected: #{@export_scene}, Got: #{current}"
+      puts "  ⚠ Switching back..."
+      switch_to_scene(@export_scene)
+    end
+    true
+  end
+  
+  # ============================================
   # EXTRACT — Phase 0
   # ============================================
   
@@ -52,16 +92,19 @@ module IRP
     return unless dir
     
     puts ""
-    puts "╔══════════════════════════════════════════╗"
-    puts "║   IRP EXTRACT                            ║"
-    puts "╚══════════════════════════════════════════╝"
+    puts "╔══════════════════════════════════════════════════╗"
+    puts "║   IRP EXTRACT v#{VERSION}                             ║"
+    puts "╚══════════════════════════════════════════════════╝"
     puts ""
+    puts "Current scene: #{current_scene_name}"
+    puts ""
+    
+    lock_scene
     
     # Create temp folder
     temp_dir = File.join(dir, "irp_extract_temp")
     FileUtils.rm_rf(temp_dir)
     FileUtils.mkdir_p(temp_dir)
-    FileUtils.mkdir_p(File.join(temp_dir, 'views'))
     
     begin
       # 1. Scene graph
@@ -70,127 +113,39 @@ module IRP
       File.write(File.join(temp_dir, 'scene_graph.json'), JSON.pretty_generate(scene_graph))
       puts "  ✓ scene_graph.json (#{scene_graph[:entities].length} entities)"
       
-      # 2. Render all scenes (cameras)
+      # 2. Beauty render from locked scene
       puts ""
-      puts "=== VIEWS (ALL SCENES) ==="
+      puts "=== BEAUTY RENDER ==="
+      verify_scene
       saved_render = save_rendering_options
       setup_normal_rendering
-      
-      pages = model.pages.to_a
-      if pages.empty?
-        # No scenes - render current view
-        view.refresh
-        sleep(0.3)
-        export_image(File.join(temp_dir, 'views', 'default.png'))
-        puts "  ✓ views/default.png (current view)"
-      else
-        pages.each_with_index do |page, i|
-          next if page.name.start_with?('_')  # Skip hidden scenes
-          
-          page.use_camera = true if page.respond_to?(:use_camera=)
-          model.pages.selected_page = page
-          view.refresh
-          sleep(0.3)
-          
-          safe_name = page.name.gsub(/[^a-zA-Z0-9_-]/, '_')
-          export_image(File.join(temp_dir, 'views', "#{safe_name}.png"))
-          puts "  ✓ views/#{safe_name}.png"
-        end
-      end
-      
+      view.refresh
+      sleep(0.3)
+      export_image(File.join(temp_dir, 'beauty.png'))
       restore_rendering_options(saved_render)
+      puts "  ✓ beauty.png"
       
-      # 3. Create zip (overwrite previous)
+      # 3. Create zip
       zip_path = File.join(dir, "irp_extract.zip")
       FileUtils.rm_f(zip_path)
       create_zip(temp_dir, zip_path)
       
       puts ""
-      puts "╔══════════════════════════════════════════╗"
-      puts "║   EXTRACT COMPLETE                       ║"
-      puts "╚══════════════════════════════════════════╝"
+      puts "╔══════════════════════════════════════════════════╗"
+      puts "║   EXTRACT COMPLETE                               ║"
+      puts "╚══════════════════════════════════════════════════╝"
       puts ""
+      puts "Scene: #{@export_scene}"
       puts "Output: #{zip_path}"
-      puts ""
-      puts "Contents:"
-      puts "  - scene_graph.json (all entities with PIDs)"
-      puts "  - views/*.png (render from each Scene/camera)"
       puts ""
       puts "Next steps:"
       puts "1. Send zip + ТЗ.md to AI for role mapping"
       puts "2. Save role_map.json to: #{dir}"
-      puts "3. Run IRP.export"
+      puts "3. Run IRP.export (same scene will be used)"
       
     ensure
       FileUtils.rm_rf(temp_dir)
     end
-  end
-  
-  def self.build_scene_graph
-    page = model.pages.selected_page
-    camera = view.camera
-    
-    # Collect all scenes/cameras
-    scenes = model.pages.to_a.map do |p|
-      cam = p.camera
-      {
-        name: p.name,
-        camera: {
-          eye: cam.eye.to_a,
-          target: cam.target.to_a,
-          up: cam.up.to_a,
-          fov: cam.fov
-        }
-      }
-    end
-    
-    {
-      version: 'gamma',
-      model_name: File.basename(model.path, '.skp'),
-      resolution: RESOLUTION,
-      current_scene: page ? page.name : 'Default',
-      scenes: scenes,
-      entities: collect_entities_recursive(model.entities, 0)
-    }
-  end
-  
-  def self.collect_entities_recursive(entities, depth, max_depth = 20)
-    return [] if depth > max_depth
-    
-    result = []
-    entities.each do |e|
-      next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
-      next unless e.visible?
-      
-      bounds = e.bounds
-      
-      entry = {
-        pid: e.persistent_id,
-        type: e.is_a?(Sketchup::Group) ? 'Group' : 'ComponentInstance',
-        name: e.name.to_s.empty? ? nil : e.name,
-        depth: depth,
-        bounds: {
-          width: bounds.width.to_mm.round(1),
-          height: bounds.height.to_mm.round(1),
-          depth: bounds.depth.to_mm.round(1)
-        },
-        position: bounds.center.to_a.map { |v| v.to_m.round(3) }
-      }
-      
-      # Count faces
-      inner = e.is_a?(Sketchup::Group) ? e.entities : e.definition.entities
-      entry[:face_count] = inner.grep(Sketchup::Face).length
-      entry[:child_count] = inner.grep(Sketchup::Group).length + 
-                            inner.grep(Sketchup::ComponentInstance).length
-      
-      result << entry
-      
-      # Recurse
-      children = collect_entities_recursive(inner, depth + 1, max_depth)
-      result.concat(children)
-    end
-    
-    result
   end
   
   # ============================================
@@ -201,58 +156,75 @@ module IRP
     dir = skp_dir
     return unless dir
     
-    role_map_path = File.join(dir, 'role_map.json')
+    puts ""
+    puts "╔══════════════════════════════════════════════════╗"
+    puts "║   IRP EXPORT v#{VERSION}                              ║"
+    puts "╚══════════════════════════════════════════════════╝"
+    puts ""
     
+    # Scene control
+    if @export_scene
+      puts "Using locked scene: #{@export_scene}"
+      switch_to_scene(@export_scene)
+    else
+      lock_scene
+    end
+    puts ""
+    
+    # Load role_map
+    role_map_path = File.join(dir, 'role_map.json')
     unless File.exist?(role_map_path)
-      puts ""
       puts "ERROR: role_map.json not found!"
-      puts "Expected: #{role_map_path}"
+      puts "Expected at: #{role_map_path}"
       puts ""
-      puts "Run IRP.extract first, then place role_map.json in the same folder."
+      puts "Run IRP.extract first, then create role_map.json"
       return
     end
     
     load_role_map(role_map_path)
+    puts "Loaded role_map.json (#{@role_map.length} entities)"
+    puts ""
     
-    puts ""
-    puts "╔══════════════════════════════════════════╗"
-    puts "║   IRP EXPORT                             ║"
-    puts "╚══════════════════════════════════════════╝"
-    puts ""
-    puts "Role map: #{@role_map.length} entities"
-    puts ""
+    # Load technical spec if exists
+    tz_path = File.join(dir, 'TZ.md')
+    tz_path = File.join(dir, 'ТЗ.md') unless File.exist?(tz_path)
+    @technical_spec = load_technical_spec(tz_path)
     
     # Create temp folder
     temp_dir = File.join(dir, "irp_bundle_temp")
     FileUtils.rm_rf(temp_dir)
     FileUtils.mkdir_p(temp_dir)
     FileUtils.mkdir_p(File.join(temp_dir, 'masks'))
-    
-    saved_vis = save_visibility
-    saved_render = save_rendering_options
+    FileUtils.mkdir_p(File.join(temp_dir, 'model'))
     
     begin
-      # 1. Beauty
-      puts "=== PASSES ==="
+      # 1. Beauty render
+      puts "=== BEAUTY ==="
+      verify_scene
+      saved_render = save_rendering_options
       setup_normal_rendering
-      show_all_mapped
       view.refresh
+      sleep(0.3)
       export_image(File.join(temp_dir, 'beauty.png'))
+      restore_rendering_options(saved_render)
       puts "  ✓ beauty.png"
       
-      # 2. Depth map (ground truth)
+      # 2. Depth map
       puts ""
       puts "=== DEPTH MAP ==="
+      verify_scene
       export_depth_map(temp_dir)
       
-      # 3. Boundary mask
+      # 3. Boundary mask (binary)
       puts ""
       puts "=== BOUNDARY MASK ==="
+      verify_scene
       export_boundary_mask(temp_dir)
       
       # 4. Individual masks
       puts ""
       puts "=== MASKS ==="
+      verify_scene
       @role_map.each do |pid, info|
         if export_mask(pid, info[:name], temp_dir)
           puts "  ✓ #{info[:name]}.png"
@@ -261,37 +233,82 @@ module IRP
         end
       end
       
-      # 5. Manifest
+      # 5. Copy technical spec
+      if @technical_spec[:exists]
+        FileUtils.cp(@technical_spec[:path], File.join(temp_dir, 'technical_spec.md'))
+        puts ""
+        puts "=== TECHNICAL SPEC ==="
+        puts "  ✓ technical_spec.md (#{@technical_spec[:hash][0..15]}...)"
+      end
+      
+      # 6. Manifest
       puts ""
       puts "=== MANIFEST ==="
       generate_manifest(temp_dir)
       puts "  ✓ manifest.json"
       
-      # 6. Blender exports
+      # 7. Blender exports
       puts ""
-      puts "=== BLENDER EXPORTS ==="
+      puts "=== MODEL EXPORTS ==="
       name_entities_for_export
       export_models(temp_dir)
       revert_structural_changes
       
-      # 7. Create zip (overwrite previous)
+      # 8. Create zip
       zip_path = File.join(dir, "irp_bundle.zip")
       FileUtils.rm_f(zip_path)
       create_zip(temp_dir, zip_path)
       
       puts ""
-      puts "╔══════════════════════════════════════════╗"
-      puts "║   EXPORT COMPLETE                        ║"
-      puts "╚══════════════════════════════════════════╝"
+      puts "╔══════════════════════════════════════════════════╗"
+      puts "║   EXPORT COMPLETE                                ║"
+      puts "╚══════════════════════════════════════════════════╝"
       puts ""
+      puts "Scene: #{@export_scene}"
       puts "Output: #{zip_path}"
+      puts ""
+      puts "Bundle contents:"
+      puts "  - beauty.png"
+      puts "  - depth.png (SketchUp ground truth)"
+      puts "  - boundary_mask.png (binary)"
+      puts "  - masks/*.png (#{@role_map.length} entities)"
+      puts "  - manifest.json (v#{VERSION})"
+      puts "  - technical_spec.md" if @technical_spec[:exists]
+      puts "  - model.dae/fbx/glb"
       
     ensure
       FileUtils.rm_rf(temp_dir)
-      restore_visibility(saved_vis)
-      restore_rendering_options(saved_render)
     end
   end
+  
+  # ============================================
+  # TECHNICAL SPEC
+  # ============================================
+  
+  def self.load_technical_spec(path)
+    if File.exist?(path)
+      content = File.read(path, encoding: 'UTF-8')
+      hash = Digest::SHA256.hexdigest(content)
+      
+      # Extract summary (first non-empty line after #)
+      summary = content.lines.find { |l| l.start_with?('#') }
+      summary = summary ? summary.gsub(/^#+\s*/, '').strip : ''
+      
+      {
+        exists: true,
+        path: path,
+        hash: "sha256:#{hash}",
+        summary: summary
+      }
+    else
+      puts "  ⚠ Technical spec (ТЗ.md) not found"
+      { exists: false, path: nil, hash: nil, summary: nil }
+    end
+  end
+  
+  # ============================================
+  # ROLE MAP
+  # ============================================
   
   def self.load_role_map(path)
     data = JSON.parse(File.read(path), symbolize_names: true)
@@ -302,10 +319,16 @@ module IRP
         name: entity[:name],
         role: entity[:role],
         entity_class: entity[:class],
+        surface_kind: entity[:surface_kind],
         prompt: entity[:prompt],
-        reference: entity[:reference]
+        prompt_source: entity[:prompt_source] || "role_map.json",
+        reference: entity[:reference],
+        critical: entity[:critical] || false
       }
     end
+    
+    # Track excluded
+    @excluded = data[:excluded] || []
   end
   
   # ============================================
@@ -379,12 +402,18 @@ module IRP
     
     begin
       setup_mask_rendering
-      show_all_mapped
       
-      # Paint everything white
+      # Hide ALL entities first
+      model.entities.each { |e| e.visible = false if e.respond_to?(:visible=) }
+      
+      # Show and paint ONLY mapped entities in pure white
+      white = Sketchup::Color.new(255, 255, 255)
       @role_map.each do |pid, info|
         entity = find_by_pid(pid)
-        paint_entity_white(entity) if entity
+        if entity
+          entity.visible = true
+          paint_entity_solid(entity, white)
+        end
       end
       
       view.refresh
@@ -395,7 +424,7 @@ module IRP
       model.abort_operation
     end
     
-    puts "  ✓ boundary_mask.png"
+    puts "  ✓ boundary_mask.png (binary)"
   end
   
   # ============================================
@@ -404,18 +433,19 @@ module IRP
   
   def self.export_mask(pid, name, output_dir)
     entity = find_by_pid(pid)
-    return false unless entity && entity.valid?
+    return false unless entity
     
     path = File.join(output_dir, 'masks', "#{name}.png")
     
-    model.start_operation('Export Mask', true)
+    model.start_operation("Export Mask #{name}", true)
     
     begin
       setup_mask_rendering
-      hide_all_mapped
+      hide_all
       
       entity.visible = true
-      paint_entity_white(entity)
+      white = Sketchup::Color.new(255, 255, 255)
+      paint_entity_solid(entity, white)
       
       view.refresh
       sleep(0.2)
@@ -425,16 +455,32 @@ module IRP
       model.abort_operation
     end
     
+    # Calculate coverage
+    coverage = calculate_coverage(path)
+    @role_map[pid][:coverage_pct] = coverage
+    
     true
   end
   
-  def self.paint_entity_white(entity)
-    return unless entity
-    white = Sketchup::Color.new(255, 255, 255)
-    paint_recursive(entity, white)
+  def self.calculate_coverage(path)
+    # Simple coverage estimation based on file size ratio
+    # More accurate would need image processing
+    file_size = File.size(path) rescue 0
+    max_size = 500000  # Approximate max for full white
+    pct = (file_size.to_f / max_size * 100).round(1)
+    pct.clamp(0.1, 99.0)
   end
   
-  def self.paint_recursive(entity, color)
+  # ============================================
+  # PAINTING
+  # ============================================
+  
+  def self.paint_entity_solid(entity, color)
+    return unless entity
+    paint_recursive_solid(entity, color)
+  end
+  
+  def self.paint_recursive_solid(entity, color)
     entity.material = color if entity.respond_to?(:material=)
     
     inner = if entity.is_a?(Sketchup::Group)
@@ -450,7 +496,7 @@ module IRP
         e.material = color
         e.back_material = color
       elsif e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
-        paint_recursive(e, color)
+        paint_recursive_solid(e, color)
       end
     end
   end
@@ -466,12 +512,12 @@ module IRP
     entities = @role_map.map do |pid, info|
       entity_class = info[:entity_class] || 'fixture'
       
-      # Default weights by class
+      # Weight by class
       weight = case entity_class
         when 'surface' then 0.55
-        when 'fixture' then 0.5
+        when 'fixture' then 0.50
         when 'opening' then 0.0
-        else 0.5
+        else 0.50
       end
       
       # Render mode by class
@@ -482,18 +528,26 @@ module IRP
         name: info[:name],
         role: info[:role],
         class: entity_class,
+        surface_kind: info[:surface_kind],
         mask: "masks/#{info[:name]}.png",
+        coverage_pct: info[:coverage_pct] || 0.0,
         reference: info[:reference],
         prompt: info[:prompt],
-        critical: ['walls', 'floor', 'vanity', 'bathtub', 'mirror'].include?(info[:name]),
+        prompt_source: info[:prompt_source] || "role_map.json",
+        critical: info[:critical] || false,
         render_mode: render_mode,
         ipadapter_weight: weight
       }
     end
     
+    # Build scene_id from model name and scene
+    model_name = File.basename(model.path, '.skp').gsub(/[^a-zA-Z0-9_-]/, '_')
+    scene_name = (page ? page.name : 'default').gsub(/[^a-zA-Z0-9_-]/, '_')
+    scene_id = "#{model_name}_#{scene_name}"
+    
     manifest = {
-      version: '1.0',
-      scene_id: "#{File.basename(model.path, '.skp')}_#{page ? page.name.gsub(/\s+/, '_') : 'default'}",
+      version: VERSION,
+      scene_id: scene_id,
       created: Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ'),
       base_image: 'beauty.png',
       depth_map: 'depth.png',
@@ -508,10 +562,88 @@ module IRP
         up: camera.up.to_a,
         fov: camera.fov.round(1)
       },
-      entities: entities
+      technical_spec: @technical_spec[:exists] ? {
+        path: 'technical_spec.md',
+        hash: @technical_spec[:hash],
+        summary: @technical_spec[:summary]
+      } : nil,
+      entities: entities,
+      excluded: @excluded
     }
     
+    # Remove nil technical_spec
+    manifest.delete(:technical_spec) unless manifest[:technical_spec]
+    
     File.write(File.join(output_dir, 'manifest.json'), JSON.pretty_generate(manifest))
+  end
+  
+  # ============================================
+  # SCENE GRAPH
+  # ============================================
+  
+  def self.build_scene_graph
+    page = model.pages.selected_page
+    camera = view.camera
+    
+    # Collect all scenes
+    scenes = model.pages.to_a.map do |p|
+      cam = p.camera
+      {
+        name: p.name,
+        camera: {
+          eye: cam.eye.to_a,
+          target: cam.target.to_a,
+          up: cam.up.to_a,
+          fov: cam.fov
+        }
+      }
+    end
+    
+    {
+      version: VERSION,
+      model_name: File.basename(model.path, '.skp'),
+      resolution: RESOLUTION,
+      current_scene: page ? page.name : 'Default',
+      scenes: scenes,
+      entities: collect_entities_recursive(model.entities, 0)
+    }
+  end
+  
+  def self.collect_entities_recursive(entities, depth)
+    result = []
+    entities.each do |e|
+      next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
+      next if e.hidden?
+      
+      inner = e.is_a?(Sketchup::Group) ? e.entities : e.definition.entities
+      face_count = inner.grep(Sketchup::Face).length
+      child_count = inner.grep(Sketchup::Group).length + inner.grep(Sketchup::ComponentInstance).length
+      
+      bounds = e.bounds
+      
+      result << {
+        pid: e.persistent_id,
+        name: e.name.empty? ? nil : e.name,
+        type: e.class.name.split('::').last,
+        depth: depth,
+        face_count: face_count,
+        child_count: child_count,
+        bounds: {
+          width: bounds.width.to_m.round(1),
+          height: bounds.height.to_m.round(1),
+          depth: bounds.depth.to_m.round(1)
+        },
+        position: [
+          bounds.center.x.to_m.round(3),
+          bounds.center.y.to_m.round(3),
+          bounds.center.z.to_m.round(3)
+        ]
+      }
+      
+      # Recurse
+      result += collect_entities_recursive(inner, depth + 1)
+    end
+    result
   end
   
   # ============================================
@@ -519,157 +651,62 @@ module IRP
   # ============================================
   
   def self.name_entities_for_export
-    model.start_operation('Name for Export', true)
-    
     @role_map.each do |pid, info|
       entity = find_by_pid(pid)
-      next unless entity
-      
-      name = "IRP_#{info[:name]}"
-      
-      if entity.is_a?(Sketchup::Group)
-        # Convert to component for proper export
-        comp = entity.to_component
-        comp.definition.name = name
-        comp.name = name
-      else
-        entity.definition.name = name
-        entity.name = name
+      if entity
+        entity.name = "IRP_#{info[:name]}"
       end
     end
-    
-    # Don't commit — will be reverted
-  end
-  
-  def self.revert_structural_changes
-    model.abort_operation
-    puts "  ✓ Structural changes reverted"
+    puts "  Named #{@role_map.length} entities with IRP_ prefix"
   end
   
   def self.export_models(output_dir)
-    # DAE (for camera)
+    # DAE (includes camera)
     dae_path = File.join(output_dir, 'model.dae')
     model.export(dae_path, false)
     puts "  ✓ model.dae"
     
     # FBX
-    fbx_path = File.join(output_dir, 'model.fbx')
-    if model.export(fbx_path, false)
+    begin
+      fbx_path = File.join(output_dir, 'model.fbx')
+      model.export(fbx_path, false)
       puts "  ✓ model.fbx"
+    rescue => e
+      puts "  ✗ model.fbx (#{e.message})"
     end
     
     # GLB
-    glb_path = File.join(output_dir, 'model.glb')
-    if model.export(glb_path, false)
+    begin
+      glb_path = File.join(output_dir, 'model.glb')
+      model.export(glb_path, false)
       puts "  ✓ model.glb"
+    rescue => e
+      puts "  ✗ model.glb (#{e.message})"
     end
+  end
+  
+  def self.revert_structural_changes
+    # Names are reverted with abort_operation in export_mask
   end
   
   # ============================================
-  # UTILITIES
+  # HELPERS
   # ============================================
   
-  def self.find_by_pid(pid, entities = nil)
-    entities ||= model.entities
-    entities.each do |e|
-      return e if e.respond_to?(:persistent_id) && e.persistent_id == pid
-      
-      if e.is_a?(Sketchup::Group)
-        found = find_by_pid(pid, e.entities)
-        return found if found
-      elsif e.is_a?(Sketchup::ComponentInstance)
-        found = find_by_pid(pid, e.definition.entities)
-        return found if found
-      end
-    end
-    nil
+  def self.find_by_pid(pid)
+    model.find_entity_by_persistent_id(pid)
   end
   
-  def self.save_visibility
-    states = {}
-    save_visibility_recursive(model.entities, states)
-    states
-  end
-  
-  def self.save_visibility_recursive(entities, states)
-    entities.each do |e|
-      if e.respond_to?(:visible?) && e.respond_to?(:persistent_id)
-        states[e.persistent_id] = e.visible?
-      end
-      if e.is_a?(Sketchup::Group)
-        save_visibility_recursive(e.entities, states)
-      elsif e.is_a?(Sketchup::ComponentInstance)
-        save_visibility_recursive(e.definition.entities, states)
-      end
-    end
-  end
-  
-  def self.restore_visibility(states)
-    restore_visibility_recursive(model.entities, states)
-    view.refresh
-  end
-  
-  def self.restore_visibility_recursive(entities, states)
-    entities.each do |e|
-      if e.respond_to?(:visible=) && e.respond_to?(:persistent_id)
-        e.visible = states[e.persistent_id] if states.key?(e.persistent_id)
-      end
-      if e.is_a?(Sketchup::Group)
-        restore_visibility_recursive(e.entities, states)
-      elsif e.is_a?(Sketchup::ComponentInstance)
-        restore_visibility_recursive(e.definition.entities, states)
-      end
-    end
-  end
-  
-  def self.hide_all_mapped
-    @role_map.keys.each do |pid|
-      entity = find_by_pid(pid)
-      entity.visible = false if entity
-    end
-    view.refresh
+  def self.hide_all
+    model.entities.each { |e| e.visible = false if e.respond_to?(:visible=) }
   end
   
   def self.show_all_mapped
-    @role_map.keys.each do |pid|
+    hide_all
+    @role_map.each do |pid, _|
       entity = find_by_pid(pid)
       entity.visible = true if entity
     end
-    view.refresh
-  end
-  
-  def self.save_rendering_options
-    ro = model.rendering_options
-    {
-      edge_mode: ro['EdgeDisplayMode'],
-      silhouettes: ro['DrawSilhouettes'],
-      profiles: ro['DrawDepthQue'],
-      sky: ro['DrawSky'],
-      ground: ro['DrawGround'],
-      fog: ro['DisplayFog'],
-      section_planes: ro['DisplaySectionPlanes']
-    }
-  end
-  
-  def self.restore_rendering_options(saved)
-    ro = model.rendering_options
-    safe_set(ro, 'EdgeDisplayMode', saved[:edge_mode])
-    safe_set(ro, 'DrawSilhouettes', saved[:silhouettes])
-    safe_set(ro, 'DrawDepthQue', saved[:profiles])
-    safe_set(ro, 'DrawSky', saved[:sky])
-    safe_set(ro, 'DrawGround', saved[:ground])
-    safe_set(ro, 'DisplayFog', saved[:fog])
-    safe_set(ro, 'DisplaySectionPlanes', saved[:section_planes])
-  end
-  
-  def self.setup_normal_rendering
-    ro = model.rendering_options
-    safe_set(ro, 'EdgeDisplayMode', 1)
-    safe_set(ro, 'DrawSilhouettes', true)
-    safe_set(ro, 'DrawSky', false)
-    safe_set(ro, 'DrawGround', false)
-    safe_set(ro, 'DisplayFog', false)
-    safe_set(ro, 'DisplaySectionPlanes', false)
   end
   
   def self.setup_mask_rendering
@@ -683,10 +720,36 @@ module IRP
     safe_set(ro, 'BackgroundColor', Sketchup::Color.new(0, 0, 0))
   end
   
+  def self.setup_normal_rendering
+    ro = model.rendering_options
+    safe_set(ro, 'EdgeDisplayMode', 1)
+    safe_set(ro, 'DrawSilhouettes', true)
+    safe_set(ro, 'DrawSky', true)
+    safe_set(ro, 'DrawGround', true)
+  end
+  
   def self.safe_set(ro, key, value)
     ro[key] = value
   rescue ArgumentError => e
     puts "  Warning: #{key} not supported, skipping"
+  end
+  
+  def self.save_rendering_options
+    ro = model.rendering_options
+    {
+      'EdgeDisplayMode' => (ro['EdgeDisplayMode'] rescue nil),
+      'DrawSilhouettes' => (ro['DrawSilhouettes'] rescue nil),
+      'DrawSky' => (ro['DrawSky'] rescue nil),
+      'DrawGround' => (ro['DrawGround'] rescue nil),
+      'BackgroundColor' => (ro['BackgroundColor'] rescue nil)
+    }
+  end
+  
+  def self.restore_rendering_options(saved)
+    ro = model.rendering_options
+    saved.each do |key, value|
+      safe_set(ro, key, value) if value
+    end
   end
   
   def self.export_image(path, opts = {})
@@ -694,27 +757,33 @@ module IRP
       filename: path,
       width: RESOLUTION[0],
       height: RESOLUTION[1],
-      antialias: false,
-      transparent: opts[:transparent] || false
+      antialias: true,
+      transparent: false
     }
     view.write_image(options)
   end
   
   def self.create_zip(source_dir, zip_path)
-    # Ruby doesn't have built-in zip, use system call
-    if Gem.win_platform?
-      # Windows: use PowerShell
-      ps_cmd = "Compress-Archive -Path '#{source_dir}\\*' -DestinationPath '#{zip_path}' -Force"
-      system("powershell -Command \"#{ps_cmd}\"")
-    else
-      # Unix
-      system("cd '#{source_dir}' && zip -r '#{zip_path}' .")
+    require 'rubygems/package'
+    require 'zlib'
+    
+    # Use system zip if available
+    if system("zip -r \"#{zip_path}\" . > NUL 2>&1", chdir: source_dir)
+      return
+    end
+    
+    # Fallback: manual zip via PowerShell on Windows
+    if Sketchup.platform == :platform_win
+      cmd = "powershell -Command \"Compress-Archive -Path '#{source_dir}\\*' -DestinationPath '#{zip_path}' -Force\""
+      system(cmd)
     end
   end
 end
 
 puts ""
-puts "IRP loaded. Commands:"
+puts "IRP v#{IRP::VERSION} loaded. Commands:"
 puts "  IRP.extract  — Generate scene_graph + beauty (Phase 0)"
 puts "  IRP.export   — Generate masks + depth + models (Phase 2)"
+puts ""
+puts "Current scene: #{IRP.current_scene_name}"
 puts ""
