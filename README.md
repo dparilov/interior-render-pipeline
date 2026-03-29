@@ -10,18 +10,19 @@ Generate photorealistic interior renders from SketchUp models with precise mater
 
 ## Quick Start
 
-```bash
-# 1. Extract scene graph from SketchUp
-#    → scene_graph.json + beauty.png
+```ruby
+# In SketchUp Ruby Console:
+load 'http://100.96.1.25:9090/irp.rb'
 
-# 2. Map PIDs to semantic roles (AI-assisted)
-#    → role_map.json
+# 1. Extract scene graph
+IRP.extract   # → irp_extract.zip (next to .skp)
 
-# 3. Export bundle from SketchUp
-#    → irp_bundle/ (masks, models, manifest)
+# 2. Send zip to AI, get role_map.json, place next to .skp
+
+# 3. Export bundle
+IRP.export    # → irp_bundle.zip (masks, depth, boundary, models)
 
 # 4. Render with ComfyUI
-#    → render.png
 ```
 
 See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed instructions.
@@ -29,20 +30,19 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed instructions.
 ## Project Structure
 
 ```
-├── sketchup/           # SketchUp Ruby scripts
-│   ├── irp_extract.rb  # Phase 0: Scene graph extraction
-│   └── irp_export.rb   # Phase 2: Mask & model export
-├── render/             # ComfyUI rendering
-│   ├── workflow.json   # Canonical workflow
+├── sketchup/
+│   └── irp.rb          # Single script: IRP.extract + IRP.export
+├── render/
+│   ├── workflow.json   # Canonical ComfyUI workflow
 │   └── render.py       # Python orchestrator
-├── specs/              # Specifications
-│   ├── BUNDLE_SPEC.md  # Bundle JSON schema
-│   └── RENDERING.md    # Render strategies
-├── docs/               # Documentation
+├── specs/
+│   ├── BUNDLE_SPEC.md  # Bundle JSON schema v1.0
+│   └── RENDERING.md    # Render strategies by entity class
+├── docs/
 │   ├── ARCHITECTURE.md # Pipeline contracts
 │   └── QUICKSTART.md   # Step-by-step guide
-└── examples/           # Example bundles
-    └── bathroom_01/    # Test scene
+└── examples/
+    └── bathroom_01/    # Complete test bundle
 ```
 
 ## Pipeline
@@ -54,9 +54,12 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed instructions.
 └─────────────┘     └─────────────┘     └─────────────┘
       │                   │                   │
       ▼                   ▼                   ▼
- scene_graph.json    masks/*.png      Canny + Depth
- role_map.json       references/      IPAdapter × N
+ scene_graph.json    masks/*.png      Canny ControlNet (0.8)
+ role_map.json       depth.png        SketchUp Depth (0.9)
+                     boundary_mask    IPAdapter × N
 ```
+
+**Key:** Depth map exported from SketchUp geometry (not neural estimation) ensures pixel-perfect object placement. Boundary mask prevents generation outside room.
 
 ## Requirements
 
@@ -87,9 +90,9 @@ See [STATUS.md](STATUS.md) for detailed implementation status.
 | Bundle schema | ✅ Stable |
 | ComfyUI workflow | ✅ Works |
 | Python orchestrator | 📄 Stub |
-| Example bundle | 📄 Stub (schema only) |
+| Example bundle | ✅ Complete |
 
-**Next:** Complete bathroom_01 example with real images.
+**Current focus:** Strict geometry control via SketchUp depth map.
 
 ## License
 

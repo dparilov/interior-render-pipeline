@@ -10,28 +10,28 @@
   - `ip-adapter_sdxl.safetensors`
   - `clip_vision_g.safetensors`
 
-## Phase 0: Extract Scene Graph
+## Workflow
+
+### Step 1: Extract Scene Graph
 
 In SketchUp Ruby Console:
 
 ```ruby
-load '/path/to/irp_extract.rb'
+load 'http://100.96.1.25:9090/irp.rb'
 IRP.extract
 ```
 
-**Output:**
-- `~/Downloads/irp_extract/scene_graph.json`
-- `~/Downloads/irp_extract/beauty.png`
+**Output:** `irp_extract.zip` (next to your .skp file)
 
-## Phase 1: Create Role Map
+Contents:
+- `scene_graph.json` — all entities with PIDs
+- `beauty.png` — current view render
 
-Provide to AI:
-- `scene_graph.json`
-- `beauty.png`
-- Your ТЗ (requirements doc)
-- Reference images
+### Step 2: Create Role Map
 
-**Output:** `role_map.json`
+Send `irp_extract.zip` to AI with your requirements (ТЗ).
+
+AI returns `role_map.json`:
 
 ```json
 {
@@ -46,21 +46,58 @@ Provide to AI:
 }
 ```
 
-## Phase 2: Export Bundle
+Place `role_map.json` next to your .skp file.
 
-In SketchUp Ruby Console:
+### Step 3: Export Bundle
 
 ```ruby
-load '/path/to/irp_export.rb'
-IRP.load_map('/path/to/role_map.json')
 IRP.export
 ```
 
-**Output:** `~/Downloads/irp_bundle/`
+**Output:** `irp_bundle.zip` (next to your .skp file)
+
+Contents:
+- `beauty.png` — source render
+- `depth.png` — ground truth depth from geometry
+- `boundary_mask.png` — room silhouette (white = room, black = outside)
+- `masks/*.png` — binary mask per entity
+- `manifest.json` — bundle metadata
+- `model.dae/fbx/glb` — 3D models for Blender
+
+### Step 4: Visual QA
+
+Check masks against beauty.png:
+
+| Criterion | Target |
+|-----------|--------|
+| Coverage | Mask covers entire object |
+| Precision | No overlap with neighbors |
+| Binary | Pure black/white only |
+| Score | ≥ 95 for each entity |
+
+### Step 5: Render
+
+#### Option A: ComfyUI GUI
+
+1. Open `http://localhost:8188`
+2. Load `render/workflow.json`
+3. Set paths to your bundle
+4. Queue prompt
+
+#### Option B: Python Script
+
+```bash
+python render/render.py /path/to/irp_bundle
+```
+
+## Bundle Structure
+
 ```
 irp_bundle/
 ├── manifest.json
 ├── beauty.png
+├── depth.png           # Ground truth from SketchUp
+├── boundary_mask.png   # Room silhouette
 ├── masks/
 │   ├── walls.png
 │   ├── floor.png
@@ -70,37 +107,20 @@ irp_bundle/
 └── model.glb
 ```
 
-## Phase 3: Visual QA
+## ControlNet Settings
 
-Check each mask against beauty.png:
-- Coverage: Does mask cover entire object?
-- Precision: Does mask avoid neighbors?
-- Binary: Pure black/white only?
+| ControlNet | Source | Strength | End At |
+|------------|--------|----------|--------|
+| Canny | beauty.png | 0.8 | 0.9 |
+| Depth | depth.png (SketchUp) | 0.9 | 0.8 |
 
-**Target:** Score ≥ 95 for each entity.
-
-## Phase 4: Render
-
-### Option A: ComfyUI GUI
-
-1. Open `http://localhost:8188`
-2. Load `render/workflow.json`
-3. Set paths to your bundle
-4. Queue prompt
-
-### Option B: API
-
-```bash
-curl -X POST http://localhost:8188/prompt \
-  -H "Content-Type: application/json" \
-  -d @render/workflow.json
-```
+**Important:** Use `depth.png` from bundle, NOT neural depth estimation. This ensures pixel-perfect geometry.
 
 ## Troubleshooting
 
 | Issue | Cause | Solution |
 |-------|-------|----------|
+| Objects in wrong place | Using neural depth | Use SketchUp depth.png |
+| Generation outside room | No boundary mask | Add boundary_mask as latent_mask |
+| Extra objects appear | Weak ControlNet | Increase Canny to 0.8+ |
 | Empty mask | Faces not painted | Check recursive painting |
-| Mask leaks | Overlapping geometry | Hide neighbors during render |
-| Gray tones | Antialiasing | Use flat shading |
-| Wrong aspect | Hardcoded size | Match beauty.png dimensions |

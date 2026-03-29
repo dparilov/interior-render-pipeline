@@ -29,8 +29,11 @@
 
 | File | Status | Notes |
 |------|--------|-------|
-| `sketchup/irp_extract.rb` | ✅ Works | Recursive scene graph, camera, beauty render |
-| `sketchup/irp_export.rb` | ✅ Works | Masks with occlusion, DAE/FBX/GLB export |
+| `sketchup/irp.rb` | ✅ Works | Single script: IRP.extract + IRP.export |
+
+**Exports:**
+- scene_graph.json, beauty.png (extract)
+- depth.png, boundary_mask.png, masks/, models (export)
 
 ### Render
 
@@ -62,13 +65,16 @@
 
 ### Implemented
 
+- [x] Single script workflow (IRP.extract + IRP.export)
 - [x] Recursive scene graph extraction (20 levels deep)
 - [x] PID-based entity mapping
 - [x] Binary mask export with occlusion
+- [x] **Depth map from SketchUp geometry** (ground truth)
+- [x] **Boundary mask** (room silhouette for latent masking)
 - [x] IRP_* naming for model export
 - [x] Group → Component conversion (with rollback)
-- [x] DAE camera export
-- [x] Dual ControlNet (Canny + Depth)
+- [x] ZIP output next to .skp file
+- [x] Dual ControlNet (Canny + SketchUp Depth)
 - [x] Regional IPAdapter with attention masks
 - [x] Entity class separation (surface/fixture/opening)
 - [x] Fixed seed for reproducibility
