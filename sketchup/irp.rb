@@ -461,26 +461,53 @@ module IRP
   
   def self.generate_manifest(output_dir)
     page = model.pages.selected_page
+    camera = view.camera
     
     entities = @role_map.map do |pid, info|
+      entity_class = info[:entity_class] || 'fixture'
+      
+      # Default weights by class
+      weight = case entity_class
+        when 'surface' then 0.55
+        when 'fixture' then 0.5
+        when 'opening' then 0.0
+        else 0.5
+      end
+      
+      # Render mode by class
+      render_mode = entity_class == 'opening' ? 'structural_controlnet' : 'regional_ipadapter'
+      
       {
         pid: pid,
         name: info[:name],
         role: info[:role],
-        class: info[:entity_class],
+        class: entity_class,
         mask: "masks/#{info[:name]}.png",
         reference: info[:reference],
-        prompt: info[:prompt]
+        prompt: info[:prompt],
+        critical: ['walls', 'floor', 'vanity', 'bathtub', 'mirror'].include?(info[:name]),
+        render_mode: render_mode,
+        ipadapter_weight: weight
       }
     end
     
     manifest = {
       version: '1.0',
-      scene_name: page ? page.name : 'Default',
-      resolution: RESOLUTION,
+      scene_id: "#{File.basename(model.path, '.skp')}_#{page ? page.name.gsub(/\s+/, '_') : 'default'}",
+      created: Time.now.utc.strftime('%Y-%m-%dT%H:%M:%SZ'),
       base_image: 'beauty.png',
       depth_map: 'depth.png',
       boundary_mask: 'boundary_mask.png',
+      image_size: {
+        width: RESOLUTION[0],
+        height: RESOLUTION[1]
+      },
+      camera: {
+        eye: camera.eye.to_a.map { |v| v.to_m.round(3) },
+        target: camera.target.to_a.map { |v| v.to_m.round(3) },
+        up: camera.up.to_a,
+        fov: camera.fov.round(1)
+      },
       entities: entities
     }
     
