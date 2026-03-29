@@ -73,10 +73,12 @@ See [docs/QUICKSTART.md](docs/QUICKSTART.md) for detailed instructions.
 
 | Document | Description |
 |----------|-------------|
+| [QUICKSTART.md](docs/QUICKSTART.md) | Step-by-step guide |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Data flow contracts |
+| [AUDIT.md](docs/AUDIT.md) | External review checklist |
 | [BUNDLE_SPEC.md](specs/BUNDLE_SPEC.md) | Bundle JSON schema v1.0 |
 | [RENDERING.md](specs/RENDERING.md) | Entity classes & render modes |
-| [QUICKSTART.md](docs/QUICKSTART.md) | Step-by-step guide |
+| [EXPERIMENTS.md](specs/EXPERIMENTS.md) | Experiment tracking |
 
 ## Status
 
