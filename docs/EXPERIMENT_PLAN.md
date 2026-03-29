@@ -1,17 +1,4 @@
-# IRP Experiment Plan v1.1
-
-## Overview
-
-Controlled experiment series to validate pipeline components and find optimal parameters.
-All experiments use **fixed seed=42** for reproducibility.
-
-**Baseline configuration** (from workflow.json v1.1):
-- Canny: strength=0.8, end=0.9
-- Depth: strength=0.9, end=0.8 (SketchUp ground truth)
-- IPAdapter: surface=0.55, fixture=0.50, opening=0.0
-- Boundary mask: ON (SetLatentNoiseMask)
-
----
+# IRP Experiment Plan v2.0
 
 ## Compute Platform
 
@@ -19,9 +6,7 @@ All experiments use **fixed seed=42** for reproducibility.
 |----------|------|----------|------|
 | RunPod Pod | Dedicated | RTX 4090 24GB | ~$0.69/hr |
 
-**All experiments run on dedicated RunPod Pod** (not serverless).
-- Local CPU: OOM at 10 IPAdapter
-- Serverless: Stock images lack IPAdapter nodes
+**All experiments run on dedicated RunPod Pod.**
 
 ### Pod Setup
 
@@ -35,65 +20,27 @@ SSH: `ssh root@<ip> -p <port> -i ~/.ssh/id_rsa`
 - ControlNet Canny/Depth (control-lora-rank256)
 
 **Expected per experiment:**
-- Time: ~30-60 sec (RTX 4090)
-- Cost: ~$0.01-0.02
+- Time: ~30-35 sec (RTX 4090)
+- Cost: ~$0.006
 
 ---
 
-## Hypotheses
+## Block 0: Infra Smoke ✅
 
-| ID | Hypothesis | Test | Success Criteria |
-|----|------------|------|------------------|
-| H1 | SketchUp Depth > Neural Depth | S1 vs S1-neural | Objects in correct positions |
-| H2 | Boundary Mask prevents hallucination | S1 vs S1-no-boundary | No objects outside room |
-| H3 | Surfaces need higher weight than fixtures | I2 vs I4 sweeps | Optimal weight differs by class |
-| H4 | Canny 0.8 + Depth 0.9 is optimal | Baseline vs sweep | Best structure preservation |
-| H5 | IPAdapter order affects result | F2 vs F2-order2 | Visible difference in output |
-| H6 | ТЗ-derived prompts improve accuracy | T1 vs T2 | Better material/color match |
+| ID | Name | Status |
+|----|------|--------|
+| S0 | pod-smoke | ✅ PASSED |
 
 ---
 
-## Block 0: Infrastructure Test (Pod Validation)
+## Block 1: Structural Gate ✅
 
-Minimal smoke test to validate Pod + ComfyUI works.
-
-| ID | Name | ControlNet | IPAdapter | Boundary | Purpose |
-|----|------|------------|-----------|----------|---------|
-| S0 | pod-smoke | Canny 0.8 | OFF | OFF | Verify Pod ComfyUI works |
-
-**Uses:** Dedicated Pod with manually installed ComfyUI + nodes
-
-**S0 is intentionally minimal:**
-- Single ControlNet (Canny only)
-- No IPAdapter
-- No Boundary mask
-- txt2img with structure guidance
-
-**Pass criteria:**
-- ComfyUI accepts workflow
-- Image generated and saved
-- No OOM or crashes
-
----
-
-## Block 1: Structural Gate (REQUIRED FIRST)
-
-**Requires:** Custom image `irp/worker-comfyui:sdxl-ipadapter`
-
-These must pass before any material experiments.
-
-| ID | Name | Depth | Boundary | IPAdapter | Purpose |
-|----|------|-------|----------|-----------|---------|
-| S1 | baseline | SKP 0.9 | ON | ALL (10) | Golden structural reference |
-| S1-neural | neural-depth | Neural 0.7 | ON | ALL | Compare depth sources |
-| S1-no-boundary | no-boundary | SKP 0.9 | OFF | ALL | Verify boundary effect |
-| S1-weak | weak-structure | SKP 0.5, Canny 0.5 | ON | ALL | Minimum viable structure |
-
-**Pass criteria:**
-- S1: All objects in correct positions, room boundaries respected
-- S1-neural vs S1: SKP depth should have fewer position errors
-- S1-no-boundary vs S1: Should show hallucinated objects outside room
-- S1-weak: Should show structural drift
+| ID | Name | Depth | Boundary | IPAdapter | Status |
+|----|------|-------|----------|-----------|--------|
+| S1 | baseline | SKP 0.9 | ON | ALL (10) | ✅ PASSED |
+| S1-neural | neural-depth | Neural 0.7 | ON | ALL | ✅ PASSED |
+| S1-no-boundary | no-boundary | SKP 0.9 | OFF | ALL | ✅ PASSED |
+| S1-weak | weak-structure | 0.5 | ON | ALL | ✅ PASSED |
 
 ---
 
@@ -103,153 +50,129 @@ Isolate weight sensitivity per entity class.
 
 ### I2: Floor (Surface)
 
-| ID | Entity | Weight | All others |
-|----|--------|--------|------------|
-| I2-03 | floor | 0.3 | OFF |
-| I2-04 | floor | 0.4 | OFF |
-| I2-05 | floor | 0.5 | OFF |
-| I2-06 | floor | 0.6 | OFF |
-| I2-07 | floor | 0.7 | OFF |
+| ID | Entity | Weight | Status |
+|----|--------|--------|--------|
+| I2-03 | floor | 0.3 | ✅ PASSED |
+| I2-04 | floor | 0.4 | ✅ PASSED |
+| I2-05 | floor | 0.5 | ✅ PASSED |
+| I2-06 | floor | 0.6 | ✅ PASSED |
+| I2-07 | floor | 0.7 | ✅ PASSED |
 
 ### I4: Vanity (Fixture)
 
-| ID | Entity | Weight | All others |
-|----|--------|--------|------------|
-| I4-03 | vanity | 0.3 | OFF |
-| I4-04 | vanity | 0.4 | OFF |
-| I4-05 | vanity | 0.5 | OFF |
-| I4-06 | vanity | 0.6 | OFF |
-| I4-07 | vanity | 0.7 | OFF |
+| ID | Entity | Weight | Status |
+|----|--------|--------|--------|
+| I4-03 | vanity | 0.3 | ✅ PASSED |
+| I4-04 | vanity | 0.4 | ✅ PASSED |
+| I4-05 | vanity | 0.5 | ✅ PASSED |
+| I4-06 | vanity | 0.6 | ⏳ TODO |
+| I4-07 | vanity | 0.7 | ⏳ TODO |
 
-**Output:** Optimal weight per class for integration tests.
-
----
-
-## Block 3: First Integration
-
-| ID | Name | Entities | Order | Purpose |
-|----|------|----------|-------|---------|
-| F1 | critical-only | walls, floor, vanity, towel_warmer, mirror | Standard | First integration gate |
-| F2 | all-entities | All 10 | Standard (surface→fixture→opening) | Full scene |
-| F2-order2 | reversed-order | All 10 | Reversed (opening→fixture→surface) | Test H5 |
-
-**F1 is the primary integration gate** — run before F2.
+**Output:** Best weight for surface, best weight for fixture.
 
 ---
 
-## Block 4: ТЗ Impact
+## Block 3: Refiner Tests
 
-Test whether ТЗ-derived prompts improve render accuracy.
+Test refiner impact before full integration (isolate refiner effect from integration complexity).
 
-| ID | Name | Prompts | References | Purpose |
-|----|------|---------|------------|---------|
-| T1 | full-tz | From ТЗ (detailed) | All refs | Baseline with full ТЗ |
-| T2 | minimal-prompts | Simplified (e.g., "white tiles") | All refs | Refs-only comparison |
-| T3 | no-refs-critical | From ТЗ (detailed) | Critical only | ТЗ without all refs |
+### R1: Structural + Refiner
 
-**Expected result:** T1 should match ТЗ requirements better than T2.
+| ID | Setup | Refiner | Purpose |
+|----|-------|---------|---------|
+| R1a | Best structural (S1) | OFF | Baseline |
+| R1b | Best structural (S1) | ON | Does refiner improve readability? |
 
-**Verification method:**
-- Compare towel_warmer color (ТЗ says WHITE)
-- Compare floor pattern (ТЗ says blue geometric)
-- Count material mismatches vs ТЗ checklist
+### R2: Floor Entity + Refiner
 
----
+| ID | Setup | Refiner | Purpose |
+|----|-------|---------|---------|
+| R2a | Best I2 weight | OFF | Baseline |
+| R2b | Best I2 weight | ON | Does refiner help surface transfer? |
 
-## Block 5: Production Candidates
+### R3: Vanity Entity + Refiner
 
-After all blocks pass:
+| ID | Setup | Refiner | Purpose |
+|----|-------|---------|---------|
+| R3a | Best I4 weight | OFF | Baseline |
+| R3b | Best I4 weight | ON | Does refiner help fixture detail? |
 
-| ID | Name | Config | Entities | Seed | Purpose |
-|----|------|--------|----------|------|---------|
-| P1 | prod-critical | Best structural + weights | Critical only | 42 | Minimal production |
-| P2 | prod-all | Same as P1 | All entities | 42 | Full production |
-| P3 | prod-all-seed2 | Same as P2 | All entities | 123 | Seed independence |
+### R4: Critical-Only + Refiner
 
-**P1 config derived from:**
-- Structural: S1 baseline (SKP depth 0.9, boundary ON)
-- Weights: Best from I2/I4 sweeps
-- Prompts: Full ТЗ (if T1 > T2)
+| ID | Setup | Refiner | Purpose |
+|----|-------|---------|---------|
+| R4a | Critical entities only | OFF | Bridge to full-scene |
+| R4b | Critical entities only | ON | Refiner on integration |
 
 ---
 
-## Experiment Output Requirements
+## Block 4: First Integration
 
-Each experiment must produce:
+Run after Block 2-3 to understand best settings.
 
-```
-experiments/<id>_<timestamp>/
-├── experiment.json      # Full params from workflow (not hardcoded)
-├── workflow.json        # Actual submitted workflow
-├── bundle_manifest.json # Copy of manifest used
-├── render.png           # Output image
-└── notes.md             # Optional observations
-```
+| ID | Name | Entities | Refiner | IPAdapter Order |
+|----|------|----------|---------|-----------------|
+| F1 | critical-only | Critical only | OFF | Default |
+| F1-refiner | critical-refiner | Critical only | ON | Default |
+| F2 | all-entities | All (10) | OFF | Default |
+| F2-refiner | all-refiner | All (10) | ON | Default |
+| F2-order2 | reversed-order | All (10) | OFF | Reversed |
 
-**experiment.json must include:**
-- All ControlNet strengths extracted from workflow
-- All IPAdapter weights and entities_used
-- depth_map: "skp" or "neural"
-- boundary_mask: true/false
-- technical_spec_hash
-- references_hash (per entity)
-- timing (submit → complete)
+**Critical entities:** walls, floor, bathtub, vanity
 
 ---
 
-## Execution Order
+## Block 5: Technical Spec Impact
 
-### Execution Order
+Run on best integration setup from Block 4.
 
-```
-S0 → [build custom image] → S1 → S1-neural → S1-no-boundary → I2-05 → I4-05 → F1 → T1 → T2
-```
-
-### Phase 1: Infrastructure (stock image)
-1. **S0** — RunPod infra test, validates pipeline
-
-### Phase 2: Build Custom Image
-- After S0 passes, build `irp/worker-comfyui:sdxl-ipadapter`
-- Deploy new endpoint with custom image
-
-### Phase 3: Full Experiments (custom image)
-1. **S1** — must pass before anything else
-2. **S1-neural, S1-no-boundary** — validate H1, H2
-3. **I2-05, I4-05** — baseline weights (skip sweep if time-constrained)
-4. **F1** — critical integration gate
-5. **T1, T2** — validate ТЗ impact
-6. **F2** — full scene (only if F1 passes)
-7. **P1, P2, P3** — production candidates
-8. **R1, R2, R3** — refiner tests (if time permits)
+| ID | Name | Refs | Prompts | Purpose |
+|----|------|------|---------|---------|
+| T1 | full-tz | ✅ | ТЗ-derived | Full spec compliance |
+| T2 | refs-only | ✅ | Simplified | Isolate ref impact |
+| T3 | strong-tz | ✅ | Strong ТЗ | Max spec emphasis |
 
 ---
 
-## Block 6: Refiner Experiments
+## Block 6: Production Candidate
 
-Test SDXL Refiner impact on texture quality. Run after best config from Blocks 1-5.
+Final candidates for production recipe.
 
-| ID | Name | Base Steps | Refiner Steps | Denoise | Purpose |
-|----|------|-----------|---------------|---------|---------|
-| R1 | refiner-subtle | 40/50 | 10/50 | 0.2 | Subtle detail enhancement |
-| R2 | refiner-medium | 35/50 | 15/50 | 0.25 | Balanced refinement |
-| R3 | refiner-strong | 30/50 | 20/50 | 0.3 | Maximum detail (risk: structure drift) |
+| ID | Name | Config | Seed | Purpose |
+|----|------|--------|------|---------|
+| P1 | best-critical | Best structural + best weights + critical | 42 | Minimal viable |
+| P2 | best-full | Best full integration | 42 | Full scene |
+| P2-refiner | best-full-refiner | Best full + refiner | 42 | With refinement |
+| P3 | seed-test-1 | Best variant | 123 | Seed stability |
+| P4 | seed-test-2 | Best variant | 456 | Seed stability |
 
-**Refiner parameters:**
-- Model: SDXL Refiner 1.0 (or RealVisXL refiner if available)
-- Switch: At denoise % of total steps
-- IPAdapter: Applied to base only (not refiner)
+---
 
-**Hypothesis H7:** Refiner улучшает текстуры (плитка, ткань, хром) без потери структурной точности
+## Execution Summary
 
-**Sequential enabling:**
-1. R1 first — if structure holds, proceed
-2. R2 — compare texture improvement vs R1
-3. R3 — test limit before structure degrades
+| Block | Experiments | Status |
+|-------|-------------|--------|
+| 0 - Infra | 1 | ✅ Complete |
+| 1 - Structural | 4 | ✅ Complete |
+| 2 - Calibration | 10 | 🔄 In Progress (8/10) |
+| 3 - Refiner | 8 | ⏳ TODO |
+| 4 - Integration | 5 | ⏳ TODO |
+| 5 - Tech Spec | 3 | ⏳ TODO |
+| 6 - Production | 5 | ⏳ TODO |
 
-**Pass criteria:**
-- Structure matches S1 baseline
-- Texture detail improved (subjective + LPIPS)
-- No new artifacts introduced
+**Total:** 36 experiments
+
+---
+
+## Decision Points
+
+After each block, decide:
+
+1. **After Block 2:** Best surface weight, best fixture weight
+2. **After Block 3:** Refiner ON or OFF for integration
+3. **After Block 4:** Best integration config (F1/F2/F2-order2)
+4. **After Block 5:** Best ТЗ handling
+5. **After Block 6:** Production recipe locked
 
 ---
 
