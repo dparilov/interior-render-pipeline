@@ -167,6 +167,35 @@ This validates: structure holds, depth/boundary work, class weights, integration
 
 ---
 
+## Block 6: Refiner Experiments
+
+Test SDXL Refiner impact on texture quality. Run after best config from Blocks 1-5.
+
+| ID | Name | Base Steps | Refiner Steps | Denoise | Purpose |
+|----|------|-----------|---------------|---------|---------|
+| R1 | refiner-subtle | 40/50 | 10/50 | 0.2 | Subtle detail enhancement |
+| R2 | refiner-medium | 35/50 | 15/50 | 0.25 | Balanced refinement |
+| R3 | refiner-strong | 30/50 | 20/50 | 0.3 | Maximum detail (risk: structure drift) |
+
+**Refiner parameters:**
+- Model: SDXL Refiner 1.0 (or RealVisXL refiner if available)
+- Switch: At denoise % of total steps
+- IPAdapter: Applied to base only (not refiner)
+
+**Hypothesis H7:** Refiner улучшает текстуры (плитка, ткань, хром) без потери структурной точности
+
+**Sequential enabling:**
+1. R1 first — if structure holds, proceed
+2. R2 — compare texture improvement vs R1
+3. R3 — test limit before structure degrades
+
+**Pass criteria:**
+- Structure matches S1 baseline
+- Texture detail improved (subjective + LPIPS)
+- No new artifacts introduced
+
+---
+
 ## Failure Criteria
 
 **Automatic FAIL:**
