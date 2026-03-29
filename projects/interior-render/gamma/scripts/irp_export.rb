@@ -344,6 +344,10 @@ module IRP
       export_fbx
       export_glb
       
+      # 8. Revert structural changes (Group→Component conversions)
+      # Names are preserved, but structure returns to original
+      revert_structural_changes
+      
     ensure
       restore_visibility(saved_vis)
       restore_rendering_options(saved_render)
@@ -408,11 +412,27 @@ module IRP
   # ============================================
   
   def self.name_entities_for_export
+    # Start operation so we can undo structural changes after export
+    model.start_operation('IRP Export Naming', true)
+    
+    @converted_groups = []
+    
     @role_map.each do |pid, info|
       entity = find_by_pid(pid)
       next unless entity && entity.valid?
       
       irp_name = "IRP_#{info[:name]}"
+      
+      # CRITICAL: Convert Group to Component (Groups lose geometry in GLB export)
+      if entity.is_a?(Sketchup::Group)
+        puts "  ⚙ Converting Group #{pid} to Component..."
+        component = entity.to_component
+        component.definition.name = irp_name
+        component.name = irp_name
+        @converted_groups << pid
+        puts "  ✓ PID #{pid} → #{irp_name} (converted to Component)"
+        next
+      end
       
       # Set entity name (survives FBX/GLB export)
       if entity.respond_to?(:name=)
@@ -428,6 +448,20 @@ module IRP
           entity.definition.name = irp_name
         end
       end
+    end
+  end
+  
+  def self.revert_structural_changes
+    if @converted_groups && !@converted_groups.empty?
+      puts ""
+      puts "=== REVERTING STRUCTURAL CHANGES ==="
+      puts "  Undoing Group→Component conversions..."
+      model.abort_operation  # Undo the operation started in name_entities_for_export
+      puts "  ✓ Reverted #{@converted_groups.length} structural changes"
+      puts "  Note: IRP_* names are preserved (non-structural)"
+      @converted_groups = []
+    else
+      model.commit_operation  # Nothing to revert, commit naming
     end
   end
   
