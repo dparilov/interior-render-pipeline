@@ -192,13 +192,71 @@ def submit_prompt(prompt: Dict, experiment: Optional[Experiment] = None) -> Dict
         raise
 
 
+def poll_completion(prompt_id: str, timeout_seconds: int = 7200, poll_interval: int = 10) -> Optional[Dict]:
+    """Poll ComfyUI history until prompt completes or times out.
+    
+    Args:
+        prompt_id: The prompt ID to wait for
+        timeout_seconds: Max wait time (default 2 hours for CPU render)
+        poll_interval: Seconds between polls
+    
+    Returns:
+        History entry dict or None if timeout/error
+    """
+    import time
+    start = time.time()
+    
+    while time.time() - start < timeout_seconds:
+        try:
+            response = requests.get(f"{COMFYUI_URL}/history/{prompt_id}", timeout=10)
+            if response.status_code == 200:
+                history = response.json()
+                if prompt_id in history:
+                    entry = history[prompt_id]
+                    # Check if completed
+                    if entry.get("status", {}).get("completed", False):
+                        return entry
+                    # Check for error
+                    if entry.get("status", {}).get("status_str") == "error":
+                        return entry
+        except requests.exceptions.RequestException:
+            pass  # Retry on network errors
+        
+        time.sleep(poll_interval)
+    
+    return None  # Timeout
+
+
+def get_output_images(history_entry: Dict, comfyui_output_dir: Path = None) -> List[Path]:
+    """Extract output image paths from history entry."""
+    if comfyui_output_dir is None:
+        comfyui_output_dir = Path.home() / "ComfyUI" / "output"
+    
+    images = []
+    outputs = history_entry.get("outputs", {})
+    
+    for node_id, node_output in outputs.items():
+        if "images" in node_output:
+            for img in node_output["images"]:
+                filename = img.get("filename")
+                subfolder = img.get("subfolder", "")
+                if filename:
+                    img_path = comfyui_output_dir / subfolder / filename
+                    if img_path.exists():
+                        images.append(img_path)
+    
+    return images
+
+
 def render(
     bundle_path: Path,
     workflow_path: Path = None,
     experiment_name: str = "render",
     experiments_dir: Path = None,
     validate: bool = True,
-    dry_run: bool = False
+    dry_run: bool = False,
+    wait: bool = True,
+    timeout_seconds: int = 7200
 ) -> Dict:
     """Main render function.
     
@@ -209,6 +267,8 @@ def render(
         experiments_dir: Where to save experiment data
         validate: Whether to validate bundle first
         dry_run: If True, don't submit to ComfyUI
+        wait: If True, poll until completion and save output
+        timeout_seconds: Max wait time for completion (default 2h)
     
     Returns:
         Dict with prompt_id and experiment info
@@ -265,12 +325,57 @@ def render(
         print("Submitting to ComfyUI...")
         result = submit_prompt(workflow.get("prompt", workflow), experiment)
         
-        print(f"  ✅ Submitted: {result.get('prompt_id')}")
+        prompt_id = result.get("prompt_id")
+        print(f"  ✅ Submitted: {prompt_id}")
+        
+        if not wait:
+            return {
+                "prompt_id": prompt_id,
+                "experiment_id": experiment.id,
+                "experiment_dir": str(experiment.output_dir),
+                "status": "submitted"
+            }
+        
+        # Wait for completion
+        print(f"Waiting for completion (timeout: {timeout_seconds}s)...")
+        history = poll_completion(prompt_id, timeout_seconds)
+        
+        if history is None:
+            experiment.fail("Timeout waiting for completion")
+            return {
+                "prompt_id": prompt_id,
+                "experiment_id": experiment.id,
+                "experiment_dir": str(experiment.output_dir),
+                "status": "timeout"
+            }
+        
+        if history.get("status", {}).get("status_str") == "error":
+            error_msg = str(history.get("status", {}).get("messages", []))
+            experiment.fail(f"ComfyUI error: {error_msg}")
+            return {
+                "prompt_id": prompt_id,
+                "experiment_id": experiment.id,
+                "experiment_dir": str(experiment.output_dir),
+                "status": "error",
+                "error": error_msg
+            }
+        
+        # Get output images
+        output_images = get_output_images(history)
+        if output_images:
+            # Save first image to experiment
+            experiment.log_output(output_images[0])
+            print(f"  ✅ Output saved: {output_images[0].name}")
+        
+        experiment.complete(status="success")
+        print(f"  ✅ Experiment complete: {experiment.id}")
         
         return {
-            "prompt_id": result.get("prompt_id"),
+            "prompt_id": prompt_id,
             "experiment_id": experiment.id,
-            "experiment_dir": str(experiment.output_dir)
+            "experiment_dir": str(experiment.output_dir),
+            "status": "success",
+            "output_images": [str(p) for p in output_images]
         }
         
     except Exception as e:
@@ -280,17 +385,19 @@ def render(
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print("Usage: python render.py <bundle_path> [--dry-run] [--no-validate]")
+        print("Usage: python render.py <bundle_path> [--dry-run] [--no-validate] [--no-wait]")
         sys.exit(1)
     
     bundle_path = Path(sys.argv[1])
     dry_run = "--dry-run" in sys.argv
     validate = "--no-validate" not in sys.argv
+    wait = "--no-wait" not in sys.argv
     
     result = render(
         bundle_path=bundle_path,
         dry_run=dry_run,
-        validate=validate
+        validate=validate,
+        wait=wait
     )
     
     print(json.dumps(result, indent=2))
