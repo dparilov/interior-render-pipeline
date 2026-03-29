@@ -117,7 +117,7 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
 | class | string | ✅ | Category: surface / fixture / opening |
 | surface_kind | string | ❌ | For surfaces: wall_tiles, floor_tiles, etc. |
 | mask | string | ✅ | Path to binary mask |
-| coverage_pct | float | ✅ | Mask coverage as % of image |
+| coverage_pct | float | ✅ | Estimated mask coverage as % of image (validated by validate.py) |
 | reference | string | ❌ | Path to reference image (null for openings) |
 | prompt | string | ✅ | Material/appearance description |
 | prompt_source | string | ✅ | Traceability: where prompt came from |

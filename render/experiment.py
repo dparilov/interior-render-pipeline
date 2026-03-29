@@ -76,6 +76,14 @@ class Experiment:
         self.data["hashes"]["beauty"] = self._hash_file(bundle_path / manifest.get("base_image", "beauty.png"))
         self.data["hashes"]["depth"] = self._hash_file(bundle_path / manifest.get("depth_map", "depth.png"))
         self.data["hashes"]["boundary"] = self._hash_file(bundle_path / manifest.get("boundary_mask", "boundary_mask.png"))
+        
+        # Hash all references
+        ref_hashes = {}
+        for entity in manifest.get("entities", []):
+            if entity.get("reference"):
+                ref_path = bundle_path / entity["reference"]
+                ref_hashes[entity["name"]] = self._hash_file(ref_path)
+        self.data["hashes"]["references"] = ref_hashes
     
     def log_workflow(self, workflow: Dict):
         """Extract actual parameters from workflow - NOT hardcoded values."""

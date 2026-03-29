@@ -218,17 +218,37 @@ class BundleValidator:
             except Exception as e:
                 self._add_error("depth_map", f"Cannot read image: {e}")
         
-        # Check entity masks are binary
+        # Check entity masks are binary and calculate actual coverage
+        total_pixels = None
         for entity in self.manifest.get("entities", []):
             mask_path = self.bundle_path / entity.get("mask", "")
             if mask_path.exists():
                 try:
                     img = Image.open(mask_path).convert("L")
                     arr = np.array(img)
+                    
+                    if total_pixels is None:
+                        total_pixels = arr.size
+                    
                     unique = np.unique(arr)
                     non_binary = len(unique) > 2 or (len(unique) == 2 and set(unique) != {0, 255})
                     if non_binary:
                         self._add_warning(f"masks/{entity['name']}", f"Mask should be binary, found {len(unique)} values")
+                    
+                    # Calculate actual coverage
+                    white_pixels = np.sum(arr == 255)
+                    actual_coverage = (white_pixels / total_pixels) * 100
+                    declared_coverage = entity.get("coverage_pct", 0)
+                    
+                    # Store for later use
+                    entity["_actual_coverage_pct"] = round(actual_coverage, 2)
+                    
+                    # Warn if declared coverage differs significantly
+                    if abs(actual_coverage - declared_coverage) > 5:
+                        self._add_warning(
+                            f"masks/{entity['name']}", 
+                            f"coverage_pct mismatch: declared {declared_coverage}%, actual {actual_coverage:.1f}%"
+                        )
                 except Exception as e:
                     self._add_error(f"masks/{entity['name']}", f"Cannot read mask: {e}")
     

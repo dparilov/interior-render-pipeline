@@ -562,17 +562,14 @@ module IRP
         up: camera.up.to_a,
         fov: camera.fov.round(1)
       },
-      technical_spec: @technical_spec[:exists] ? {
-        path: 'technical_spec.md',
-        hash: @technical_spec[:hash],
-        summary: @technical_spec[:summary]
-      } : nil,
+      technical_spec: {
+        path: @technical_spec[:exists] ? 'technical_spec.md' : nil,
+        hash: @technical_spec[:hash] || 'missing',
+        summary: @technical_spec[:summary] || 'ТЗ not found - manual verification required'
+      },
       entities: entities,
       excluded: @excluded
     }
-    
-    # Remove nil technical_spec
-    manifest.delete(:technical_spec) unless manifest[:technical_spec]
     
     File.write(File.join(output_dir, 'manifest.json'), JSON.pretty_generate(manifest))
   end
