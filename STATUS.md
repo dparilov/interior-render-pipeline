@@ -50,9 +50,11 @@
 
 | Example | Status | Notes |
 |---------|--------|-------|
-| `examples/bathroom_01/manifest.json` | 📄 Stub | Schema only, no actual images |
-| `examples/bathroom_01/masks/` | 📋 Planned | Need to add actual masks |
-| `examples/bathroom_01/references/` | 📋 Planned | Need to add reference images |
+| `examples/bathroom_01/manifest.json` | ✅ Complete | v1.0 schema with all entities |
+| `examples/bathroom_01/beauty.png` | ✅ Complete | 1920×1080 source render |
+| `examples/bathroom_01/masks/` | ✅ Complete | 10 binary masks |
+| `examples/bathroom_01/references/` | ✅ Complete | 9 reference images |
+| `examples/bathroom_01/render.png` | ✅ Complete | Output from workflow.json |
 
 ---
 
@@ -112,7 +114,7 @@
 
 ## Next Steps (Priority Order)
 
-1. **Complete bathroom_01 example** — add actual masks, references, beauty.png
+1. ~~**Complete bathroom_01 example**~~ ✅ Done
 2. **Test render.py** — verify Python orchestrator works end-to-end
 3. **Fix mask issues** — window, bathtub, walls
 4. **Add validation** — bundle schema validation script
