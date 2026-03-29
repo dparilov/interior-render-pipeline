@@ -200,6 +200,11 @@ class WorkflowBuilder:
         else:
             metadata['refiner_enabled'] = False
         
+        # Add workflow hash for traceability
+        import hashlib
+        workflow_json = json.dumps(workflow, sort_keys=True)
+        metadata['workflow_hash'] = f"sha256:{hashlib.sha256(workflow_json.encode()).hexdigest()[:16]}"
+        
         return {'prompt': workflow}, metadata
     
     def _find_base_model(self, workflow: Dict) -> Any:
@@ -262,7 +267,7 @@ class WorkflowBuilder:
         return workflow
 
 
-def validate_workflow(workflow: Dict, expected_entities: List[str]) -> Dict:
+def validate_workflow(workflow: Dict, expected_entities: List[str], metadata: Dict = None) -> Dict:
     """
     Validate generated workflow.
     
@@ -278,7 +283,12 @@ def validate_workflow(workflow: Dict, expected_entities: List[str]) -> Dict:
         'errors': [],
         'warnings': [],
         'entity_branches_found': [],
-        'entity_branches_missing': []
+        'entity_branches_missing': [],
+        'expected_entities': len(expected_entities),
+        'actual_branches': 0,
+        'missing_entities': [],
+        'missing_masks': [],
+        'missing_references': []
     }
     
     for entity_name in expected_entities:
@@ -298,8 +308,14 @@ def validate_workflow(workflow: Dict, expected_entities: List[str]) -> Dict:
         
         if found_apply and found_ref and found_mask:
             result['entity_branches_found'].append(entity_name)
+            result['actual_branches'] += 1
         else:
             result['entity_branches_missing'].append(entity_name)
+            result['missing_entities'].append(entity_name)
+            if not found_mask:
+                result['missing_masks'].append(entity_name)
+            if not found_ref:
+                result['missing_references'].append(entity_name)
             result['errors'].append(f"Missing branch for entity: {entity_name}")
             result['valid'] = False
     

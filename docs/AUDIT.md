@@ -1,149 +1,52 @@
-# Audit Guide
+# IRP Audit Guidelines
 
-> Для внешнего ревью: как проверить pipeline от начала до конца
+## Phase B Audit Requirements
 
-## TL;DR
+For any Phase B (-v2) experiment, the audit MUST verify:
 
-1. Открыть `examples/bathroom_01/` — готовый bundle
-2. Сравнить `beauty.png` (input) и `render.png` (output)
-3. Проверить `depth.png` и `boundary_mask.png` на корректность
-4. Запустить `render/render.py` — получить новый эксперимент
+### Required Fields in experiment.json
 
-## Контрольные точки
+| Field | Description | Example |
+|-------|-------------|---------|
+| `workflow_mode` | Must be `multi_ipadapter_regional` | `"multi_ipadapter_regional"` |
+| `workflow_snapshot` | Path to executed workflow JSON | `"workflow_f2_v2.json"` |
+| `workflow_hash` | SHA256 hash of workflow | `"sha256:a1b2c3d4..."` |
+| `entities_requested` | All entities from manifest | `["walls", "floor", ...]` |
+| `entities_applied` | Entities with generated branches | `["walls", "floor", ...]` |
+| `entities_skipped` | Entities missing mask/ref | `[]` |
+| `entity_order` | Actual application order | `["walls", "floor", ...]` |
+| `entity_weights` | Per-entity IPAdapter weights | `{"walls": 0.55, ...}` |
+| `regional_ipadapter_count` | Number of IPAdapter branches | `9` |
+| `workflow_validation_passed` | Pre-render validation result | `true` |
+| `workflow_validation_summary` | Detailed validation breakdown | `{...}` |
 
-### 1. Scene Graph (Phase 0)
+### Workflow Snapshot Verification
 
-**Файл:** `scene_graph.json` в extract zip
+1. `regional_ipadapter_count` MUST match branch count in snapshot
+2. Each entity in `entities_applied` MUST have corresponding nodes:
+   - `entity_N_<name>_ref` (LoadImage)
+   - `entity_N_<name>_mask` (LoadImageMask)
+   - `entity_N_<name>_apply` (IPAdapterAdvanced)
+3. Entity order in workflow MUST match `entity_order` field
 
-**Проверить:**
-- Все объекты сцены присутствуют с уникальными PID
-- Камера совпадает с текущим видом в SketchUp
-- face_count > 0 для объектов с геометрией
+### Cross-Experiment Checks
 
-```json
-{
-  "entities": [
-    {"pid": 36696, "name": "walls", "face_count": 156},
-    {"pid": 43754, "name": "bathtub", "face_count": 892}
-  ]
-}
-```
+| Test | Verification |
+|------|--------------|
+| F2-v2 vs F2-order2-v2 | `entity_order` must be reversed |
+| F1-v2 vs F2-v2 | `regional_ipadapter_count`: 4 vs 9 |
+| P2-v2 vs P2-refiner-v2 | Refiner nodes present in snapshot |
 
-### 2. Role Map (Phase 1)
+### Audit Checklist
 
-**Файл:** `role_map.json`
+- [ ] All -v2 experiments have workflow_snapshot
+- [ ] workflow_hash matches actual snapshot
+- [ ] entities_applied matches branch count
+- [ ] entity_order matches workflow node sequence
+- [ ] No entities_skipped for production tests
+- [ ] Refiner tests have both multi-IPAdapter AND refiner nodes
 
-**Проверить:**
-- Каждый PID из ТЗ присутствует
-- class корректен (surface/fixture/opening)
-- excluded содержит служебные объекты (люди, камеры)
+## Phase A (Historical)
 
-### 3. Masks (Phase 2)
-
-**Папка:** `masks/`
-
-**Проверить визуально:**
-
-| Критерий | Описание | Как проверить |
-|----------|----------|---------------|
-| Coverage | Маска покрывает весь объект | Наложить на beauty.png |
-| Precision | Нет захвата соседей | Сравнить границы |
-| Binary | Только чёрный/белый | Гистограмма = 2 пика |
-| Alignment | Совпадает с beauty | Pixel-perfect наложение |
-
-**Типичные проблемы:**
-- `hollow` — только контур, внутри чёрное (faces не покрашены)
-- `leak` — захват соседнего объекта
-- `gray` — градиенты вместо бинарной маски
-
-### 4. Depth Map
-
-**Файл:** `depth.png`
-
-**Проверить:**
-- Ближние объекты светлее (ванна, тумба)
-- Дальние темнее (стены, окно)
-- Нет артефактов на границах объектов
-- Соответствует реальной геометрии (не угадывание нейросетью)
-
-### 5. Boundary Mask
-
-**Файл:** `boundary_mask.png`
-
-**Проверить:**
-- Белый = вся комната
-- Чёрный = за пределами стен
-- Контур точно по границам геометрии
-
-### 6. Render Output
-
-**Файл:** `render.png`
-
-**Критерии качества:**
-
-| Критерий | Вес | Описание |
-|----------|-----|----------|
-| Geometry | 40% | Объекты на своих местах, нет лишних |
-| Materials | 30% | Материалы соответствуют референсам |
-| Lighting | 15% | Естественное освещение |
-| Details | 15% | Нет артефактов, резкость |
-
-**Критические ошибки (автоматический FAIL):**
-- Объект в неправильном месте
-- Лишние объекты (не из ТЗ)
-- Генерация за пределами комнаты
-- Изменение архитектуры (стены, проёмы)
-
-## Минимальные проверки
-
-### Структурный тест (обязательный)
-
-Запустить S1 (Structural Baseline) из [EXPERIMENT_PLAN.md](EXPERIMENT_PLAN.md):
-
-```
-Canny: 0.8, Depth: 0.9 (SketchUp)
-Boundary: ON
-IPAdapter: OFF
-Seed: 42
-```
-
-**PASS если:**
-- [ ] Все объекты на своих местах
-- [ ] Нет объектов за пределами комнаты
-- [ ] Нет лишних сущностей (полотенца, декор)
-- [ ] Архитектура не изменена (стены, проёмы)
-
-**FAIL если:** любой пункт выше нарушен
-
-### Интеграционный тест
-
-Запустить F2 (Full Pipeline):
-
-**PASS если:**
-- [ ] Структурный тест пройден
-- [ ] Материалы узнаваемо соответствуют референсам
-- [ ] Нет критических артефактов
-
-## Воспроизводимость
-
-Для повторения эксперимента:
-
-1. Использовать тот же `bundle`
-2. Использовать тот же `seed`
-3. Использовать ту же версию ComfyUI и моделей
-4. Сравнить `workflow_hash` из `experiment.json`
-
-```bash
-python render/experiment.py compare --dir experiments/ exp_1 exp_2
-```
-
-## Чек-лист аудита
-
-- [ ] README понятен без дополнительных объяснений
-- [ ] QUICKSTART воспроизводим с нуля
-- [ ] example bundle содержит все необходимые файлы
-- [ ] Masks бинарные и выровнены с beauty
-- [ ] Depth map соответствует геометрии
-- [ ] Render не выходит за boundary mask
-- [ ] Эксперименты логируются с полными параметрами
-- [ ] Можно воспроизвести любой предыдущий результат
+Phase A results are NOT subject to multi-IPAdapter audit.
+They serve as baseline comparison only.

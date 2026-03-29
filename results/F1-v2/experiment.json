@@ -1,11 +1,56 @@
 {
   "experiment_id": "F1-v2",
-  "status": "PASSED",
   "phase": "B",
   "workflow_mode": "multi_ipadapter_regional",
+  "workflow_snapshot": "workflow_f1_v2.json",
+  "workflow_hash": "sha256:fd3f27edb28d5e21",
+  "entities_requested": [
+    "walls",
+    "floor",
+    "bathtub",
+    "vanity",
+    "shower_screen",
+    "rainshower",
+    "towel_warmer",
+    "basket",
+    "mirror"
+  ],
+  "entities_applied": [
+    "walls",
+    "floor",
+    "bathtub",
+    "vanity"
+  ],
+  "entities_skipped": [],
+  "entity_order": [
+    "walls",
+    "floor",
+    "bathtub",
+    "vanity"
+  ],
+  "entity_weights": {
+    "walls": 0.55,
+    "floor": 0.55,
+    "bathtub": 0.5,
+    "vanity": 0.5
+  },
   "regional_ipadapter_count": 4,
-  "entities_mode": "critical",
   "refiner_enabled": false,
-  "timestamp": "2026-03-29T23:33:12+03:00",
-  "platform": {"type": "pod", "id": "m88nqdtocfd818", "gpu": "RTX 4090 24GB"}
+  "workflow_validation_passed": true,
+  "workflow_validation_summary": {
+    "expected_entities": 4,
+    "actual_branches": 4,
+    "missing_entities": [],
+    "missing_masks": [],
+    "missing_references": []
+  },
+  "status": "PASSED",
+  "execution_time_sec": 64.1,
+  "output_file": "IRP_render_00052_.png",
+  "timestamp": "2026-03-29T20:42:15Z",
+  "platform": {
+    "type": "pod",
+    "id": "m88nqdtocfd818",
+    "gpu": "RTX 4090 24GB"
+  }
 }

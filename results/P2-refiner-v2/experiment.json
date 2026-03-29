@@ -1,12 +1,71 @@
 {
   "experiment_id": "P2-refiner-v2",
-  "status": "PASSED",
   "phase": "B",
   "workflow_mode": "multi_ipadapter_regional",
+  "workflow_snapshot": "workflow_p2_refiner_v2.json",
+  "workflow_hash": "sha256:df21475578ae44b2",
+  "entities_requested": [
+    "walls",
+    "floor",
+    "bathtub",
+    "vanity",
+    "shower_screen",
+    "rainshower",
+    "towel_warmer",
+    "basket",
+    "mirror"
+  ],
+  "entities_applied": [
+    "walls",
+    "floor",
+    "bathtub",
+    "shower_screen",
+    "vanity",
+    "mirror",
+    "towel_warmer",
+    "basket",
+    "rainshower"
+  ],
+  "entities_skipped": [],
+  "entity_order": [
+    "walls",
+    "floor",
+    "bathtub",
+    "shower_screen",
+    "vanity",
+    "mirror",
+    "towel_warmer",
+    "basket",
+    "rainshower"
+  ],
+  "entity_weights": {
+    "walls": 0.55,
+    "floor": 0.55,
+    "bathtub": 0.5,
+    "shower_screen": 0.5,
+    "vanity": 0.5,
+    "mirror": 0.5,
+    "towel_warmer": 0.5,
+    "basket": 0.5,
+    "rainshower": 0.5
+  },
   "regional_ipadapter_count": 9,
-  "entities_mode": "all",
   "refiner_enabled": true,
-  "purpose": "production_candidate",
-  "timestamp": "2026-03-29T23:33:41+03:00",
-  "platform": {"type": "pod", "id": "m88nqdtocfd818", "gpu": "RTX 4090 24GB"}
+  "workflow_validation_passed": true,
+  "workflow_validation_summary": {
+    "expected_entities": 9,
+    "actual_branches": 9,
+    "missing_entities": [],
+    "missing_masks": [],
+    "missing_references": []
+  },
+  "status": "PASSED",
+  "execution_time_sec": 66.0,
+  "output_file": "IRP_render_00057_.png",
+  "timestamp": "2026-03-29T20:47:02Z",
+  "platform": {
+    "type": "pod",
+    "id": "m88nqdtocfd818",
+    "gpu": "RTX 4090 24GB"
+  }
 }

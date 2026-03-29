@@ -43,9 +43,26 @@ Completed:
 - T1-v2, T2-v2, T3-v2: all 9 adapters, ~40s each
 - P1-v2 through P4-v2: production validated
 
-## Results Status
+## Canonical Path
 
-✅ **Phase B Complete** — All integration results now validated with true multi-entity regional IPAdapter.
+**Phase B (multi_ipadapter_regional) is canonical for:**
+- Block 4 Integration
+- Block 5 Tech Spec  
+- Block 6 Production
 
-Phase A results (F1, F2, etc.) remain as historical benchmarks.
-Phase B results (-v2 suffix) are the validated production candidates.
+**Historical baseline:**
+- Phase A results remain valid as simplified single-IPAdapter benchmark
+- NOT canonical for final architecture claims
+
+## Audit Prerequisites
+
+✅ All satisfied:
+- workflow_builder.py active
+- manifest validator active
+- workflow validator active
+- per-experiment workflow snapshot saved
+- workflow_hash logged
+- entity_order logged
+- entities_applied logged
+- workflow_validation_passed logged
+- workflow_validation_summary logged
