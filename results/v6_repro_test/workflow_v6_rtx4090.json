@@ -1,0 +1,659 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "front.jpg"
+    }
+  },
+  "2": {
+    "class_type": "CannyEdgePreprocessor",
+    "inputs": {
+      "image": [
+        "1",
+        0
+      ],
+      "low_threshold": 100,
+      "high_threshold": 200,
+      "resolution": 1024
+    }
+  },
+  "3": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "v6_depth_00001_.png"
+    }
+  },
+  "10": {
+    "class_type": "CheckpointLoaderSimple",
+    "inputs": {
+      "ckpt_name": "RealVisXL_V4.0.safetensors"
+    }
+  },
+  "11": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "10",
+        1
+      ],
+      "text": "A photorealistic modern bathroom interior, 8K resolution, warm natural lighting from small window.\nDark charcoal gray floating vanity cabinet with white ceramic sink.\nWhite glossy wavy textured wall tiles in vertical pattern.\nBlue and white geometric patterned floor tiles, Mediterranean style.\nWhite bathtub on right side with tiled front panel.\nChrome faucet and fixtures.\nRectangular mirror with LED backlight above vanity.\nWhite vertical towel warmer on left wall.\nWoven rattan laundry basket.\nMagazine quality interior photo, Architectural Digest style, clear textures, visible tile grout."
+    }
+  },
+  "12": {
+    "class_type": "CLIPTextEncode",
+    "inputs": {
+      "clip": [
+        "10",
+        1
+      ],
+      "text": "low quality, blurry, watermark, text, brass faucet, gold fixtures, \nblack towel warmer, chrome towel warmer, white vanity, wooden vanity, \nbeige floor tiles, horizontal wall tiles, cartoon, anime, 3D render look"
+    }
+  },
+  "20": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-canny-sdxl.safetensors"
+    }
+  },
+  "21": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "11",
+        0
+      ],
+      "negative": [
+        "12",
+        0
+      ],
+      "control_net": [
+        "20",
+        0
+      ],
+      "image": [
+        "2",
+        0
+      ],
+      "strength": 0.7,
+      "start_percent": 0,
+      "end_percent": 0.8
+    }
+  },
+  "22": {
+    "class_type": "ControlNetLoader",
+    "inputs": {
+      "control_net_name": "controlnet-depth-sdxl.safetensors"
+    }
+  },
+  "23": {
+    "class_type": "ControlNetApplyAdvanced",
+    "inputs": {
+      "positive": [
+        "21",
+        0
+      ],
+      "negative": [
+        "21",
+        1
+      ],
+      "control_net": [
+        "22",
+        0
+      ],
+      "image": [
+        "3",
+        0
+      ],
+      "strength": 0.5,
+      "start_percent": 0,
+      "end_percent": 0.6
+    }
+  },
+  "30": {
+    "class_type": "CLIPVisionLoader",
+    "inputs": {
+      "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+    }
+  },
+  "31": {
+    "class_type": "IPAdapterModelLoader",
+    "inputs": {
+      "ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"
+    }
+  },
+  "100": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/floor_tiles.jpg"
+    }
+  },
+  "101": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_floor.png"
+    }
+  },
+  "102": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "101",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "103": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "10",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "100",
+        0
+      ],
+      "weight": 0.5,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "102",
+        0
+      ]
+    }
+  },
+  "104": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/wall_tiles.png"
+    }
+  },
+  "105": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_wall.png"
+    }
+  },
+  "106": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "105",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "107": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "103",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "104",
+        0
+      ],
+      "weight": 0.5,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "106",
+        0
+      ]
+    }
+  },
+  "108": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/vanity.jpg"
+    }
+  },
+  "109": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_vanity.png"
+    }
+  },
+  "110": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "109",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "111": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "107",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "108",
+        0
+      ],
+      "weight": 0.6,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "110",
+        0
+      ]
+    }
+  },
+  "112": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/mirror.jpg"
+    }
+  },
+  "113": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_mirror.png"
+    }
+  },
+  "114": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "113",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "115": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "111",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "112",
+        0
+      ],
+      "weight": 0.4,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "114",
+        0
+      ]
+    }
+  },
+  "116": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/bathtub.jpg"
+    }
+  },
+  "117": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_bathtub.png"
+    }
+  },
+  "118": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "117",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "119": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "115",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "116",
+        0
+      ],
+      "weight": 0.4,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "118",
+        0
+      ]
+    }
+  },
+  "120": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/wall_tiles.png"
+    }
+  },
+  "121": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_bathtub_screen.png"
+    }
+  },
+  "122": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "121",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "123": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "119",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "120",
+        0
+      ],
+      "weight": 0.4,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "122",
+        0
+      ]
+    }
+  },
+  "124": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/basket.jpg"
+    }
+  },
+  "125": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_basket.png"
+    }
+  },
+  "126": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "125",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "127": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "123",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "124",
+        0
+      ],
+      "weight": 0.35,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "126",
+        0
+      ]
+    }
+  },
+  "128": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/towel_warmer.jpg"
+    }
+  },
+  "129": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_towel_warmer.png"
+    }
+  },
+  "130": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "129",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "131": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "127",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "128",
+        0
+      ],
+      "weight": 0.5,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "130",
+        0
+      ]
+    }
+  },
+  "132": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "refs/faucet.jpg"
+    }
+  },
+  "133": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "masks_final/mask_faucet.png"
+    }
+  },
+  "134": {
+    "class_type": "ImageToMask",
+    "inputs": {
+      "image": [
+        "133",
+        0
+      ],
+      "channel": "red"
+    }
+  },
+  "135": {
+    "class_type": "IPAdapterAdvanced",
+    "inputs": {
+      "model": [
+        "131",
+        0
+      ],
+      "ipadapter": [
+        "31",
+        0
+      ],
+      "clip_vision": [
+        "30",
+        0
+      ],
+      "image": [
+        "132",
+        0
+      ],
+      "weight": 0.4,
+      "weight_type": "style transfer",
+      "combine_embeds": "concat",
+      "start_at": 0.0,
+      "end_at": 0.6,
+      "embeds_scaling": "V only",
+      "attn_mask": [
+        "134",
+        0
+      ]
+    }
+  },
+  "200": {
+    "class_type": "EmptyLatentImage",
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    }
+  },
+  "201": {
+    "class_type": "KSampler",
+    "inputs": {
+      "model": [
+        "135",
+        0
+      ],
+      "positive": [
+        "23",
+        0
+      ],
+      "negative": [
+        "23",
+        1
+      ],
+      "latent_image": [
+        "200",
+        0
+      ],
+      "seed": 42,
+      "steps": 50,
+      "cfg": 7.5,
+      "sampler_name": "dpmpp_2m_sde",
+      "scheduler": "karras",
+      "denoise": 1.0
+    }
+  },
+  "202": {
+    "class_type": "VAEDecode",
+    "inputs": {
+      "samples": [
+        "201",
+        0
+      ],
+      "vae": [
+        "10",
+        2
+      ]
+    }
+  },
+  "203": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "202",
+        0
+      ],
+      "filename_prefix": "bathroom_v6"
+    }
+  }
+}
