@@ -581,6 +581,57 @@ Evaluate ComfyUI support:
 
 ---
 
+# Priority Order (MVP)
+
+**Rationale:** Current risk is not missing Blender-only flow, but proving the chosen rendering approach is actually best.
+
+1. **Infra + Epic C + Second Scene** — immediate quality impact
+2. **Epic A (Multi-View)** — +10-20% quality on complex scenes
+3. **Epic B (Blender Independence)** — strategic, low immediate ROI
+
+---
+
+# Additional MVP Tools
+
+## Entity Failure Tracking
+
+Track entities that consistently render poorly:
+```json
+{
+  "entity": "bathtub",
+  "failure_rate": 0.3,
+  "common_issues": ["wrong shape", "missing detail"],
+  "suggested_strategy": "F-I2I"
+}
+```
+
+## Automatic Fallback Strategy
+
+Per-entity strategy override when default fails:
+```python
+if entity_quality_score < threshold:
+    switch from F-IP to F-I2I
+```
+
+## Cost/Runtime Dashboard
+
+Track per experiment:
+- Time (seconds)
+- Cost (cents)
+- Strategy used
+- Entity count
+- Multi-view count
+
+## Bundle Diff Tool
+
+Compare two experiment folders:
+- Workflow diff
+- Entity order diff
+- Weight diff
+- Visual diff (side-by-side)
+
+---
+
 # Policy
 
 **Keep SketchUp path canonical until Blender-first path reaches measurable parity.**
