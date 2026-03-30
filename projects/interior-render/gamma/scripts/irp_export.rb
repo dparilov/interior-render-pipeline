@@ -201,6 +201,133 @@ module IRP
   end
   
   # ============================================
+  # DEPTH MAP EXPORT (Ground Truth)
+  # ============================================
+  
+  def self.export_depth_map
+    path = File.join(OUTPUT_DIR, 'depth.png')
+    
+    model.start_operation('Export Depth', true)
+    
+    begin
+      saved_vis = save_visibility
+      saved_render = save_rendering_options
+      
+      # Show all mapped entities
+      show_all_mapped
+      
+      # Setup for depth: no edges, no textures, flat shading
+      ro = model.rendering_options
+      ro['EdgeDisplayMode'] = 0
+      ro['DrawSilhouettes'] = false
+      ro['DisplayInstanceAxes'] = false
+      ro['DrawHidden'] = false
+      ro['DrawUnderground'] = false
+      ro['DisplaySectionPlanes'] = false
+      ro['DisplaySectionCuts'] = false
+      ro['DisplayText'] = false
+      ro['DisplayDims'] = false
+      
+      # Paint surfaces by distance from camera
+      # Closer = white (255), farther = black (0)
+      paint_by_depth
+      
+      view.refresh
+      sleep(0.2)
+      
+      export_image(path)
+      
+    ensure
+      model.abort_operation  # Undo depth painting
+      restore_visibility(saved_vis)
+      restore_rendering_options(saved_render)
+    end
+    
+    puts "  ✓ depth.png"
+    true
+  end
+  
+  def self.paint_by_depth
+    camera = view.camera
+    eye = camera.eye
+    
+    # Find depth range
+    min_dist = Float::INFINITY
+    max_dist = 0
+    
+    collect_faces.each do |face|
+      dist = eye.distance(face.bounds.center)
+      min_dist = [min_dist, dist].min
+      max_dist = [max_dist, dist].max
+    end
+    
+    range = max_dist - min_dist
+    range = 1.0 if range < 0.001  # Avoid division by zero
+    
+    # Paint faces by normalized distance
+    collect_faces.each do |face|
+      dist = eye.distance(face.bounds.center)
+      normalized = 1.0 - ((dist - min_dist) / range)  # Closer = brighter
+      gray = (normalized * 255).to_i.clamp(0, 255)
+      color = Sketchup::Color.new(gray, gray, gray)
+      face.material = color
+      face.back_material = color
+    end
+  end
+  
+  def self.collect_faces(entities = nil, faces = [])
+    entities ||= model.entities
+    entities.each do |e|
+      if e.is_a?(Sketchup::Face)
+        faces << e
+      elsif e.is_a?(Sketchup::Group)
+        collect_faces(e.entities, faces)
+      elsif e.is_a?(Sketchup::ComponentInstance)
+        collect_faces(e.definition.entities, faces)
+      end
+    end
+    faces
+  end
+  
+  # ============================================
+  # BOUNDARY MASK EXPORT
+  # ============================================
+  
+  def self.export_boundary_mask
+    path = File.join(OUTPUT_DIR, 'boundary_mask.png')
+    
+    model.start_operation('Export Boundary', true)
+    
+    begin
+      saved_vis = save_visibility
+      saved_render = save_rendering_options
+      
+      # Setup: black background, white room
+      setup_mask_rendering
+      
+      # Show ALL mapped entities (entire room = white)
+      show_all_mapped
+      @role_map.each do |pid, info|
+        entity = find_by_pid(pid)
+        paint_entity_white(entity) if entity
+      end
+      
+      view.refresh
+      sleep(0.2)
+      
+      export_image(path)
+      
+    ensure
+      model.abort_operation
+      restore_visibility(saved_vis)
+      restore_rendering_options(saved_render)
+    end
+    
+    puts "  ✓ boundary_mask.png"
+    true
+  end
+  
+  # ============================================
   # MASK EXPORT
   # ============================================
   
@@ -315,7 +442,17 @@ module IRP
       export_image(File.join(OUTPUT_DIR, 'fixtures_only.png'), transparent: true)
       puts "  ✓ fixtures_only.png"
       
-      # 4. Individual masks
+      # 4. Depth map (ground truth for ControlNet)
+      puts ""
+      puts "=== DEPTH MAP ==="
+      export_depth_map
+      
+      # 5. Boundary mask (room silhouette)
+      puts ""
+      puts "=== BOUNDARY MASK ==="
+      export_boundary_mask
+      
+      # 6. Individual masks
       puts ""
       puts "=== MASKS ==="
       @role_map.each do |pid, info|

@@ -85,6 +85,43 @@ Capture what matters. Decisions, context, things to remember. Skip the secrets u
 - Удаление файлов (используй `trash` если разрешено)
 - Любые деструктивные операции
 
+## Render Workflow Governance
+
+⚠️ **Workflows = immutable source-of-truth. НИКОГДА не "адаптируй" их.**
+
+**Запрещено:**
+- Подмена моделей (sd_xl_base → RealVisXL и т.п.)
+- Изменение графа, весов, промптов, порядка нод
+- Создание пустых масок вместо поиска оригиналов
+- "Миграция" workflow на другие компоненты
+
+**Разрешено:**
+- Конвертация UI JSON → API JSON
+- Фиксы путей (маунты, симлинки)
+- Setup скрипты (зависимости, окружение)
+- Execution wrappers
+
+**Если чего-то не хватает:**
+- Модель отсутствует → скачай ТОЧНУЮ модель из workflow
+- Маска/файл отсутствует → найди оригинал, не создавай пустышку
+- Компонент отсутствует → установи компонент
+
+**Любое изменение модели/промпта/маски/весов = НОВЫЙ workflow candidate.**
+
+**Каждый запуск должен создать:**
+- Output PNG
+- Executed workflow JSON
+- Workflow hash (sha256)
+- experiment.json
+- README/verdict
+
+**Разделяй коммиты:**
+- Environment setup (модели, deps)
+- Execution (результаты)
+- Interpretation (анализ)
+
+📖 **Подробности:** см. skill `runpod` → "Render Workflow Governance"
+
 ## Safety
 
 - Don't exfiltrate private data. Ever.
