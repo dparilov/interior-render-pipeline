@@ -24,7 +24,8 @@
    Always convert UI → API before execution.
 
 8. **No quality comparison before reproducibility status is recorded.**
-   First prove it runs identically, then judge output.
+   First record reproducibility status, then judge output.
+   Quality comparison is allowed only after reproducibility status is explicitly documented.
 
 9. **Environment, execution, and interpretation commits must be separate.**
    Don't mix model downloads with results with analysis.
@@ -53,8 +54,12 @@
 | Action | Why |
 |--------|-----|
 | Model substitution | Breaks reproducibility |
-| Creating empty masks | Hides missing data |
+| Empty placeholder masks in normal execution | Hides missing data, invalidates results |
 | Changing prompts | Creates different output |
+
+> **Note on empty masks:** Placeholder masks are acceptable *only* as explicit debug artifacts
+> with `reproducibility: debug` or `reproducibility: failed` status. They must never be used
+> in normal execution or quality comparison runs.
 | Adjusting weights | Changes generation |
 | Reordering nodes | May affect execution |
 | "Fixing" workflows | Creates undocumented variants |
