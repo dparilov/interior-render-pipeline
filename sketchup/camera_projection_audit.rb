@@ -10,8 +10,8 @@
 require 'sketchup'
 require 'json'
 
-module CameraProjectionAudit
-  VERSION = '1.0'
+module CameraProjectionAuditV2
+  VERSION = '1.1'
   TARGET_PID = 36696
   
   MATERIAL_GROUPS = {
@@ -365,5 +365,5 @@ module CameraProjectionAudit
   end
 end
 
-puts "CameraProjectionAudit loaded."
-puts "Run: CameraProjectionAudit.run"
+puts "CameraProjectionAuditV2 loaded."
+puts "Run: CameraProjectionAuditV2.run"
