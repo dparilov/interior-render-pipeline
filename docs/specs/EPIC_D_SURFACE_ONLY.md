@@ -31,6 +31,20 @@ examples/bathroom_01/
 | walls_upper | surface.walls_upper | masks/walls_upper.png | — | Gray painted wall (upper portion, no reference) |
 | floor | surface.floor | masks/floor.png | references/floor_tiles.jpg | Blue Rivoli Bergen pattern |
 
+> **Note on walls_upper (no image reference):**
+> 
+> `walls_upper` intentionally has no image reference. This is a plain painted surface
+> without distinct pattern or texture to match. Evaluation criteria for surfaces
+> without image reference:
+> 
+> 1. **Technical spec compliance** — matches color/finish described in technical_spec.md
+> 2. **Color accuracy** — uniform gray, consistent with original render
+> 3. **Clean boundary** — sharp transition to walls_tile without bleeding or artifacts
+> 4. **No drift** — stable appearance across multiple renders (no random texture injection)
+> 
+> This methodology applies to any surface where the goal is preservation/consistency
+> rather than material transfer from a reference image.
+
 ### 🔒 Preserved Geometry (keep unchanged)
 
 | Entity | Role | Mask | Notes |
