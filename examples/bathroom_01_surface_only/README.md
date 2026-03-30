@@ -61,12 +61,24 @@ Masks generated using `face_material_mask_export.rb`:
 - **Was:** Split walls.png by Y coordinate from Z-height mapping
 - **Problem:** Uses walls.png as intermediate, not direct face render
 
-### ✅ CANONICAL: direct_face_render
-- **Status:** CURRENT
+### ✅ CURRENT CANONICAL: direct_face_render
+- **Status:** CURRENT CANONICAL METHOD
 - **Method:** Project face groups directly to camera
 - **Script:** `face_material_mask_export_v2.rb`
 - **Config:** `face_projection_config.json`
 - **Validation:** `validate_surface_masks.py`
+- **Note:** VALID_WITH_WARNINGS due to overlapping geometry in source model
+
+### ⚠️ Known Overlap
+
+walls_tile and walls_upper have **39.6% overlap** (99,426 pixels).
+
+**This is NOT a projection error** — it's a characteristic of the SKP geometry:
+- Tile and upper wall faces are visible in the same pixels
+- Overlap is distributed uniformly across image height
+- Caused by layered/overlapping geometry in source model
+
+**Policy:** Acceptable for this scene. Masks remain usable for regional rendering.
 
 ---
 

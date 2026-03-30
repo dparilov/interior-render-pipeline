@@ -132,7 +132,10 @@
     "script": "scripts/validate_surface_masks.py",
     "report": "validation_report.json",
     "status": "VALID_WITH_WARNINGS",
-    "note": "Overlap at tile/upper boundary is expected for true face projection"
+    "overlap_pixels": 99426,
+    "overlap_pct": 39.6,
+    "boundary_overlap_policy": "bathroom_01 has overlapping face geometry in SKP; 39.6% overlap is scene characteristic, not projection error",
+    "note": "Overlap occurs because tile and upper wall faces are visible in same pixels due to layered geometry in source model"
   },
   "face_projection_config": "face_projection_config.json",
   "deprecated_methods": [

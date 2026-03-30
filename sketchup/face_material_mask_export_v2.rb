@@ -70,6 +70,16 @@ module FaceMaterialMaskExportV2
       errors << "Camera FOV mismatch: current=#{current_fov.round(2)}, expected=#{ref['fov']} (tolerance=#{tol['fov']})"
     end
     
+    # Check up vector
+    up_dist = Math.sqrt(
+      (current_up[0] - ref['up'][0])**2 +
+      (current_up[1] - ref['up'][1])**2 +
+      (current_up[2] - ref['up'][2])**2
+    )
+    if up_dist > tol['direction']
+      errors << "Camera up vector mismatch: distance=#{up_dist.round(6)} (tolerance=#{tol['direction']})"
+    end
+    
     {
       valid: errors.empty?,
       errors: errors,
@@ -193,8 +203,17 @@ module FaceMaterialMaskExportV2
     puts "\n--- CAMERA VALIDATION ---"
     cam_result = validate_camera(config)
     
+    # Check scene/page
+    current_scene = current_scene_name
+    expected_scene = config['camera_reference']['scene_name'] rescue nil
+    if expected_scene && current_scene != expected_scene
+      cam_result[:errors] << "Scene mismatch: current='#{current_scene}', expected='#{expected_scene}'"
+      cam_result[:valid] = false
+    end
+    
     if cam_result[:valid]
       puts "✓ Camera matches reference"
+      puts "✓ Scene: #{current_scene}"
     else
       puts "✗ Camera validation FAILED:"
       cam_result[:errors].each { |e| puts "  - #{e}" }
