@@ -1,4 +1,4 @@
-# IRP Experiment Plan v3.0
+# IRP Experiment Plan v4.0
 
 ## Experiment Phases
 
@@ -348,6 +348,145 @@ Compare same scene rendered from both sources:
 | Beauty quality | Visually comparable |
 
 **Note:** Exact pixel match NOT expected due to different renderers.
+
+---
+
+---
+
+# Epic D — Surface-Only Validation
+
+## Goal
+
+Validate rendering strategy specifically for surfaces (floor, walls) without fixture complexity.
+Surfaces have different requirements than fixtures and may need different strategies.
+
+## D1.1 — Create Surface-Only Scene
+
+Prepare simplified scene with only:
+- floor
+- lower wall tile zone
+- upper wall zone (paint)
+- window
+- room shell
+
+**Artifacts:**
+- `examples/bathroom_01_surfaces/` bundle
+- masks/*.png (floor, walls, window only)
+- beauty.png
+- depth.png
+- manifest.json (surfaces only, no fixtures)
+
+## D1.2 — Surface-Specific Acceptance Criteria
+
+Add to evaluation:
+
+| Criterion | Description |
+|-----------|-------------|
+| Floor matches blue patterned reference | Rivoli Bergen Azul pattern visible |
+| Wall tile matches white vertical ribbed reference | Costa Nova White texture |
+| Upper wall matches gray paint requirement | Smooth gray paint, no texture |
+| No material drift | No wood / marble / brass appearing |
+| Correct boundaries | Clean transitions between zones |
+
+## D1.3 — Block SF: Surface-Focused Tests
+
+**Status:** ⏳ TODO
+
+| ID | Workflow | Description |
+|----|----------|-------------|
+| SF1 | phase_b_multi_ipadapter_regional | Current Phase B workflow |
+| SF2 | render_v6_segmentation_regional | Original v6 with UperNet+SAM |
+| SF3 | v6_plus_sketchup_masks | v6 flow + SketchUp masks |
+| SF4 | phase_b_strong_prompt | Phase B + strong global prompt/negative |
+| SF5 | best_hybrid_surface | Best hybrid from SF1-SF4 |
+
+### SF1 — Phase B Current
+
+Use current multi-IPAdapter regional workflow on surface-only bundle.
+
+### SF2 — Render v6 Segmentation
+
+**Workflow:** render_v6_segmentation_regional
+
+Parameters from v6:
+- ControlNet Canny: 0.7, end_at 0.8
+- ControlNet Depth: 0.5, end_at 0.6
+- 9 Regional IP-Adapter (only surfaces active)
+- Steps: 50
+- Sampler: dpmpp_2m_sde
+- CFG: 7.0
+
+### SF3 — v6 + SketchUp Masks
+
+Hybrid: v6 ControlNet weights + SketchUp bundle masks.
+
+### SF4 — Phase B + Strong Prompt
+
+Current Phase B with:
+- Strong global positive prompt (surface-focused)
+- Strong negative prompt: "wood grain, marble veins, brass fixtures, gold accents"
+
+### SF5 — Best Hybrid
+
+Take best elements from SF1-SF4, combine.
+
+## D1.4 — Surface Evaluation Rubric
+
+Score 1-5 for each axis:
+
+| Axis | Description |
+|------|-------------|
+| Floor fidelity | Blue patterned tile matches reference |
+| Wall tile fidelity | White ribbed tile matches reference |
+| Upper wall fidelity | Gray paint matches requirement |
+| Boundary quality | Clean transitions, no bleeding |
+| Geometric consistency | Room shape preserved |
+| Overall surface realism | Natural, coherent surfaces |
+
+## D1.5 — Surface-Only Comparison
+
+**Important:** Do NOT evaluate bathtub, vanity, accessories.
+Goal: Select best workflow specifically for surfaces.
+
+---
+
+# Epic E — Workflow Candidate Registry
+
+## Goal
+
+Register and compare candidate workflows without premature benchmark claims.
+
+## E1.1 — Candidate Workflows
+
+**Status: None declared as benchmark yet.**
+
+| ID | Name | Description | Status |
+|----|------|-------------|--------|
+| WF1 | phase_b_multi_ipadapter_regional | Current Phase B | ✅ Implemented |
+| WF2 | render_v6_segmentation_regional | v6 with UperNet+SAM | ✅ Reference exists |
+| WF3 | v6_plus_sketchup_masks | v6 + SketchUp masks | 📋 Planned |
+| WF4 | phase_b_strong_prompt | Phase B + strong prompts | 📋 Planned |
+| WF5 | hybrid_best | Best elements combined | 📋 Planned |
+
+## E1.2 — Hybrid Comparison Plan
+
+| ID | Test | Baseline | Variables |
+|----|------|----------|-----------|
+| H1 | v6 original | - | UperNet+SAM masks, v6 ControlNet weights |
+| H2 | v6 + SketchUp masks | H1 | Replace masks with SketchUp bundle |
+| H3 | Phase B current | - | Current multi-IPAdapter regional |
+| H4 | Phase B + strong prompt | H3 | Add global prompt/negative prompt |
+| H5 | Best hybrid | H1-H4 results | Combine best elements |
+
+### Comparison Metrics
+
+| Metric | Description |
+|--------|-------------|
+| Surface fidelity | Match to reference materials |
+| Fixture accuracy | Shape and detail preservation |
+| Boundary quality | Clean transitions |
+| Overall coherence | Unified visual style |
+| Runtime | Seconds per render |
 
 ---
 

@@ -2,10 +2,13 @@
 
 ## Strategic Direction
 
-Two major expansion tracks:
+Four major expansion tracks:
 
 1. **Epic A**: Automatic multi-camera / multi-view scene generation
 2. **Epic B**: Progressive removal of SketchUp dependency via Blender-first path
+3. **Epic C**: Research best rendering strategy for fixtures vs surfaces
+4. **Epic D**: Surface-only validation (immediate priority)
+5. **Epic E**: Workflow candidate registry and hybrid comparison
 
 **Sequencing:**
 - Phase 1: Multi-view support on current SketchUp pipeline
@@ -585,9 +588,98 @@ Evaluate ComfyUI support:
 
 **Rationale:** Current risk is not missing Blender-only flow, but proving the chosen rendering approach is actually best.
 
-1. **Infra + Epic C + Second Scene** — immediate quality impact
-2. **Epic A (Multi-View)** — +10-20% quality on complex scenes
-3. **Epic B (Blender Independence)** — strategic, low immediate ROI
+1. **Epic D + E (Surface validation + Workflow registry)** — immediate, validate strategy
+2. **Epic C (Rendering strategies)** — research best approach per entity class
+3. **Epic A (Multi-View)** — +10-20% quality on complex scenes
+4. **Epic B (Blender Independence)** — strategic, low immediate ROI
+
+---
+
+# Epic D — Surface-Only Validation
+
+## Goal
+
+Validate rendering strategy specifically for surfaces (floor, walls) without fixture complexity.
+
+## Tasks
+
+| ID | Task | Status |
+|----|------|--------|
+| D1.1 | Create surface-only scene (bundle without fixtures) | ⏳ TODO |
+| D1.2 | Define surface-specific acceptance criteria | ⏳ TODO |
+| D1.3 | Add Block SF experiments (SF1-SF5) | ⏳ TODO |
+| D1.4 | Add surface evaluation rubric | ⏳ TODO |
+| D1.5 | Compare workflows only on surfaces | ⏳ TODO |
+
+## Block SF — Surface-Focused Tests
+
+| ID | Workflow | Description |
+|----|----------|-------------|
+| SF1 | phase_b_multi_ipadapter_regional | Current Phase B |
+| SF2 | render_v6_segmentation_regional | v6 with UperNet+SAM |
+| SF3 | v6_plus_sketchup_masks | v6 + SketchUp masks |
+| SF4 | phase_b_strong_prompt | Phase B + strong negative prompt |
+| SF5 | best_hybrid_surface | Best elements from SF1-SF4 |
+
+## Surface Acceptance Criteria
+
+- Floor matches blue patterned reference (Rivoli Bergen Azul)
+- Wall tile matches white vertical ribbed reference (Costa Nova White)
+- Upper wall matches gray paint requirement
+- No material drift (no wood / marble / brass appearing)
+- Correct boundaries and transitions
+
+## Surface Evaluation Rubric (1-5)
+
+| Axis | Description |
+|------|-------------|
+| Floor fidelity | Blue patterned tile matches reference |
+| Wall tile fidelity | White ribbed tile matches reference |
+| Upper wall fidelity | Gray paint matches requirement |
+| Boundary quality | Clean transitions, no bleeding |
+| Geometric consistency | Room shape preserved |
+| Overall surface realism | Natural, coherent surfaces |
+
+---
+
+# Epic E — Workflow Candidate Registry
+
+## Goal
+
+Register and compare candidate workflows without premature benchmark claims.
+
+## E1.1 — Candidate Workflows
+
+**Important:** No workflow is declared benchmark yet.
+
+| ID | Name | Description | Status |
+|----|------|-------------|--------|
+| WF1 | phase_b_multi_ipadapter_regional | Current Phase B | ✅ Implemented |
+| WF2 | render_v6_segmentation_regional | v6 with UperNet+SAM | ✅ Reference exists |
+| WF3 | v6_plus_sketchup_masks | v6 + SketchUp masks | 📋 Planned |
+| WF4 | phase_b_strong_prompt | Phase B + strong prompts | 📋 Planned |
+| WF5 | hybrid_best | Best elements combined | 📋 Planned |
+
+## E1.2 — Hybrid Comparison Plan
+
+| ID | Test | Description |
+|----|------|-------------|
+| H1 | v6 original | UperNet+SAM masks, v6 ControlNet weights |
+| H2 | v6 + SketchUp masks | Replace v6 masks with SketchUp bundle |
+| H3 | Phase B current | Current multi-IPAdapter regional |
+| H4 | Phase B + strong prompt | Add global prompt/negative prompt |
+| H5 | Best hybrid | Combine best elements from H1-H4 |
+
+## Render v6 Reference Parameters
+
+From original v6 workflow:
+- ControlNet Canny: strength 0.7, end_at 0.8
+- ControlNet Depth: strength 0.5, end_at 0.6
+- 9 Regional IP-Adapter with attention masks
+- Steps: 50
+- Sampler: dpmpp_2m_sde
+- Scheduler: karras
+- CFG: 7.0
 
 ---
 
