@@ -88,3 +88,33 @@ echo ""
 echo "=== Setup Complete ==="
 echo "ComfyUI: http://localhost:8188"
 echo "Screen: screen -r comfyui"
+
+# 6. Setup file compatibility
+echo ""
+echo "[6/6] Setting up file compatibility..."
+cd /workspace/ComfyUI/input
+
+# Create symlinks for folder compatibility
+ln -sf refs references 2>/dev/null || true
+ln -sf masks_final masks 2>/dev/null || true
+
+# Create depth.png from available depth file
+if [ ! -f depth.png ]; then
+    cp s1_depth.png depth.png 2>/dev/null || cp v6_depth*.png depth.png 2>/dev/null || true
+fi
+
+# Create mask symlinks without prefix
+cd masks_final 2>/dev/null || cd masks || true
+for f in mask_*.png; do
+    [ -f "$f" ] && ln -sf "$f" "${f#mask_}" 2>/dev/null || true
+done
+
+# Special case mappings
+ln -sf mask_bathtub_screen.png shower_screen.png 2>/dev/null || true
+ln -sf mask_wall.png walls.png 2>/dev/null || true
+
+# Create empty masks for missing ones
+python3 -c 'from PIL import Image; import numpy as np; Image.fromarray(np.zeros((1024, 1024), dtype=np.uint8)).save("mask_rainshower.png")' 2>/dev/null || true
+ln -sf mask_rainshower.png rainshower.png 2>/dev/null || true
+
+echo "✓ File compatibility setup complete"
