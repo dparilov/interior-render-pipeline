@@ -23,12 +23,19 @@ examples/bathroom_01/
 
 ## Entities
 
-### ✅ Keep (Surfaces)
+### 🎯 Primary Surfaces (to render)
 
 | Entity | Role | Mask | Reference | Notes |
 |--------|------|------|-----------|-------|
-| walls | surface.walls | masks/walls.png | references/wall_tiles.png | White Costa Nova tiles |
+| walls_tile | surface.walls_tile | masks/walls_tile.png | references/wall_tiles.png | White Costa Nova tiles (lower portion) |
+| walls_upper | surface.walls_upper | masks/walls_upper.png | — | Gray painted wall (upper portion, no reference) |
 | floor | surface.floor | masks/floor.png | references/floor_tiles.jpg | Blue Rivoli Bergen pattern |
+
+### 🔒 Preserved Geometry (keep unchanged)
+
+| Entity | Role | Mask | Notes |
+|--------|------|------|-------|
+| window | opening.window | masks/window.png | Natural light source, structural element |
 
 ### ❌ Remove (Fixtures)
 
@@ -39,7 +46,6 @@ examples/bathroom_01/
 | shower_screen | fixture.shower_screen | Not a surface |
 | rainshower | fixture.rainshower | Not a surface |
 | towel_warmer | fixture.towel_warmer | Not a surface |
-| window | opening.window | Not a surface |
 | basket | fixture.basket | Not a surface |
 | mirror | fixture.mirror | Not a surface |
 
@@ -47,24 +53,32 @@ examples/bathroom_01/
 
 ## Required Masks
 
-### Surface Masks (from bathroom_01)
-- `masks/walls.png` — wall tile area
-- `masks/floor.png` — floor tile area
+### Primary Surface Masks
+- `masks/walls_tile.png` — lower wall area with Costa Nova tiles
+- `masks/walls_upper.png` — upper wall area with gray paint
+- `masks/floor.png` — floor tile area (from bathroom_01)
 
 ### Composite Masks (to generate)
-- `masks/surfaces_combined.png` — union of walls + floor
+- `masks/surfaces_combined.png` — union of walls_tile + walls_upper + floor
 - `masks/fixtures_all.png` — union of all fixtures (for inpainting/exclusion)
+
+### Optional Masks
+- `masks/geometry_preserved.png` — window + other structural elements to keep unchanged
 
 ### Derivation
 ```bash
+# Split walls.png into walls_tile and walls_upper
+# (manual or threshold-based, depends on original mask structure)
+
 # Combine surface masks
 python3 -c "
 from PIL import Image
 import numpy as np
 
-walls = np.array(Image.open('masks/walls.png'))
+walls_tile = np.array(Image.open('masks/walls_tile.png'))
+walls_upper = np.array(Image.open('masks/walls_upper.png'))
 floor = np.array(Image.open('masks/floor.png'))
-combined = np.maximum(walls, floor)
+combined = np.maximum(walls_tile, np.maximum(walls_upper, floor))
 Image.fromarray(combined).save('masks/surfaces_combined.png')
 "
 ```
@@ -107,41 +121,83 @@ Image.fromarray(combined).save('masks/surfaces_combined.png')
 
 ## Acceptance Criteria
 
+### Per-Surface Criteria
+
+#### Floor
+| Criterion | Metric | Threshold |
+|-----------|--------|-----------|
+| Pattern matches reference | Human visual | Recognizable Rivoli Bergen pattern |
+| Color accuracy | Visual | Blue with white geometric pattern |
+| Area coverage | Mask overlap | >95% of floor mask affected |
+| Grout lines visible | Human visual | Pattern structure maintained |
+
+#### Wall Tile (lower)
+| Criterion | Metric | Threshold |
+|-----------|--------|-----------|
+| Pattern matches reference | Human visual | Recognizable Costa Nova wavy tiles |
+| Color accuracy | Visual | White glossy appearance |
+| 3D texture visible | Human visual | Ribbed/wave texture apparent |
+| Area coverage | Mask overlap | >95% of walls_tile mask affected |
+
+#### Wall Upper (gray)
+| Criterion | Metric | Threshold |
+|-----------|--------|-----------|
+| Color consistency | Visual | Uniform gray, no pattern |
+| Texture appropriate | Human visual | Matte paint appearance |
+| Area coverage | Mask overlap | >95% of walls_upper mask affected |
+
+### Boundary Criteria
+
+#### Tile → Upper Boundary
+| Criterion | Metric | Threshold |
+|-----------|--------|-----------|
+| Clean horizontal transition | Human visual | No bleeding between zones |
+| Edge alignment | Visual | Follows original boundary |
+| No artifacts | Human visual | No halos, smearing, or color mixing |
+
+#### Window Boundary
+| Criterion | Metric | Threshold |
+|-----------|--------|-----------|
+| Window unchanged | Pixel diff | <1% changed pixels in window mask |
+| Wall-to-window transition | Human visual | Clean edge, no bleeding |
+| Light quality preserved | Visual | Natural daylight appearance maintained |
+
+### Workflow-Level Criteria
+
 ### SF1: Floor Only
 | Criterion | Metric | Threshold |
 |-----------|--------|-----------|
-| Floor pattern matches reference | Human visual | Recognizable Rivoli pattern |
-| Floor area coverage | Mask overlap | >95% of floor mask affected |
+| Floor criteria above | — | All pass |
 | Non-floor areas unchanged | SSIM on inverse mask | >0.98 |
-| No artifacts at mask boundary | Human visual | Clean transitions |
 
 ### SF2: Walls Only
 | Criterion | Metric | Threshold |
 |-----------|--------|-----------|
-| Wall pattern matches reference | Human visual | Recognizable Costa Nova tiles |
-| Wall area coverage | Mask overlap | >95% of wall mask affected |
+| Wall tile criteria above | — | All pass |
+| Wall upper criteria above | — | All pass |
+| Tile→upper boundary | — | Pass |
 | Non-wall areas unchanged | SSIM on inverse mask | >0.98 |
-| No artifacts at mask boundary | Human visual | Clean transitions |
 
 ### SF3: Sequential
 | Criterion | Metric | Threshold |
 |-----------|--------|-----------|
-| Both surfaces match references | Human visual | Both patterns recognizable |
+| All surface criteria | — | All pass |
 | No degradation from first pass | Visual comparison | Floor still correct after wall pass |
 | Processing time | Runtime | <150s total |
 
 ### SF4: Parallel
 | Criterion | Metric | Threshold |
 |-----------|--------|-----------|
-| Both surfaces match references | Human visual | Both patterns recognizable |
+| All surface criteria | — | All pass |
 | Processing time | Runtime | <100s (faster than sequential) |
 | Quality vs sequential | Visual comparison | Equal or better |
 
 ### SF5: Fixture Preservation
 | Criterion | Metric | Threshold |
 |-----------|--------|-----------|
-| Surfaces match references | Human visual | Both patterns recognizable |
-| Fixtures unchanged | Pixel diff on fixture masks | <1% changed pixels |
+| All surface criteria | — | All pass |
+| Window boundary criteria | — | Pass |
+| Other fixtures unchanged | Pixel diff on fixture masks | <1% changed pixels |
 | Boundary mask respected | Visual inspection | No bleeding into fixtures |
 
 ---
@@ -155,10 +211,13 @@ examples/bathroom_01_surfaces/
 ├── depth.png              # Copy from bathroom_01
 ├── boundary_mask.png      # Copy from bathroom_01
 ├── masks/
-│   ├── walls.png          # Copy from bathroom_01
-│   ├── floor.png          # Copy from bathroom_01
-│   ├── surfaces_combined.png   # Generated: walls ∪ floor
-│   └── fixtures_all.png        # Generated: all fixtures combined
+│   ├── walls_tile.png          # Lower wall tiles (split from walls.png)
+│   ├── walls_upper.png         # Upper gray wall (split from walls.png)
+│   ├── floor.png               # Copy from bathroom_01
+│   ├── window.png              # Copy from bathroom_01 (preserved geometry)
+│   ├── surfaces_combined.png   # Generated: walls_tile ∪ walls_upper ∪ floor
+│   ├── fixtures_all.png        # Generated: all fixtures combined
+│   └── geometry_preserved.png  # Optional: window + structural elements
 ├── references/
 │   ├── wall_tiles.png     # Copy from bathroom_01
 │   └── floor_tiles.jpg    # Copy from bathroom_01
@@ -169,17 +228,25 @@ examples/bathroom_01_surfaces/
 
 ## Manifest Changes
 
-### entities (keep only)
+### entities
 ```json
 {
   "entities": [
     {
-      "name": "walls",
-      "role": "surface.walls",
+      "name": "walls_tile",
+      "role": "surface.walls_tile",
       "class": "surface",
-      "mask": "masks/walls.png",
+      "mask": "masks/walls_tile.png",
       "reference": "references/wall_tiles.png",
       "prompt": "white glossy wavy subway tiles, Equipe Costa Nova White style"
+    },
+    {
+      "name": "walls_upper",
+      "role": "surface.walls_upper",
+      "class": "surface",
+      "mask": "masks/walls_upper.png",
+      "reference": null,
+      "prompt": "smooth gray painted wall, matte finish"
     },
     {
       "name": "floor",
@@ -189,11 +256,20 @@ examples/bathroom_01_surfaces/
       "reference": "references/floor_tiles.jpg",
       "prompt": "blue ceramic floor tiles with white geometric pattern, Equipe Rivoli Bergen Azul style"
     }
+  ],
+  "preserved": [
+    {
+      "name": "window",
+      "role": "opening.window",
+      "class": "opening",
+      "mask": "masks/window.png",
+      "reason": "Preserved geometry: natural light source, structural element"
+    }
   ]
 }
 ```
 
-### excluded (add fixtures)
+### excluded (fixtures only)
 ```json
 {
   "excluded": [
@@ -202,7 +278,6 @@ examples/bathroom_01_surfaces/
     {"name": "shower_screen", "reason": "Surface-only experiment: fixtures excluded"},
     {"name": "rainshower", "reason": "Surface-only experiment: fixtures excluded"},
     {"name": "towel_warmer", "reason": "Surface-only experiment: fixtures excluded"},
-    {"name": "window", "reason": "Surface-only experiment: fixtures excluded"},
     {"name": "basket", "reason": "Surface-only experiment: fixtures excluded"},
     {"name": "mirror", "reason": "Surface-only experiment: fixtures excluded"}
   ]
