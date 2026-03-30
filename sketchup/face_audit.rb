@@ -7,7 +7,14 @@ require 'json'
 
 module FaceAudit
   TARGET_PID = 36696
-  OUTPUT_FILE = File.expand_path("~/sketchup-share/face_audit_36696.json")
+  # Output to same folder as SKP file
+  def self.output_path
+    model = Sketchup.active_model
+    skp_dir = File.dirname(model.path)
+    File.join(skp_dir, "face_audit_36696.json")
+  end
+  
+  OUTPUT_FILE = nil  # Will use output_path() instead
   
   def self.run
     model = Sketchup.active_model
@@ -126,12 +133,13 @@ module FaceAudit
       faces: face_data
     }
     
-    # Write to file
-    File.open(OUTPUT_FILE, 'w') do |f|
+    # Write to file (same folder as SKP)
+    out_path = output_path
+    File.open(out_path, 'w') do |f|
       f.write(JSON.pretty_generate(result))
     end
     
-    puts "\n✓ Audit saved to: #{OUTPUT_FILE}"
+    puts "\n✓ Audit saved to: #{out_path}"
     puts "=" * 60
     
     result
