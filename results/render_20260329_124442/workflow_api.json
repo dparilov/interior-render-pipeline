@@ -1,0 +1,610 @@
+{
+  "_comment": "IRP Delta - Canonical Workflow v1.1",
+  "_description": "Dual ControlNet (Canny+Depth) + Regional IPAdapter + Boundary Mask",
+  "_params": {
+    "canny_strength": 0.8,
+    "canny_end": 0.9,
+    "depth_strength": 0.9,
+    "depth_end": 0.8,
+    "seed": 42,
+    "steps": 50,
+    "cfg": 7.0
+  },
+  "prompt": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "RealVisXL_V4.0.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "CLIPVisionLoader",
+      "inputs": {
+        "clip_name": "clip_vision_g.safetensors"
+      }
+    },
+    "3": {
+      "class_type": "IPAdapterModelLoader",
+      "inputs": {
+        "ipadapter_file": "ip-adapter_sdxl.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/beauty.png"
+      }
+    },
+    "5": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/depth.png"
+      }
+    },
+    "6": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/boundary_mask.png",
+        "channel": "red"
+      }
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "1",
+          1
+        ],
+        "text": "photorealistic interior photograph, professional architectural photography, 8k uhd, natural lighting, \u0422\u0417: \u0412\u0430\u043d\u043d\u0430\u044f \u043a\u043e\u043c\u043d\u0430\u0442\u0430 \u0434\u043b\u044f \u041c\u0430\u0448\u0438\n\nWALLS: white glossy wavy subway tiles, Equipe Costa Nova White style, 3D ribbed texture, vertical orientation, 50x200mm\nFLOOR: blue ceramic floor tiles with white geometric pattern, Equipe Rivoli Bergen Azul style, intersecting circles/petals, mediterranean, 200x200mm\nBATHTUB: white cast iron bathtub Jacob Delafon Soissons 160x70cm, front panel covered with white Costa Nova tiles\nVANITY: wall-mounted dark charcoal gray vanity cabinet IDDIS Edifice 100cm, two soft-close drawers, white ceramic sink on top, chrome faucet IDDIS Aiger\nSHOWER_SCREEN: glass shower screen panel, minimalist frameless design, transparent\nRAINSHOWER: chrome shower system IDDIS Aiger with large 228mm rain shower head and handheld shower\nTOWEL_WARMER: WHITE vertical electric heated towel rail Ewrika Penelopa X5 270x1200mm, NOT black NOT chrome, white color only\nWINDOW: small window with white PVC frame, frosted glass, warm natural daylight source\nBASKET: round woven natural rattan laundry basket La Redoute bohemian style with lid, beige color\nMIRROR: rectangular mirror IDDIS Uniq with rounded corners and integrated warm LED backlight 3000K around perimeter"
+      }
+    },
+    "8": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "1",
+          1
+        ],
+        "text": "cartoon, anime, drawing, sketch, low quality, blurry, distorted, watermark, text, objects not in reference, extra fixtures, additional decorations, modified wall structure, added ledges, steps, shelves, extra towels, human figure, person"
+      }
+    },
+    "9": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-canny-sdxl.safetensors"
+      }
+    },
+    "10": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-depth-sdxl.safetensors"
+      }
+    },
+    "11": {
+      "class_type": "Canny",
+      "inputs": {
+        "image": [
+          "4",
+          0
+        ],
+        "low_threshold": 0.1,
+        "high_threshold": 0.4
+      }
+    },
+    "12": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "7",
+          0
+        ],
+        "negative": [
+          "8",
+          0
+        ],
+        "control_net": [
+          "9",
+          0
+        ],
+        "image": [
+          "11",
+          0
+        ],
+        "strength": 0.8,
+        "start_percent": 0.0,
+        "end_percent": 0.9
+      }
+    },
+    "13": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "12",
+          0
+        ],
+        "negative": [
+          "12",
+          1
+        ],
+        "control_net": [
+          "10",
+          0
+        ],
+        "image": [
+          "5",
+          0
+        ],
+        "strength": 0.9,
+        "start_percent": 0.0,
+        "end_percent": 0.8
+      }
+    },
+    "14": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 1920,
+        "height": 1080,
+        "batch_size": 1
+      }
+    },
+    "15": {
+      "class_type": "SetLatentNoiseMask",
+      "inputs": {
+        "samples": [
+          "14",
+          0
+        ],
+        "mask": [
+          "6",
+          0
+        ]
+      }
+    },
+    "16": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "45",
+          0
+        ],
+        "positive": [
+          "13",
+          0
+        ],
+        "negative": [
+          "13",
+          1
+        ],
+        "latent_image": [
+          "15",
+          0
+        ],
+        "seed": 42,
+        "steps": 50,
+        "cfg": 7.0,
+        "sampler_name": "dpmpp_2m_sde",
+        "scheduler": "karras",
+        "denoise": 1.0
+      }
+    },
+    "17": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "16",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "18": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "17",
+          0
+        ],
+        "filename_prefix": "IRP_render"
+      }
+    },
+    "19": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/wall_tiles.png"
+      }
+    },
+    "20": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/walls.png",
+        "channel": "red"
+      }
+    },
+    "21": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "19",
+          0
+        ],
+        "weight": 0.55,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "20",
+          0
+        ]
+      }
+    },
+    "22": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/floor_tiles.jpg"
+      }
+    },
+    "23": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/floor.png",
+        "channel": "red"
+      }
+    },
+    "24": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "21",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "22",
+          0
+        ],
+        "weight": 0.55,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "23",
+          0
+        ]
+      }
+    },
+    "25": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/bathtub.jpg"
+      }
+    },
+    "26": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/bathtub.png",
+        "channel": "red"
+      }
+    },
+    "27": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "24",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "25",
+          0
+        ],
+        "weight": 0.5,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "26",
+          0
+        ]
+      }
+    },
+    "28": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/vanity.jpg"
+      }
+    },
+    "29": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/vanity.png",
+        "channel": "red"
+      }
+    },
+    "30": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "27",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "28",
+          0
+        ],
+        "weight": 0.5,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "29",
+          0
+        ]
+      }
+    },
+    "31": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/shower.jpg"
+      }
+    },
+    "32": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/shower_screen.png",
+        "channel": "red"
+      }
+    },
+    "33": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "30",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "31",
+          0
+        ],
+        "weight": 0.5,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "32",
+          0
+        ]
+      }
+    },
+    "34": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/shower.jpg"
+      }
+    },
+    "35": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/rainshower.png",
+        "channel": "red"
+      }
+    },
+    "36": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "33",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "34",
+          0
+        ],
+        "weight": 0.5,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "35",
+          0
+        ]
+      }
+    },
+    "37": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/towel_warmer.jpg"
+      }
+    },
+    "38": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/towel_warmer.png",
+        "channel": "red"
+      }
+    },
+    "39": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "36",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "37",
+          0
+        ],
+        "weight": 0.5,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "38",
+          0
+        ]
+      }
+    },
+    "40": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/basket.jpg"
+      }
+    },
+    "41": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/basket.png",
+        "channel": "red"
+      }
+    },
+    "42": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "39",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "40",
+          0
+        ],
+        "weight": 0.5,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "41",
+          0
+        ]
+      }
+    },
+    "43": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/references/mirror.jpg"
+      }
+    },
+    "44": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "/home/dima/ComfyUI/input/irp_bundle_s1/masks/mirror.png",
+        "channel": "red"
+      }
+    },
+    "45": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "42",
+          0
+        ],
+        "ipadapter": [
+          "3",
+          0
+        ],
+        "clip_vision": [
+          "2",
+          0
+        ],
+        "image": [
+          "43",
+          0
+        ],
+        "weight": 0.5,
+        "weight_type": "ease in-out",
+        "combine_embeds": "concat",
+        "embeds_scaling": "V only",
+        "start_at": 0.0,
+        "end_at": 0.8,
+        "attn_mask": [
+          "44",
+          0
+        ]
+      }
+    }
+  }
+}

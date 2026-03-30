@@ -1,0 +1,214 @@
+{
+  "_comment": "IRP Delta - Canonical Workflow v1.1",
+  "_description": "Dual ControlNet (Canny+Depth) + Regional IPAdapter + Boundary Mask",
+  "_params": {
+    "canny_strength": 0.8,
+    "canny_end": 0.9,
+    "depth_strength": 0.9,
+    "depth_end": 0.8,
+    "seed": 42,
+    "steps": 50,
+    "cfg": 7.0
+  },
+  "prompt": {
+    "1": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "RealVisXL_V4.0.safetensors"
+      }
+    },
+    "2": {
+      "class_type": "CLIPVisionLoader",
+      "inputs": {
+        "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+      }
+    },
+    "3": {
+      "class_type": "IPAdapterModelLoader",
+      "inputs": {
+        "ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"
+      }
+    },
+    "4": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "BUNDLE_PATH/beauty.png"
+      }
+    },
+    "5": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "BUNDLE_PATH/depth.png"
+      }
+    },
+    "6": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "BUNDLE_PATH/boundary_mask.png",
+        "channel": "red"
+      }
+    },
+    "7": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "1",
+          1
+        ],
+        "text": "POSITIVE_PROMPT"
+      }
+    },
+    "8": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "1",
+          1
+        ],
+        "text": "cartoon, anime, drawing, sketch, low quality, blurry, distorted, watermark, text, objects not in reference, extra fixtures, additional decorations, modified wall structure, added ledges, steps, shelves, extra towels, human figure, person"
+      }
+    },
+    "9": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-canny-sdxl.safetensors"
+      }
+    },
+    "10": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-depth-sdxl.safetensors"
+      }
+    },
+    "11": {
+      "class_type": "Canny",
+      "inputs": {
+        "image": [
+          "4",
+          0
+        ],
+        "low_threshold": 0.1,
+        "high_threshold": 0.4
+      }
+    },
+    "12": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "7",
+          0
+        ],
+        "negative": [
+          "8",
+          0
+        ],
+        "control_net": [
+          "9",
+          0
+        ],
+        "image": [
+          "11",
+          0
+        ],
+        "strength": 0.8,
+        "start_percent": 0.0,
+        "end_percent": 0.9
+      }
+    },
+    "13": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "12",
+          0
+        ],
+        "negative": [
+          "12",
+          1
+        ],
+        "control_net": [
+          "10",
+          0
+        ],
+        "image": [
+          "5",
+          0
+        ],
+        "strength": 0.9,
+        "start_percent": 0.0,
+        "end_percent": 0.8
+      }
+    },
+    "14": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 1920,
+        "height": 1080,
+        "batch_size": 1
+      }
+    },
+    "15": {
+      "class_type": "SetLatentNoiseMask",
+      "inputs": {
+        "samples": [
+          "14",
+          0
+        ],
+        "mask": [
+          "6",
+          0
+        ]
+      }
+    },
+    "16": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "1",
+          0
+        ],
+        "positive": [
+          "13",
+          0
+        ],
+        "negative": [
+          "13",
+          1
+        ],
+        "latent_image": [
+          "15",
+          0
+        ],
+        "seed": 42,
+        "steps": 50,
+        "cfg": 7.0,
+        "sampler_name": "dpmpp_2m_sde",
+        "scheduler": "karras",
+        "denoise": 1.0
+      }
+    },
+    "17": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "16",
+          0
+        ],
+        "vae": [
+          "1",
+          2
+        ]
+      }
+    },
+    "18": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "17",
+          0
+        ],
+        "filename_prefix": "IRP_render"
+      }
+    }
+  }
+}
