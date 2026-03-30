@@ -29,7 +29,14 @@ Scope: **Surfaces and preserved geometry only**
 - **Размер:** 50×200 мм (subway/кабанчик)
 - **Описание:** БЕЛАЯ глянцевая плитка с волнистой ребристой текстурой. Укладка ВЕРТИКАЛЬНАЯ.
 - **Референс:** `references/wall_tiles.png`
+- **SKP Material:** Материал1
 - **КРИТИЧНО:** ДА
+
+**Mask Source:**
+- Source: SKP per-face material semantics
+- Material: `Материал1` (7 faces, 11.71 m²)
+- Z range: 0.90m (lower portion of walls)
+- Derivation: Z-height split from face_audit_36696.json
 
 **Acceptance Criteria:**
 - Pattern matches reference (recognizable Costa Nova wavy tiles)
@@ -42,7 +49,14 @@ Scope: **Surfaces and preserved geometry only**
 - **Описание:** Гладкая крашеная стена нейтрального серого цвета (matte finish)
 - **Референс:** НЕТ (оценивается по цвету и консистентности)
 - **Цвет:** ~RGB(203, 203, 203) — нейтральный серый
+- **SKP Material:** 0131_Серебристый
 - **КРИТИЧНО:** ДА
+
+**Mask Source:**
+- Source: SKP per-face material semantics
+- Material: `0131_Серебристый` (12 faces, 7.31 m²)
+- Z range: 1.95 - 2.94m (upper portion of walls)
+- Derivation: Z-height split from face_audit_36696.json
 
 **Acceptance Criteria:**
 - Uniform neutral gray color
@@ -53,8 +67,8 @@ Scope: **Surfaces and preserved geometry only**
 
 **Note:** walls_upper does not have an image reference. Evaluation is based on:
 1. Technical specification compliance
-2. Color accuracy (neutral gray)
-3. Clean boundary with walls_tile
+2. Color accuracy (neutral gray ~RGB 203,203,203)
+3. Clean boundary with walls_tile at Z ≈ 1.4m
 4. No random texture/pattern injection
 
 ---

@@ -8,44 +8,32 @@ Test IPAdapter surface material transfer on walls and floor only, with fixtures 
 
 ---
 
-## ⚠️ Mask Source: Brightness-Derived Fallback
+## ✅ Mask Source: SKP Face/Material Semantics
 
-**walls_tile and walls_upper masks are DERIVED via brightness threshold, NOT from SKP semantic data.**
+**walls_tile and walls_upper masks are generated from SKP per-face material semantics.**
 
-### Why Semantic Split Was Not Used
+### Semantic Source
 
-**⚠️ IMPORTANT: Upstream SKP source was NOT verified.**
+Per-face material analysis from `face_audit_36696.json`:
 
-Investigation checked only downstream artifacts:
+| Material | Region | Faces | Area (m²) | Z Range |
+|----------|--------|-------|-----------|---------|
+| Материал1 | walls_tile | 7 | 11.71 | 0.90m |
+| 0131_Серебристый | walls_upper | 12 | 7.31 | 1.95-2.94m |
 
-1. **GLB model** (`model/model.glb`): Contains only ONE node `IRP_walls` — no separate semantic entities for tile vs upper wall
-2. **Source manifest** (`manifest.json`): Has only ONE entity `walls` with `surface_kind: wall_tiles`
-3. **Technical spec**: Describes only Costa Nova tile — upper gray wall is implicit
+### Derivation Method
 
-**What was NOT checked:**
+1. Face audit extracted per-face materials from SKP Group pid=36696
+2. Materials mapped to semantic regions by Z-height correlation
+3. Split boundary: Z = 1.4m (midpoint between tile max and upper min)
+4. Original `walls.png` split by Y coordinate corresponding to Z boundary
 
-- **SKP source file**: Not available in repository — only GLB export present
-- **Export pipeline**: Unknown if GLB export merged separate SKP objects
-- **Re-export options**: Could not verify if re-export would recover semantics
+### Source Verification
 
-**Conclusion**: Semantic split may exist in upstream SKP but was lost during export, or may genuinely not exist. Cannot determine without access to original SKP file.
-
-**TODO**: Obtain original SKP file and verify if semantic wall split exists at source.
-
-### Derivation Method Used
-
-Since semantic split is unavailable, masks were derived from `beauty.png` + `walls.png` using brightness analysis:
-
-- **walls_tile.png**: Pixels where `walls.png` is active AND brightness >210 (white tiles)
-- **walls_upper.png**: Pixels where `walls.png` is active AND brightness 150-210 (gray paint)
-
-This is a **fallback approximation** — not canonical semantic data.
-
-### Implications
-
-- Boundary between tile and upper wall is approximate
-- Some transition pixels may be misclassified
-- For production use, semantic masks should be exported from SKP source with explicit material separation
+- ✅ SKP face-level audit completed
+- ✅ Per-face materials confirmed (4 distinct materials)
+- ✅ Z-height correlation verified
+- ✅ Masks generated from semantic data, not brightness heuristics
 
 ---
 
