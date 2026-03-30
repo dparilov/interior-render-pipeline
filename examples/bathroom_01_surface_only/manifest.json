@@ -127,5 +127,24 @@
     "surfaces_combined": "masks/surfaces_combined.png",
     "fixtures_all": "masks/fixtures_all.png",
     "geometry_preserved": "masks/geometry_preserved.png"
-  }
+  },
+  "validation": {
+    "script": "scripts/validate_surface_masks.py",
+    "report": "validation_report.json",
+    "status": "VALID_WITH_WARNINGS",
+    "note": "Overlap at tile/upper boundary is expected for true face projection"
+  },
+  "face_projection_config": "face_projection_config.json",
+  "deprecated_methods": [
+    {
+      "method": "brightness_threshold_split",
+      "status": "DEPRECATED",
+      "reason": "Heuristic-based, not semantically grounded"
+    },
+    {
+      "method": "face_audit_z_split",
+      "status": "DEPRECATED",
+      "reason": "Uses walls.png as intermediate, not direct face projection"
+    }
+  ]
 }

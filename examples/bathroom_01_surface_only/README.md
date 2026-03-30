@@ -39,6 +39,34 @@ Masks generated using `face_material_mask_export.rb`:
 - ✅ True face projection (not walls.png split)
 - ✅ Masks from direct render, not Y-coordinate heuristics
 - ✅ Export metadata: `face_projection_metadata.json`
+- ✅ Config-driven: `face_projection_config.json`
+- ✅ Camera-validated export
+- ✅ Deterministic validation: `validation_report.json`
+
+---
+
+## ⛔ DEPRECATED: Old Split Methods
+
+**The following methods are DEPRECATED and must NOT be used:**
+
+### ❌ walls.png Y-split (brightness threshold)
+- **Status:** DEPRECATED
+- **Reason:** Heuristic-based, not semantically grounded
+- **Was:** Split walls.png by brightness > 210
+- **Problem:** Does not correspond to actual material boundaries
+
+### ❌ face_audit_z_split
+- **Status:** DEPRECATED  
+- **Reason:** Intermediate approximation, not true projection
+- **Was:** Split walls.png by Y coordinate from Z-height mapping
+- **Problem:** Uses walls.png as intermediate, not direct face render
+
+### ✅ CANONICAL: direct_face_render
+- **Status:** CURRENT
+- **Method:** Project face groups directly to camera
+- **Script:** `face_material_mask_export_v2.rb`
+- **Config:** `face_projection_config.json`
+- **Validation:** `validate_surface_masks.py`
 
 ---
 

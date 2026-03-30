@@ -1,0 +1,21 @@
+{
+  "status": "VALID_WITH_WARNINGS",
+  "errors": [],
+  "warnings": [
+    "walls_tile/walls_upper overlap: 99426 pixels (max 100)",
+    "walls_tile has 9102 pixels in top 10% region",
+    "walls_upper has 7934 pixels in bottom 10% region",
+    "window overlaps with wall masks: tile=1255, upper=1255"
+  ],
+  "masks": {
+    "walls_tile": {
+      "pixels": 333499,
+      "coverage_pct": 16.08
+    },
+    "walls_upper": {
+      "pixels": 250968,
+      "coverage_pct": 12.1
+    },
+    "overlap": 99426
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "scene_id": "bathroom_01_surface_only",
+  "description": "Face projection configuration for wall region masks",
+  
+  "target_entity": {
+    "pid": 36696,
+    "name": "walls",
+    "description": "Wall group containing tile and upper regions"
+  },
+  
+  "camera_reference": {
+    "source": "examples/bathroom_01/manifest.json",
+    "eye": [1.147, -4.442, 1.948],
+    "target": [1.162, 5.983, 1.598],
+    "up": [4.703432067261298e-05, 0.03359354114074483, 0.9994355766038139],
+    "fov": 35.0,
+    "tolerance": {
+      "position": 0.01,
+      "direction": 0.001,
+      "fov": 0.5
+    }
+  },
+  
+  "materials_to_entities": {
+    "Материал1": {
+      "entity_name": "walls_tile",
+      "role": "surface.walls_tile",
+      "description": "White Costa Nova subway tiles (lower wall)",
+      "expected_faces": 7,
+      "expected_area_m2_approx": 11.7,
+      "has_reference": true,
+      "reference_path": "references/wall_tiles.png"
+    },
+    "0131_Серебристый": {
+      "entity_name": "walls_upper",
+      "role": "surface.walls_upper", 
+      "description": "Gray painted wall (upper portion)",
+      "expected_faces": 12,
+      "expected_area_m2_approx": 7.3,
+      "has_reference": false,
+      "reference_path": null
+    }
+  },
+  
+  "output_masks": {
+    "walls_tile": "masks/walls_tile.png",
+    "walls_upper": "masks/walls_upper.png"
+  },
+  
+  "resolution": {
+    "width": 1920,
+    "height": 1080
+  },
+  
+  "validation": {
+    "min_pixel_count": 1000,
+    "max_overlap_pixels": 100,
+    "require_non_empty": true
+  },
+  
+  "deprecation_note": "walls.png Y-split method is DEPRECATED. Use direct face projection only."
+}
