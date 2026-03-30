@@ -3,7 +3,6 @@
   "workflow_name": "render_v6_segmentation_regional",
   "workflow_hash": "66348fa38703f691",
   "workflow_file": "workflow_v6_rtx4090.json",
-  
   "platform": {
     "gpu_test": {
       "provider": "runpod",
@@ -17,21 +16,22 @@
       "ram_gb": 128
     }
   },
-  
   "parameters": {
     "seed": 42,
     "steps": 50,
     "cfg": 7.5,
     "sampler": "dpmpp_2m_sde",
     "scheduler": "karras",
-    "resolution": [1024, 1024],
+    "resolution": [
+      1024,
+      1024
+    ],
     "checkpoint": "RealVisXL_V4.0.safetensors",
     "controlnet_canny_strength": 0.7,
     "controlnet_depth_strength": 0.5,
     "regional_ipadapter_count": 9,
     "mask_source": "upernet + SAM (pre-generated)"
   },
-  
   "models": {
     "checkpoint": {
       "name": "RealVisXL_V4.0.safetensors",
@@ -43,7 +43,7 @@
       "source": "https://huggingface.co/diffusers/controlnet-canny-sdxl-1.0"
     },
     "controlnet_depth": {
-      "name": "controlnet-depth-sdxl-1.0", 
+      "name": "controlnet-depth-sdxl-1.0",
       "source": "https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0"
     },
     "ipadapter": {
@@ -55,12 +55,10 @@
       "source": "https://huggingface.co/h94/IP-Adapter"
     }
   },
-  
   "custom_nodes": {
     "ComfyUI_IPAdapter_plus": "https://github.com/cubiq/ComfyUI_IPAdapter_plus",
     "comfyui_controlnet_aux": "https://github.com/Fannovel16/comfyui_controlnet_aux"
   },
-  
   "results": {
     "gpu_test": {
       "file": "v6_rtx4090_seed42.png",
@@ -71,37 +69,39 @@
       "file": "v6_cpu_reference.png",
       "runtime_sec": 1800,
       "cost_usd": 0
+    },
+    "gpu_test_e2e": {
+      "file": "v6_rtx4090_e2e_114s.png",
+      "runtime_sec": 114,
+      "pod_id": "3lvagv7zf331s0",
+      "gpu": "RTX 4090",
+      "timestamp": "2026-03-30T21:51:00+03:00"
     }
   },
-  
   "comparison": {
     "verdict": "EXECUTION_CONFIRMED_NOT_VISUALLY_EQUIVALENT",
     "comparison_image": "comparison_cpu_vs_gpu.png",
-    
     "similarity_scores": {
       "geometry_similarity": 0.22,
       "color_histogram_similarity": 0.54,
       "pixel_correlation": -0.06,
       "overall_visual_similarity": 0.23
     },
-    
     "analysis": {
       "geometry": "LOW - Edge structures differ significantly. Room layout preserved but object placement/shapes vary.",
       "materials": "LOW - Textures and surface details are completely different despite same regional prompts.",
       "color_logic": "MEDIUM - Overall color palette similar (bathroom whites/grays) but local colors differ.",
       "composition": "MEDIUM - Same general scene (bathroom) but different interpretation of details."
     },
-    
-    "notes": "SDXL diffusion is fundamentally non-deterministic across CPU/GPU. Same seed does NOT produce same output. This is a known limitation of floating-point stochastic sampling."
+    "notes": "SDXL diffusion is fundamentally non-deterministic across CPU/GPU. Same seed does NOT produce same output. This is a known limitation of floating-point stochastic sampling.",
+    "e2e_confirmed": true
   },
-  
   "reproducibility": {
     "status": "HISTORICAL_NON_REPRODUCIBLE_CROSS_DEVICE",
     "same_device_determinism": true,
     "cross_device_determinism": false,
     "recommendation": "For reproducible results, always use same GPU type. CPU renders are for validation only, not as ground truth for GPU comparison."
   },
-  
   "timestamp": "2026-03-30T17:38:00+03:00",
   "updated": "2026-03-30T20:05:00+03:00",
   "author": "jarvis@openclaw"
