@@ -135,9 +135,11 @@
     "overlap_pixels": 99426,
     "overlap_pct": 39.6,
     "boundary_overlap_policy": "bathroom_01 has overlapping face geometry in SKP; 39.6% overlap is scene characteristic, not projection error",
-    "note": "39.6% overlap is verified geometric characteristic, not rendering artifact",
-    "overlap_audit": "docs/WALL_MASK_OVERLAP_AUDIT.md",
-    "overlap_cause": "TRUE SOURCE-GEOMETRY OVERLAP - tile/upper faces share XY coordinates at different Z"
+    "note": "Camera projection shows 0.59% overlap; 39.6% bitmap overlap is SketchUp rendering artifact",
+    "overlap_audit": "docs/WALL_MASK_PROJECTION_OVERLAP_AUDIT.md",
+    "overlap_cause": "RENDERING ARTIFACT (not geometric overlap)",
+    "geometric_overlap_pct": 0.59,
+    "bitmap_overlap_pct": 39.6
   },
   "face_projection_config": "face_projection_config.json",
   "deprecated_methods": [

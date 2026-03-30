@@ -178,3 +178,12 @@ Not localized to a boundary — this confirms it's a scene-wide projection chara
 - Face audit data: `examples/bathroom_01/face_audit_36696.json`
 - Validation report: `examples/bathroom_01_surface_only/validation_report.json`
 - Projection config: `examples/bathroom_01_surface_only/face_projection_config.json`
+
+---
+
+## ⚠️ SUPERSEDED
+
+**This document has been superseded by `WALL_MASK_PROJECTION_OVERLAP_AUDIT.md`**
+
+Camera projection audit shows geometric overlap is only **0.59%**, not 39.6%.
+The bitmap overlap is a **rendering artifact**, not true geometry overlap.
