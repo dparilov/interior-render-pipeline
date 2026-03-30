@@ -42,3 +42,14 @@
 - **CPU (local):** ~34 min for 50 steps
 - **GPU (RTX 4090):** ~8-27 sec for 50 steps
 - **Speedup:** ~75-250x
+
+## F2-v2 Phase B Reference (from delta branch)
+- **Source:** `results/F2-v2/IRP_render_00053_.png`
+- **Experiment:** F2-v2 (all entities, multi-IPAdapter regional)
+- **9 Entities:** walls, floor, bathtub, shower_screen, vanity, mirror, towel_warmer, basket, rainshower
+- **Weights:** surfaces 0.55, fixtures 0.5
+- **Refiner:** OFF
+- **Time:** 78.1 sec
+- **Platform:** RunPod RTX 4090
+
+This is the canonical Phase B reference render from the experiment plan.
