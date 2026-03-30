@@ -1,0 +1,120 @@
+{
+  "version": "1.2",
+  "scene_id": "bathroom_01_surface_only",
+  "derived_from": "bathroom_01",
+  "experiment": "Epic D: Surface-Only",
+  "created": "2026-03-30T20:12:33.635768Z",
+  "base_image": "beauty.png",
+  "depth_map": "depth.png",
+  "boundary_mask": "boundary_mask.png",
+  "image_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "camera": {
+    "eye": [
+      1.147,
+      -4.442,
+      1.948
+    ],
+    "target": [
+      1.162,
+      5.983,
+      1.598
+    ],
+    "up": [
+      4.703432067261298e-05,
+      0.03359354114074483,
+      0.9994355766038139
+    ],
+    "fov": 35.0
+  },
+  "technical_spec": "technical_spec_surface.md",
+  "scene_type": "surface_only",
+  "entities": [
+    {
+      "name": "floor",
+      "role": "surface.floor",
+      "class": "surface",
+      "mask": "masks/floor.png",
+      "reference": "references/floor_tiles.jpg",
+      "prompt": "blue ceramic floor tiles with white geometric pattern, Equipe Rivoli Bergen Azul style, 200x200mm",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.55
+    },
+    {
+      "name": "walls_tile",
+      "role": "surface.walls_tile",
+      "class": "surface",
+      "mask": "masks/walls_tile.png",
+      "reference": "references/wall_tiles.png",
+      "prompt": "white glossy wavy subway tiles, Equipe Costa Nova White style, 3D ribbed texture, vertical orientation",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.55
+    },
+    {
+      "name": "walls_upper",
+      "role": "surface.walls_upper",
+      "class": "surface",
+      "mask": "masks/walls_upper.png",
+      "reference": null,
+      "prompt": "smooth neutral gray painted wall, matte finish",
+      "critical": true,
+      "render_mode": "preserve",
+      "ipadapter_weight": 0.0,
+      "note": "No image reference. Evaluate by: technical_spec compliance, color accuracy (neutral gray ~RGB 203,203,203), clean boundary with tiles, consistency across renders"
+    },
+    {
+      "name": "window",
+      "role": "opening.window",
+      "class": "preserved_geometry",
+      "mask": "masks/window.png",
+      "reference": null,
+      "prompt": "small window with white PVC frame, frosted glass, warm natural daylight",
+      "critical": false,
+      "render_mode": "preserve",
+      "note": "Preserved geometry - must remain unchanged. Excluded from surface fidelity scoring."
+    }
+  ],
+  "excluded": [
+    {
+      "name": "bathtub",
+      "reason": "Surface-only experiment: fixture excluded"
+    },
+    {
+      "name": "vanity",
+      "reason": "Surface-only experiment: fixture excluded"
+    },
+    {
+      "name": "mirror",
+      "reason": "Surface-only experiment: fixture excluded"
+    },
+    {
+      "name": "faucet",
+      "reason": "Surface-only experiment: fixture excluded"
+    },
+    {
+      "name": "rainshower",
+      "reason": "Surface-only experiment: fixture excluded"
+    },
+    {
+      "name": "towel_warmer",
+      "reason": "Surface-only experiment: fixture excluded"
+    },
+    {
+      "name": "basket",
+      "reason": "Surface-only experiment: fixture excluded"
+    },
+    {
+      "name": "shower_screen",
+      "reason": "Surface-only experiment: fixture excluded"
+    }
+  ],
+  "composite_masks": {
+    "surfaces_combined": "masks/surfaces_combined.png",
+    "fixtures_all": "masks/fixtures_all.png",
+    "geometry_preserved": "masks/geometry_preserved.png"
+  }
+}
