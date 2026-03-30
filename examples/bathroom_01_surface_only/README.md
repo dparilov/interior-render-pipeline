@@ -12,14 +12,25 @@ Test IPAdapter surface material transfer on walls and floor only, with fixtures 
 
 **walls_tile and walls_upper masks are DERIVED via brightness threshold, NOT from SKP semantic data.**
 
-### Why Semantic Split is Unavailable
+### Why Semantic Split Was Not Used
 
-Investigation of source artifacts:
+**⚠️ IMPORTANT: Upstream SKP source was NOT verified.**
+
+Investigation checked only downstream artifacts:
 
 1. **GLB model** (`model/model.glb`): Contains only ONE node `IRP_walls` — no separate semantic entities for tile vs upper wall
 2. **Source manifest** (`manifest.json`): Has only ONE entity `walls` with `surface_kind: wall_tiles`
-3. **SKP export**: No separate semantic masks for wall components exist
-4. **Technical spec**: Describes only Costa Nova tile — upper gray wall is implicit, not specified as separate material
+3. **Technical spec**: Describes only Costa Nova tile — upper gray wall is implicit
+
+**What was NOT checked:**
+
+- **SKP source file**: Not available in repository — only GLB export present
+- **Export pipeline**: Unknown if GLB export merged separate SKP objects
+- **Re-export options**: Could not verify if re-export would recover semantics
+
+**Conclusion**: Semantic split may exist in upstream SKP but was lost during export, or may genuinely not exist. Cannot determine without access to original SKP file.
+
+**TODO**: Obtain original SKP file and verify if semantic wall split exists at source.
 
 ### Derivation Method Used
 

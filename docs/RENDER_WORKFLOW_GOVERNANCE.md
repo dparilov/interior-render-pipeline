@@ -202,6 +202,67 @@ sha256sum workflow_api.json | cut -d' ' -f1
 
 ---
 
+---
+
+## Source-of-Truth Verification
+
+### Before Declaring Semantic Data Unavailable
+
+**You cannot conclude that semantic split is unavailable by checking only downstream artifacts.**
+
+#### Verification Order (mandatory)
+
+1. **Upstream source-of-truth** (SKP file, original scene file)
+   - Check for separate objects/groups/components
+   - Check material assignments
+   - Check layer structure
+   
+2. **Export pipeline** (if SKP unavailable)
+   - How was GLB/FBX generated?
+   - Were semantic tags preserved or flattened?
+   - Can re-export with different settings recover semantics?
+
+3. **Intermediate artifacts** (GLB, FBX, manifest)
+   - Only check these AFTER upstream is verified unavailable
+   - Document WHY upstream was not checked
+
+4. **Derived fallback**
+   - Only use if upstream AND intermediate both lack semantics
+   - Must document full verification chain
+
+#### Required Documentation
+
+When using derived fallback masks:
+
+```json
+{
+  "mask_source": "derived_fallback",
+  "mask_derivation": "brightness_threshold",
+  "upstream_verification": {
+    "skp_checked": false,
+    "skp_unavailable_reason": "File not in repository, only GLB export available",
+    "glb_checked": true,
+    "glb_has_semantic_split": false,
+    "manifest_checked": true,
+    "manifest_has_semantic_split": false
+  }
+}
+```
+
+#### ❌ Invalid Reasoning
+
+> "GLB has only one 'walls' node, therefore semantic split is unavailable"
+
+This is insufficient — the SKP source may have separate objects that were merged during export.
+
+#### ✅ Valid Reasoning
+
+> "SKP source file not available in repository (only GLB export). GLB has one 'walls' node. 
+> Re-export from SKP would require access to original file. Using brightness-derived fallback
+> as interim solution. TODO: obtain SKP and re-export with semantic preservation."
+
+---
+
 ## Quick Reference
 
 ### When Model is Missing
