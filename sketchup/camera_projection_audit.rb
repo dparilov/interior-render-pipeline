@@ -279,7 +279,8 @@ module CameraProjectionAudit
             }
             
             # Classify: true overlap vs boundary contact
-            if result[:overlap_ratio] > 0.01  # > 1% overlap
+            ratio = result[:overlap_ratio] || 0
+            if ratio > 0.01  # > 1% overlap
               overlapping_pairs << pair_info
               puts "  OVERLAP: tile[#{tp[:index]}] ↔ upper[#{up[:index]}]: #{result[:samples_overlapping]}/#{result[:samples_checked]} samples, ratio=#{result[:overlap_ratio]}"
             else
