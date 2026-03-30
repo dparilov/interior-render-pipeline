@@ -8,6 +8,36 @@ Test IPAdapter surface material transfer on walls and floor only, with fixtures 
 
 ---
 
+## ⚠️ Mask Source: Brightness-Derived Fallback
+
+**walls_tile and walls_upper masks are DERIVED via brightness threshold, NOT from SKP semantic data.**
+
+### Why Semantic Split is Unavailable
+
+Investigation of source artifacts:
+
+1. **GLB model** (`model/model.glb`): Contains only ONE node `IRP_walls` — no separate semantic entities for tile vs upper wall
+2. **Source manifest** (`manifest.json`): Has only ONE entity `walls` with `surface_kind: wall_tiles`
+3. **SKP export**: No separate semantic masks for wall components exist
+4. **Technical spec**: Describes only Costa Nova tile — upper gray wall is implicit, not specified as separate material
+
+### Derivation Method Used
+
+Since semantic split is unavailable, masks were derived from `beauty.png` + `walls.png` using brightness analysis:
+
+- **walls_tile.png**: Pixels where `walls.png` is active AND brightness >210 (white tiles)
+- **walls_upper.png**: Pixels where `walls.png` is active AND brightness 150-210 (gray paint)
+
+This is a **fallback approximation** — not canonical semantic data.
+
+### Implications
+
+- Boundary between tile and upper wall is approximate
+- Some transition pixels may be misclassified
+- For production use, semantic masks should be exported from SKP source with explicit material separation
+
+---
+
 ## Source Artifacts Used
 
 From `examples/bathroom_01/`:
@@ -19,16 +49,16 @@ From `examples/bathroom_01/`:
 | boundary_mask.png | Core image | Scene boundary |
 | technical_spec.md | Metadata | Source for technical_spec_surface.md |
 | manifest.json | Metadata | Source for entity definitions |
-| masks/floor.png | Mask | Copied directly |
-| masks/walls.png | Mask | Split into walls_tile + walls_upper |
-| masks/window.png | Mask | Copied directly |
-| masks/bathtub.png | Mask | Combined into fixtures_all |
-| masks/vanity.png | Mask | Combined into fixtures_all |
-| masks/mirror.png | Mask | Combined into fixtures_all |
-| masks/rainshower.png | Mask | Combined into fixtures_all |
-| masks/towel_warmer.png | Mask | Combined into fixtures_all |
-| masks/basket.png | Mask | Combined into fixtures_all |
-| masks/shower_screen.png | Mask | Combined into fixtures_all |
+| masks/floor.png | Mask | SKP-semantic, copied directly |
+| masks/walls.png | Mask | SKP-semantic, used as base for split |
+| masks/window.png | Mask | SKP-semantic, copied directly |
+| masks/bathtub.png | Mask | SKP-semantic, combined into fixtures_all |
+| masks/vanity.png | Mask | SKP-semantic, combined into fixtures_all |
+| masks/mirror.png | Mask | SKP-semantic, combined into fixtures_all |
+| masks/rainshower.png | Mask | SKP-semantic, combined into fixtures_all |
+| masks/towel_warmer.png | Mask | SKP-semantic, combined into fixtures_all |
+| masks/basket.png | Mask | SKP-semantic, combined into fixtures_all |
+| masks/shower_screen.png | Mask | SKP-semantic, combined into fixtures_all |
 | references/floor_tiles.jpg | Reference | Copied directly |
 | references/wall_tiles.png | Reference | Copied directly |
 
@@ -36,13 +66,13 @@ From `examples/bathroom_01/`:
 
 ## Generated Artifacts
 
-| File | Type | Generation Method |
-|------|------|-------------------|
-| masks/walls_tile.png | Derived mask | Split from walls.png by brightness (>210) |
-| masks/walls_upper.png | Derived mask | Split from walls.png by brightness (150-210) |
+| File | Type | Source |
+|------|------|--------|
+| masks/walls_tile.png | Derived mask | **FALLBACK**: brightness split from walls.png (>210) |
+| masks/walls_upper.png | Derived mask | **FALLBACK**: brightness split from walls.png (150-210) |
 | masks/surfaces_combined.png | Composite mask | Union of floor + walls_tile + walls_upper |
-| masks/fixtures_all.png | Composite mask | Union of 7 fixture masks |
-| masks/geometry_preserved.png | Composite mask | Copy of window.png |
+| masks/fixtures_all.png | Composite mask | Union of 7 SKP-semantic fixture masks |
+| masks/geometry_preserved.png | Composite mask | Copy of SKP-semantic window.png |
 | manifest.json | Metadata | New manifest for surface-only scene |
 | technical_spec_surface.md | Metadata | Extracted from original tech spec |
 
