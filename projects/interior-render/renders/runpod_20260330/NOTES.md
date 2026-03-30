@@ -53,3 +53,16 @@
 - **Platform:** RunPod RTX 4090
 
 This is the canonical Phase B reference render from the experiment plan.
+
+## F2-v2 Adapted (reproduced on current pod)
+- **File:** F2_v2_adapted_00001_.png
+- **Workflow:** f2_v2_adapted.json
+- **Pod:** 1fn8bewp35ahzq (wilful_ivory_giraffe)
+- **9 Entities:** walls, floor, bathtub, shower_screen, vanity, mirror, towel_warmer, basket, rainshower
+- **Checkpoint:** RealVisXL V4.0 (vs sd_xl_base in original)
+- **ControlNet:** Canny 0.8, Depth 0.9
+- **Boundary mask:** SetLatentNoiseMask
+- **Time:** 28.83 sec
+- **Seed:** 42
+
+This is the Phase B F2-v2 test reproduced on our current RunPod infrastructure.
