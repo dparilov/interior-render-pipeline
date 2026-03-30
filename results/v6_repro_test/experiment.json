@@ -75,18 +75,34 @@
   },
   
   "comparison": {
-    "ssim": "N/A (cross-device non-determinism)",
-    "mean_pixel_diff": 88.62,
-    "verdict": "PASS_WITH_VARIANCE",
-    "notes": "SDXL is not deterministic across CPU/GPU due to different floating-point implementations. Same seed produces visually similar but pixel-different results. Both outputs are valid V6 renders with correct regional prompting and style transfer."
+    "verdict": "EXECUTION_CONFIRMED_NOT_VISUALLY_EQUIVALENT",
+    "comparison_image": "comparison_cpu_vs_gpu.png",
+    
+    "similarity_scores": {
+      "geometry_similarity": 0.22,
+      "color_histogram_similarity": 0.54,
+      "pixel_correlation": -0.06,
+      "overall_visual_similarity": 0.23
+    },
+    
+    "analysis": {
+      "geometry": "LOW - Edge structures differ significantly. Room layout preserved but object placement/shapes vary.",
+      "materials": "LOW - Textures and surface details are completely different despite same regional prompts.",
+      "color_logic": "MEDIUM - Overall color palette similar (bathroom whites/grays) but local colors differ.",
+      "composition": "MEDIUM - Same general scene (bathroom) but different interpretation of details."
+    },
+    
+    "notes": "SDXL diffusion is fundamentally non-deterministic across CPU/GPU. Same seed does NOT produce same output. This is a known limitation of floating-point stochastic sampling."
   },
   
   "reproducibility": {
+    "status": "HISTORICAL_NON_REPRODUCIBLE_CROSS_DEVICE",
     "same_device_determinism": true,
     "cross_device_determinism": false,
-    "notes": "To reproduce exactly: use same GPU type (RTX 4090), same CUDA version, same PyTorch version. Cross-device reproducibility requires fixed-point inference (not supported in ComfyUI)."
+    "recommendation": "For reproducible results, always use same GPU type. CPU renders are for validation only, not as ground truth for GPU comparison."
   },
   
   "timestamp": "2026-03-30T17:38:00+03:00",
+  "updated": "2026-03-30T20:05:00+03:00",
   "author": "jarvis@openclaw"
 }

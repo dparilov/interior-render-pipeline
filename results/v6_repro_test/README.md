@@ -8,16 +8,57 @@
 | Speedup | **19x** | baseline |
 | Cost | $0.015 | $0 |
 
+## Verdict
+
+**`EXECUTION_CONFIRMED_NOT_VISUALLY_EQUIVALENT`**
+
+The V6 workflow executes successfully on both CPU and GPU, but produces **visually different results** despite identical seed and parameters.
+
+---
+
+## Visual Comparison Summary
+
+![CPU vs GPU Comparison](comparison_cpu_vs_gpu.png)
+
+### Similarity Scores
+
+| Metric | Score | Assessment |
+|--------|-------|------------|
+| **Geometry similarity** | 22% | LOW |
+| **Color histogram similarity** | 54% | MEDIUM |
+| **Pixel correlation** | -6% | NONE |
+| **Overall visual similarity** | ~23% | LOW |
+
+### Detailed Analysis
+
+| Aspect | Rating | Notes |
+|--------|--------|-------|
+| **Geometry** | ⚠️ LOW | Room layout preserved, but object placement/shapes vary significantly |
+| **Materials** | ⚠️ LOW | Textures and surface details completely different despite same prompts |
+| **Color logic** | 🔶 MEDIUM | Similar palette (bathroom whites/grays) but local colors differ |
+| **Composition** | 🔶 MEDIUM | Same scene type but different interpretation of details |
+
+### Conclusion
+
+V6 is classified as **historical non-reproducible candidate across devices**.
+
+For production use, always render on the same GPU type to ensure consistency.
+
+---
+
 ## Files
 
-- `workflow_v6_rtx4090.json` - ComfyUI workflow (hash: `66348fa38703f691`)
-- `v6_rtx4090_seed42.png` - GPU render result
-- `v6_cpu_reference.png` - CPU reference render
-- `experiment.json` - Full experiment metadata
+| File | Description |
+|------|-------------|
+| `experiment.json` | Complete metadata (params, models, scores) |
+| `workflow_v6_rtx4090.json` | ComfyUI workflow (hash: `66348fa38703f691`) |
+| `v6_rtx4090_seed42.png` | GPU render result |
+| `v6_cpu_reference.png` | CPU reference render |
+| `comparison_cpu_vs_gpu.png` | Side-by-side comparison |
 
 ## Workflow Parameters
 
-```
+```yaml
 seed: 42
 steps: 50
 cfg: 7.5
@@ -30,54 +71,49 @@ controlnet_depth: 0.5
 regional_ipadapter: 9 regions
 ```
 
-## Cross-Device Reproducibility
+## Why Cross-Device Reproducibility Fails
 
-**Verdict: PASS_WITH_VARIANCE**
+SDXL diffusion is **fundamentally non-deterministic** across different hardware:
 
-SDXL diffusion is not deterministic across different hardware (CPU vs GPU) due to:
-- Different floating-point precision
-- Different CUDA kernel implementations
-- Parallel execution order variations
+1. **Floating-point precision** - CPU uses x87/SSE, GPU uses CUDA cores with different rounding
+2. **Parallel execution order** - GPU runs thousands of threads with non-deterministic scheduling  
+3. **cuDNN algorithms** - Different convolution algorithms selected based on hardware
+4. **Accumulation order** - Reduction operations accumulate in different orders
 
-Same seed on same device type = identical output.
-Same seed on different device = visually similar, pixel-different.
+**Same seed ≠ same output** across devices. This is a known limitation of stochastic diffusion models.
 
-## How to Reproduce
+## Recommendations
 
-### On RunPod (RTX 4090)
+| Use Case | Recommendation |
+|----------|----------------|
+| **Production renders** | Always use same GPU type (e.g., always RTX 4090) |
+| **A/B testing** | Run both variants on same device |
+| **CI/CD validation** | Test workflow execution, not pixel-perfect output |
+| **CPU renders** | For debugging/validation only, not as ground truth |
 
-```bash
-# 1. Create pod with network volume mlhzmrjrdt
-# 2. Run setup
-wget -qO- https://raw.githubusercontent.com/dparilov/interior-render-pipeline/delta/scripts/runpod-setup.sh | bash
+## How to Reproduce (Same Device)
 
-# 3. Start ComfyUI
-cd /runpod-volume/ComfyUI && python main.py --listen 0.0.0.0 --port 8188
-
-# 4. Load workflow and queue
-curl -X POST http://localhost:8188/prompt \
-  -H "Content-Type: application/json" \
-  -d '{"prompt": <workflow_v6_rtx4090.json contents>}'
-```
-
-### On Local CPU
+On RTX 4090, same seed will produce **identical output**:
 
 ```bash
-cd ~/ComfyUI
-python main.py --cpu
-# Load same workflow via web UI
+# First render
+curl -X POST http://localhost:8188/prompt -d '{"prompt": <workflow>}'
+# → v6_result_1.png
+
+# Second render (same seed=42)  
+curl -X POST http://localhost:8188/prompt -d '{"prompt": <workflow>}'
+# → v6_result_2.png
+
+# Compare
+diff v6_result_1.png v6_result_2.png  # identical
 ```
-
-## Models Required
-
-| Model | Size | Source |
-|-------|------|--------|
-| RealVisXL_V4.0 | 6.5GB | [HuggingFace](https://huggingface.co/SG161222/RealVisXL_V4.0) |
-| ControlNet Canny SDXL | 2.4GB | [HuggingFace](https://huggingface.co/diffusers/controlnet-canny-sdxl-1.0) |
-| ControlNet Depth SDXL | 2.4GB | [HuggingFace](https://huggingface.co/diffusers/controlnet-depth-sdxl-1.0) |
-| IP-Adapter Plus SDXL | 809MB | [HuggingFace](https://huggingface.co/h94/IP-Adapter) |
-| CLIP ViT-H | 2.4GB | [HuggingFace](https://huggingface.co/h94/IP-Adapter) |
 
 ## Test Date
 
 2026-03-30
+
+## Status
+
+⚠️ **HISTORICAL_NON_REPRODUCIBLE_CROSS_DEVICE**
+
+V6 workflow is functional but cannot guarantee visual consistency across different hardware platforms.
