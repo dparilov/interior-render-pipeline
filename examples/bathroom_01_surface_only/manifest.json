@@ -139,7 +139,9 @@
     "overlap_audit": "docs/WALL_MASK_PROJECTION_OVERLAP_AUDIT.md",
     "overlap_cause": "RENDERING ARTIFACT (not geometric overlap)",
     "geometric_overlap_pct": 0.59,
-    "bitmap_overlap_pct": 39.6
+    "bitmap_overlap_pct": 39.6,
+    "max_overlap_pct": 1,
+    "max_overlap_pct_note": "Geometric overlap threshold (not bitmap)"
   },
   "face_projection_config": "face_projection_config.json",
   "deprecated_methods": [

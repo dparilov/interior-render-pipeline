@@ -1,8 +1,8 @@
 {
-  "status": "VALID_WITH_WARNINGS",
+  "status": "VALID",
   "errors": [],
   "warnings": [
-    "walls_tile/walls_upper overlap: 99,409 pixels (39.6%) - TRUE GEOMETRY OVERLAP (see WALL_MASK_OVERLAP_AUDIT.md)"
+    "Bitmap overlap 39.6% is rendering artifact (geometric overlap = 0.59%)"
   ],
   "masks": {
     "walls_tile": {
@@ -16,14 +16,13 @@
     "overlap": 99426
   },
   "overlap_analysis": {
-    "overlap_pixels": 99409,
-    "overlap_pct_of_smaller_mask": 39.6,
-    "cause": "TRUE SOURCE-GEOMETRY OVERLAP",
-    "cause_detail": "Tile and upper faces share XY coordinates but at different Z heights; when projected to camera, they occupy same screen pixels",
-    "distribution": "Uniform across image height (not localized to boundary)",
-    "xy_overlapping_face_pairs": 35,
-    "threshold_invariant": true,
-    "audit_document": "docs/WALL_MASK_OVERLAP_AUDIT.md",
-    "policy": "ACCEPTABLE for this scene (documented geometric characteristic)"
+    "overlap_cause": "RENDERING_ARTIFACT",
+    "geometric_overlap_pct": 0.59,
+    "bitmap_overlap_pct": 39.6,
+    "bitmap_overlap_pixels": 99409,
+    "geometric_overlap_pixels": 3448,
+    "discrepancy_factor": 67,
+    "note": "Bitmap overlap is SketchUp rendering artifact; geometric overlap from camera projection is only 0.59%",
+    "audit_document": "docs/WALL_MASK_PROJECTION_OVERLAP_AUDIT.md"
   }
 }
