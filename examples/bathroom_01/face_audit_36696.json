@@ -1,0 +1,1208 @@
+{
+  "audit_date": "2026-03-30T23:50:37+03:00",
+  "target_pid": 36696,
+  "entity_type": "Sketchup::Group",
+  "entity_name": null,
+  "group_material": null,
+  "total_faces": 38,
+  "material_summary": {
+    "none": {
+      "count": 8,
+      "area_m2": 24.2628
+    },
+    "Цвет M00": {
+      "count": 11,
+      "area_m2": 0.8382
+    },
+    "Материал1": {
+      "count": 7,
+      "area_m2": 11.7065
+    },
+    "0131_Серебристый": {
+      "count": 12,
+      "area_m2": 7.3094
+    }
+  },
+  "z_material_distribution": {
+    "0.0": {
+      "none": 2
+    },
+    "1.5": {
+      "none": 4
+    },
+    "2.4": {
+      "Цвет M00": 2,
+      "0131_Серебристый": 4
+    },
+    "0.9": {
+      "Материал1": 7
+    },
+    "3.0": {
+      "none": 1,
+      "Цвет M00": 4
+    },
+    "2.0": {
+      "0131_Серебристый": 2,
+      "Цвет M00": 1
+    },
+    "2.1": {
+      "0131_Серебристый": 1,
+      "Цвет M00": 1
+    },
+    "2.6": {
+      "none": 1
+    },
+    "2.3": {
+      "Цвет M00": 2,
+      "0131_Серебристый": 1
+    },
+    "2.7": {
+      "Цвет M00": 1
+    },
+    "2.9": {
+      "0131_Серебристый": 4
+    }
+  },
+  "faces": [
+    {
+      "index": 0,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 0.08,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        0.25,
+        0.2,
+        0.0
+      ],
+      "bounds_min": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds_max": [
+        0.5,
+        0.4,
+        0.0
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 6
+    },
+    {
+      "index": 1,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 5.011,
+      "normal": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        0.0,
+        0.919,
+        1.5
+      ],
+      "bounds_min": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds_max": [
+        0.0,
+        1.837,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 9
+    },
+    {
+      "index": 2,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.0521,
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        0.052,
+        0.4,
+        2.35
+      ],
+      "bounds_min": [
+        0.0,
+        0.4,
+        2.1
+      ],
+      "bounds_max": [
+        0.104,
+        0.4,
+        2.6
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 3,
+      "front_material": "Материал1",
+      "back_material": null,
+      "effective_material": "Материал1",
+      "area_m2": 0.7204,
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        0.3,
+        0.1,
+        0.901
+      ],
+      "bounds_min": [
+        0.1,
+        0.1,
+        0.0
+      ],
+      "bounds_max": [
+        0.5,
+        0.1,
+        1.801
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 4,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 6.555,
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        1.092,
+        1.837,
+        1.5
+      ],
+      "bounds_min": [
+        0.0,
+        1.837,
+        0.0
+      ],
+      "bounds_max": [
+        2.185,
+        1.837,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 5,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 5.085,
+      "normal": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "center": [
+        1.092,
+        0.0,
+        1.5
+      ],
+      "bounds_min": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds_max": [
+        2.185,
+        0.0,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 10
+    },
+    {
+      "index": 6,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 1.0927,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        1.092,
+        0.919,
+        3.0
+      ],
+      "bounds_min": [
+        0.0,
+        0.0,
+        3.0
+      ],
+      "bounds_max": [
+        2.185,
+        1.837,
+        3.0
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 8
+    },
+    {
+      "index": 7,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.0299,
+      "normal": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        1.2,
+        0.05,
+        1.95
+      ],
+      "bounds_min": [
+        1.2,
+        0.0,
+        1.801
+      ],
+      "bounds_max": [
+        1.2,
+        0.1,
+        2.1
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 8,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.07,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        0.85,
+        0.05,
+        2.1
+      ],
+      "bounds_min": [
+        0.5,
+        0.0,
+        2.1
+      ],
+      "bounds_max": [
+        1.2,
+        0.1,
+        2.1
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 4
+    },
+    {
+      "index": 9,
+      "front_material": "Материал1",
+      "back_material": null,
+      "effective_material": "Материал1",
+      "area_m2": 0.1801,
+      "normal": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        0.5,
+        0.05,
+        0.9
+      ],
+      "bounds_min": [
+        0.5,
+        0.0,
+        0.0
+      ],
+      "bounds_max": [
+        0.5,
+        0.1,
+        1.801
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 10,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 5.511,
+      "normal": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        2.185,
+        0.919,
+        1.5
+      ],
+      "bounds_min": [
+        2.185,
+        0.0,
+        0.0
+      ],
+      "bounds_max": [
+        2.185,
+        1.837,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 11,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.1043,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.052,
+        0.9,
+        2.1
+      ],
+      "bounds_min": [
+        0.0,
+        0.4,
+        2.1
+      ],
+      "bounds_max": [
+        0.104,
+        1.4,
+        2.1
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 4
+    },
+    {
+      "index": 12,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.0521,
+      "normal": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "center": [
+        0.052,
+        1.4,
+        2.35
+      ],
+      "bounds_min": [
+        0.0,
+        1.4,
+        2.1
+      ],
+      "bounds_max": [
+        0.104,
+        1.4,
+        2.6
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 13,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 0.1043,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        0.052,
+        0.9,
+        2.6
+      ],
+      "bounds_min": [
+        0.0,
+        0.4,
+        2.6
+      ],
+      "bounds_max": [
+        0.104,
+        1.4,
+        2.6
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 4
+    },
+    {
+      "index": 14,
+      "front_material": null,
+      "back_material": null,
+      "effective_material": "none",
+      "area_m2": 0.8238,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        1.092,
+        0.919,
+        0.0
+      ],
+      "bounds_min": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "bounds_max": [
+        2.185,
+        1.837,
+        0.0
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 10
+    },
+    {
+      "index": 15,
+      "front_material": "Материал1",
+      "back_material": null,
+      "effective_material": "Материал1",
+      "area_m2": 2.8816,
+      "normal": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        0.1,
+        0.9,
+        0.901
+      ],
+      "bounds_min": [
+        0.1,
+        0.1,
+        0.0
+      ],
+      "bounds_max": [
+        0.1,
+        1.7,
+        1.801
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 5
+    },
+    {
+      "index": 16,
+      "front_material": "Материал1",
+      "back_material": null,
+      "effective_material": "Материал1",
+      "area_m2": 3.4219,
+      "normal": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "center": [
+        1.05,
+        1.7,
+        0.901
+      ],
+      "bounds_min": [
+        0.1,
+        1.7,
+        0.0
+      ],
+      "bounds_max": [
+        2.0,
+        1.7,
+        1.801
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 17,
+      "front_material": "Материал1",
+      "back_material": null,
+      "effective_material": "Материал1",
+      "area_m2": 2.8816,
+      "normal": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        2.0,
+        0.9,
+        0.9
+      ],
+      "bounds_min": [
+        2.0,
+        0.1,
+        0.0
+      ],
+      "bounds_max": [
+        2.0,
+        1.7,
+        1.801
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 18,
+      "front_material": "Материал1",
+      "back_material": null,
+      "effective_material": "Материал1",
+      "area_m2": 1.4408,
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        1.6,
+        0.1,
+        0.9
+      ],
+      "bounds_min": [
+        1.2,
+        0.1,
+        0.0
+      ],
+      "bounds_max": [
+        2.0,
+        0.1,
+        1.801
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 19,
+      "front_material": "Материал1",
+      "back_material": null,
+      "effective_material": "Материал1",
+      "area_m2": 0.1801,
+      "normal": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        1.2,
+        0.05,
+        0.9
+      ],
+      "bounds_min": [
+        1.2,
+        0.0,
+        0.0
+      ],
+      "bounds_max": [
+        1.2,
+        0.1,
+        1.801
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 20,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.0299,
+      "normal": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        0.5,
+        0.05,
+        1.95
+      ],
+      "bounds_min": [
+        0.5,
+        0.0,
+        1.801
+      ],
+      "bounds_max": [
+        0.5,
+        0.1,
+        2.1
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 21,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.2056,
+      "normal": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        0.104,
+        0.9,
+        2.345
+      ],
+      "bounds_min": [
+        0.104,
+        0.34,
+        2.03
+      ],
+      "bounds_max": [
+        0.104,
+        1.46,
+        2.66
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 8
+    },
+    {
+      "index": 22,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.0048,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        0.102,
+        0.9,
+        2.03
+      ],
+      "bounds_min": [
+        0.1,
+        0.34,
+        2.03
+      ],
+      "bounds_max": [
+        0.104,
+        1.46,
+        2.03
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 4
+    },
+    {
+      "index": 23,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.0027,
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        0.102,
+        1.46,
+        2.345
+      ],
+      "bounds_min": [
+        0.1,
+        1.46,
+        2.03
+      ],
+      "bounds_max": [
+        0.104,
+        1.46,
+        2.66
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 24,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.0048,
+      "normal": [
+        0.0,
+        0.0,
+        1.0
+      ],
+      "center": [
+        0.102,
+        0.9,
+        2.66
+      ],
+      "bounds_min": [
+        0.1,
+        0.34,
+        2.66
+      ],
+      "bounds_max": [
+        0.104,
+        1.46,
+        2.66
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 4
+    },
+    {
+      "index": 25,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.0027,
+      "normal": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "center": [
+        0.102,
+        0.34,
+        2.345
+      ],
+      "bounds_min": [
+        0.1,
+        0.34,
+        2.03
+      ],
+      "bounds_max": [
+        0.104,
+        0.34,
+        2.66
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 26,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 2.1641,
+      "normal": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "center": [
+        1.05,
+        1.7,
+        2.37
+      ],
+      "bounds_min": [
+        0.1,
+        1.7,
+        1.801
+      ],
+      "bounds_max": [
+        2.0,
+        1.7,
+        2.94
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 5
+    },
+    {
+      "index": 27,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 1.8224,
+      "normal": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        2.0,
+        0.9,
+        2.37
+      ],
+      "bounds_min": [
+        2.0,
+        0.1,
+        1.801
+      ],
+      "bounds_max": [
+        2.0,
+        1.7,
+        2.94
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 6
+    },
+    {
+      "index": 28,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 1.9548,
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        1.05,
+        0.1,
+        2.37
+      ],
+      "bounds_min": [
+        0.1,
+        0.1,
+        1.801
+      ],
+      "bounds_max": [
+        2.0,
+        0.1,
+        2.94
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 9
+    },
+    {
+      "index": 29,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 1.1168,
+      "normal": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        0.1,
+        0.9,
+        2.371
+      ],
+      "bounds_min": [
+        0.1,
+        0.1,
+        1.801
+      ],
+      "bounds_max": [
+        0.1,
+        1.7,
+        2.94
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 8
+    },
+    {
+      "index": 30,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.0939,
+      "normal": [
+        1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        0.117,
+        0.9,
+        2.97
+      ],
+      "bounds_min": [
+        0.117,
+        0.117,
+        2.94
+      ],
+      "bounds_max": [
+        0.117,
+        1.683,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 31,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.0274,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        0.109,
+        0.9,
+        2.94
+      ],
+      "bounds_min": [
+        0.1,
+        0.1,
+        2.94
+      ],
+      "bounds_max": [
+        0.117,
+        1.7,
+        2.94
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 6
+    },
+    {
+      "index": 32,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.1119,
+      "normal": [
+        0.0,
+        1.0,
+        0.0
+      ],
+      "center": [
+        1.05,
+        0.117,
+        2.97
+      ],
+      "bounds_min": [
+        0.117,
+        0.117,
+        2.94
+      ],
+      "bounds_max": [
+        1.983,
+        0.117,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 33,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.0323,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        1.059,
+        0.109,
+        2.94
+      ],
+      "bounds_min": [
+        0.117,
+        0.1,
+        2.94
+      ],
+      "bounds_max": [
+        2.0,
+        0.117,
+        2.94
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 5
+    },
+    {
+      "index": 34,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.1119,
+      "normal": [
+        0.0,
+        -1.0,
+        0.0
+      ],
+      "center": [
+        1.05,
+        1.683,
+        2.97
+      ],
+      "bounds_min": [
+        0.117,
+        1.683,
+        2.94
+      ],
+      "bounds_max": [
+        1.983,
+        1.683,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 35,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.0323,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        1.059,
+        1.691,
+        2.94
+      ],
+      "bounds_min": [
+        0.117,
+        1.683,
+        2.94
+      ],
+      "bounds_max": [
+        2.0,
+        1.7,
+        2.94
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 5
+    },
+    {
+      "index": 36,
+      "front_material": "Цвет M00",
+      "back_material": null,
+      "effective_material": "Цвет M00",
+      "area_m2": 0.0939,
+      "normal": [
+        -1.0,
+        0.0,
+        0.0
+      ],
+      "center": [
+        1.983,
+        0.9,
+        2.97
+      ],
+      "bounds_min": [
+        1.983,
+        0.117,
+        2.94
+      ],
+      "bounds_max": [
+        1.983,
+        1.683,
+        3.0
+      ],
+      "is_vertical": true,
+      "is_horizontal": false,
+      "vertices": 4
+    },
+    {
+      "index": 37,
+      "front_material": "0131_Серебристый",
+      "back_material": null,
+      "effective_material": "0131_Серебристый",
+      "area_m2": 0.0268,
+      "normal": [
+        0.0,
+        0.0,
+        -1.0
+      ],
+      "center": [
+        1.991,
+        0.9,
+        2.94
+      ],
+      "bounds_min": [
+        1.983,
+        0.117,
+        2.94
+      ],
+      "bounds_max": [
+        2.0,
+        1.683,
+        2.94
+      ],
+      "is_vertical": false,
+      "is_horizontal": true,
+      "vertices": 4
+    }
+  ]
+}

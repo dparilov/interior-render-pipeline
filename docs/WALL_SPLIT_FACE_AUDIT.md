@@ -2,56 +2,98 @@
 
 **Date:** 2026-03-30
 **Target:** pid=36696 (walls Group)
-**Status:** ⚠️ INCOMPLETE — requires SketchUp execution
+**Status:** ✅ COMPLETE
 
 ---
 
 ## Conclusion
 
-**Evidence incomplete.**
+**Split EXISTS at face/material level.**
 
-GLB export has lost per-face material assignments. Face-level audit requires
-running `face_audit.rb` script in SketchUp with access to the original SKP file.
+The SketchUp Group pid=36696 contains 38 faces with **4 different materials**:
+- **Материал1** → walls_tile (lower portion, Z ≈ 0.9m)
+- **0131_Серебристый** → walls_upper (upper portion, Z ≈ 1.95-2.94m)
+- **Цвет M00** → trim/edges (transitions, window frame)
+- **none** → structural faces (floor, ceiling, outer walls)
 
-Cannot determine if per-face material split exists without direct SKP inspection.
+**Canonical masks CAN be rebuilt from face-level semantics.**
 
 ---
 
 ## Evidence
 
-### 1. GLB Analysis
+### Face Material Inventory (pid=36696)
 
-**Source:** `examples/bathroom_01/model/model.glb`
+| Material | Count | Area (m²) | Z Range (m) | Interpretation |
+|----------|-------|-----------|-------------|----------------|
+| none | 8 | 24.26 | 0.0 - 3.0 | Structural (floor, ceiling, outer walls) |
+| Материал1 | 7 | 11.71 | 0.90 | **WALLS_TILE** (white Costa Nova tiles) |
+| 0131_Серебристый | 12 | 7.31 | 1.95 - 2.94 | **WALLS_UPPER** (gray painted wall) |
+| Цвет M00 | 11 | 0.84 | 2.03 - 2.97 | Trim/edges (window, transitions) |
+
+### Z-Height Distribution
 
 ```
-Node 'Geom3D_IRP_walls': mesh index = 71
-
-Mesh:
-  Primitives count: 1
-  Primitive 0:
-    Material: None
-    Vertices: 55
-    Attributes: ['NORMAL', 'POSITION']
+Z = 0.0m:  none (structural floor)
+Z = 0.9m:  Материал1 (ALL tile faces at this height)
+Z = 1.5m:  none (structural)
+Z = 2.0m+: 0131_Серебристый + Цвет M00 (upper wall + trim)
+Z = 3.0m:  none + Цвет M00 (ceiling + trim)
 ```
 
-**Finding:** GLB mesh has:
-- Single primitive (no material-based split)
-- Material = None (not assigned)
-- No vertex colors
-- 55 vertices for 38 faces (shared vertices)
+### Key Finding
 
-### 2. Materials in GLB
+**Clear height-based material separation:**
+- **Материал1** concentrated at Z ≈ 0.9m (lower wall - TILES)
+- **0131_Серебристый** concentrated at Z ≈ 2.0-2.9m (upper wall - GRAY)
+- This is exactly the tile/upper split we were looking for!
 
-Relevant materials that exist in GLB:
-- `[0128_White]` — white (no color factor, likely texture-based)
-- `[0128_White]1` — white variant
-- `[0134_DimGray]` — gray RGB(0.41, 0.41, 0.41)
+---
 
-**Finding:** Gray and white materials exist but are **not assigned** to walls mesh.
-This suggests per-face materials were lost during SKP → GLB export.
+## Does Material-Level Split Exist?
 
-### 3. scene_graph.json
+**YES.**
 
+The split exists in the SKP file at the per-face material level:
+- 7 faces with "Материал1" = tile area
+- 12 faces with "0131_Серебристый" = upper gray wall
+
+---
+
+## Can Canonical Masks Be Rebuilt?
+
+**YES.**
+
+To generate masks from face semantics:
+
+1. For each face with material "Материал1" or "0131_Серебристый":
+   - Project face vertices to 2D camera view
+   - Fill polygon on mask image
+
+2. Generate separate masks:
+   - `walls_tile.png` ← faces with "Материал1"
+   - `walls_upper.png` ← faces with "0131_Серебристый"
+
+This would produce **semantically correct** masks without brightness-based heuristics.
+
+---
+
+## Where Is The Split Lost?
+
+### Loss Point: IRP Extract (scene_graph serialization)
+
+The current `collect_entities_recursive()` in `irp.rb` captures:
+- Group/Component objects
+- Group-level material (which is null for pid=36696)
+- Face count
+
+**But does NOT capture:**
+- Per-face materials
+- Face geometry for projection
+
+### Evidence
+
+scene_graph.json for pid=36696:
 ```json
 {
   "pid": 36696,
@@ -60,163 +102,115 @@ This suggests per-face materials were lost during SKP → GLB export.
 }
 ```
 
-**Finding:** Group-level material is null. scene_graph does not capture per-face materials.
+Face materials exist in SKP but are not serialized.
 
-### 4. SKP File Status
+### Secondary Loss: GLB Export
 
-- **Location:** `/home/dima/sketchup-share/bathroom_work.skp`
-- **Size:** 14,280,289 bytes
-- **Access:** Available on filesystem
-
----
-
-## What Is Known
-
-| Level | Has Material Data | Split Visible |
-|-------|-------------------|---------------|
-| SKP file | Unknown (not inspected) | Unknown |
-| scene_graph.json | Group-level only | No |
-| GLB mesh | None assigned | No |
-| Rendered image | Yes (visual) | Yes (brightness) |
-
----
-
-## What Is NOT Known
-
-1. **Do faces inside pid=36696 have different materials in SKP?**
-   - Cannot determine from downstream artifacts
-   - Requires SketchUp Ruby API inspection
-
-2. **If materials exist, how are they distributed?**
-   - By Z height (upper vs lower)?
-   - By face orientation?
-   - By connected regions?
-
-3. **At what exact point are per-face materials lost?**
-   - During IRP extract (scene_graph serialization)?
-   - During GLB export from SketchUp?
-   - Both?
-
----
-
-## Required Action
-
-### Run face_audit.rb in SketchUp
-
-Script location: `sketchup/face_audit.rb`
-
-```ruby
-# In SketchUp Ruby Console:
-load '/path/to/interior-render-pipeline/sketchup/face_audit.rb'
-FaceAudit.run
+SketchUp's GLB export also loses per-face materials:
+```
+Geom3D_IRP_walls: 1 primitive, material=None
 ```
 
-Output will be saved to: `~/sketchup-share/face_audit_36696.json`
+Materials `[0128_White]` and `[0134_DimGray]` exist in GLB but are not assigned to walls mesh.
 
-### Expected Output
+---
 
-```json
-{
-  "target_pid": 36696,
-  "total_faces": 38,
-  "material_summary": {
-    "material_name": { "count": N, "area_m2": X.XX }
-  },
-  "z_material_distribution": {
-    "Z_height": { "material_name": count }
-  },
-  "faces": [
-    {
-      "index": 0,
-      "front_material": "...",
-      "back_material": "...",
-      "effective_material": "...",
-      "center": [x, y, z],
-      "area_m2": X.XX
+## Recommended Pipeline Change
+
+### Option 1: Enhance scene_graph.json
+
+Add per-face material capture to `collect_entities_recursive()`:
+
+```ruby
+def self.collect_entities_recursive(entities, depth)
+  result = []
+  entities.each do |e|
+    next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
+    
+    inner = e.is_a?(Sketchup::Group) ? e.entities : e.definition.entities
+    
+    # NEW: Capture per-face materials
+    face_materials = {}
+    inner.grep(Sketchup::Face).each do |face|
+      mat = face.material || face.back_material || e.material
+      mat_name = mat ? mat.display_name : 'none'
+      face_materials[mat_name] ||= { count: 0, area: 0, faces: [] }
+      face_materials[mat_name][:count] += 1
+      face_materials[mat_name][:area] += face.area
+      face_materials[mat_name][:faces] << {
+        center: face.bounds.center.to_a,
+        normal: face.normal.to_a
+      }
+    end
+    
+    result << {
+      pid: e.persistent_id,
+      # ... existing fields ...
+      face_materials: face_materials  # NEW
     }
-  ]
-}
-```
-
----
-
-## Questions To Answer After Audit
-
-1. **Are there faces with different materials inside pid=36696?**
-   - If YES: split exists at face/material level
-   - If NO: split does not exist even at face level
-
-2. **If split exists, can canonical masks be built?**
-   - Group faces by material
-   - Project face centroids to 2D camera view
-   - Generate separate masks for each material region
-
-3. **Where is the split lost?**
-   - If SKP has materials but scene_graph doesn't → lost in extract
-   - If scene_graph has materials but GLB doesn't → lost in GLB export
-   - If SKP doesn't have materials → never existed
-
----
-
-## Interim Status
-
-Until face_audit.rb is executed:
-
-- **Cannot claim** "split absent in source model"
-- **Cannot claim** "brightness fallback justified"
-- **Status:** evidence incomplete
-
-The current brightness-derived masks remain as **provisional fallback**,
-not as architecturally justified solution.
-
----
-
-## Updated Audit Chain
-
-```
-SKP file (bathroom_work.skp)
-    │
-    ├── [UNKNOWN] Per-face materials inside pid=36696?
-    │
-    ▼
-scene_graph.json
-    │
-    └── [CONFIRMED] Group-level material: null
-    │              Face-level materials: NOT captured
-    │
-    ▼
-GLB export
-    │
-    └── [CONFIRMED] Single primitive, material: None
-                    Per-face materials: LOST
-    ▼
-manifest.json
-    │
-    └── [CONFIRMED] Single entity "walls"
-    ▼
-Current bundle
-    │
-    └── [FALLBACK] Brightness-derived walls_tile/walls_upper
-```
-
----
-
-## Recommended Pipeline Enhancement
-
-Regardless of audit outcome, IRP extract should be enhanced to capture per-face materials:
-
-```ruby
-def self.collect_face_materials(group)
-  materials = {}
-  group.entities.grep(Sketchup::Face).each do |face|
-    mat = face.material || face.back_material || group.material
-    mat_name = mat ? mat.display_name : 'none'
-    materials[mat_name] ||= { count: 0, area: 0 }
-    materials[mat_name][:count] += 1
-    materials[mat_name][:area] += face.area
   end
-  materials
+  result
 end
 ```
 
-This would allow detecting material-based splits without manual inspection.
+### Option 2: Auto-Split Groups by Material
+
+When generating masks, detect per-face materials and create sub-entities:
+
+```ruby
+def self.maybe_split_by_material(entity, role_info)
+  inner = entity.entities
+  face_mats = inner.grep(Sketchup::Face).group_by { |f| f.material&.display_name || 'none' }
+  
+  if face_mats.length > 1 && role_info[:class] == 'surface'
+    # Generate separate masks for each material
+    face_mats.each do |mat_name, faces|
+      generate_mask_for_faces(faces, "#{role_info[:name]}_#{mat_name}")
+    end
+  end
+end
+```
+
+### Option 3: Generate Masks from Face Audit
+
+Use `face_audit.rb` output to generate canonical masks:
+
+1. Load `face_audit_36696.json`
+2. Group faces by material
+3. Project face bounds to camera view
+4. Render masks for each material group
+
+---
+
+## Updated Conclusion
+
+| Question | Answer |
+|----------|--------|
+| Split exists at face/material level? | **YES** |
+| Can canonical masks be built? | **YES** (from face geometry + camera projection) |
+| Where is split lost? | IRP extract (scene_graph serialization) |
+| Why is it lost? | `collect_entities_recursive()` doesn't capture per-face materials |
+| Is brightness fallback justified? | **NO** — semantic data exists, should be used |
+
+---
+
+## Action Items
+
+1. ✅ Face-level audit complete
+2. 🔲 Update scene_graph.json schema to include face_materials
+3. 🔲 Implement mask generation from face geometry
+4. 🔲 Regenerate walls_tile.png and walls_upper.png from semantic data
+5. 🔲 Update manifest to reflect semantic source
+
+---
+
+## Audit Data Source
+
+```
+File: face_audit_36696.json
+Date: 2026-03-30T23:50:37+03:00
+SKP: bathroom_work.skp
+Target: pid=36696 (walls Group)
+Total faces: 38
+Materials found: 4
+```
