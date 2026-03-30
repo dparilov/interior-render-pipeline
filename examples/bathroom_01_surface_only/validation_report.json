@@ -2,7 +2,7 @@
   "status": "VALID_WITH_WARNINGS",
   "errors": [],
   "warnings": [
-    "walls_tile/walls_upper overlap: 99426 pixels (39.6% of smaller mask) - expected due to overlapping geometry in SKP"
+    "walls_tile/walls_upper overlap: 99,409 pixels (39.6%) - TRUE GEOMETRY OVERLAP (see WALL_MASK_OVERLAP_AUDIT.md)"
   ],
   "masks": {
     "walls_tile": {
@@ -16,11 +16,14 @@
     "overlap": 99426
   },
   "overlap_analysis": {
-    "overlap_pixels": 99426,
+    "overlap_pixels": 99409,
     "overlap_pct_of_smaller_mask": 39.6,
-    "cause": "Overlapping face geometry in SKP source model",
+    "cause": "TRUE SOURCE-GEOMETRY OVERLAP",
+    "cause_detail": "Tile and upper faces share XY coordinates but at different Z heights; when projected to camera, they occupy same screen pixels",
     "distribution": "Uniform across image height (not localized to boundary)",
-    "interpretation": "Scene geometry characteristic, not projection error",
-    "policy": "Acceptable for this scene; masks remain usable"
+    "xy_overlapping_face_pairs": 35,
+    "threshold_invariant": true,
+    "audit_document": "docs/WALL_MASK_OVERLAP_AUDIT.md",
+    "policy": "ACCEPTABLE for this scene (documented geometric characteristic)"
   }
 }

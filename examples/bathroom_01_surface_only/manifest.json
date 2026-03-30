@@ -135,7 +135,9 @@
     "overlap_pixels": 99426,
     "overlap_pct": 39.6,
     "boundary_overlap_policy": "bathroom_01 has overlapping face geometry in SKP; 39.6% overlap is scene characteristic, not projection error",
-    "note": "Overlap occurs because tile and upper wall faces are visible in same pixels due to layered geometry in source model"
+    "note": "39.6% overlap is verified geometric characteristic, not rendering artifact",
+    "overlap_audit": "docs/WALL_MASK_OVERLAP_AUDIT.md",
+    "overlap_cause": "TRUE SOURCE-GEOMETRY OVERLAP - tile/upper faces share XY coordinates at different Z"
   },
   "face_projection_config": "face_projection_config.json",
   "deprecated_methods": [
