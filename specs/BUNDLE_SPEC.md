@@ -122,7 +122,7 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
 | prompt | string | ✅ | Material/appearance description |
 | prompt_source | string | ✅ | Traceability: where prompt came from |
 | critical | boolean | ✅ | Must match ТЗ exactly |
-| render_mode | string | ✅ | regional_ipadapter / structural_controlnet |
+| render_mode | string | ✅ | regional_ipadapter / structural_controlnet / preserve |
 | ipadapter_weight | float | ✅ | Weight for IPAdapter (0.0 for openings) |
 
 ### Render Mode Rules
@@ -132,6 +132,13 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
 | surface | regional_ipadapter | 0.55 | Walls, floor - high weight |
 | fixture | regional_ipadapter | 0.50 | Vanity, bathtub, etc. |
 | opening | structural_controlnet | 0.00 | Windows, doors - no IPAdapter |
+| preserved | preserve | 0.00 | Keep unchanged, no generation |
+
+**Render mode descriptions:**
+
+- `regional_ipadapter` — Generate surface/fixture appearance using IPAdapter with reference image
+- `structural_controlnet` — Preserve structural geometry via ControlNet, no appearance generation
+- `preserve` — Entity excluded from generation entirely, geometry preserved as-is (e.g., window as light source)
 
 ## Validation Rules
 

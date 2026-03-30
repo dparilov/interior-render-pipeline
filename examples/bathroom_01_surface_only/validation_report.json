@@ -1,9 +1,7 @@
 {
   "status": "VALID",
   "errors": [],
-  "warnings": [
-    "Bitmap overlap 39.6% is rendering artifact (geometric overlap = 0.59%)"
-  ],
+  "warnings": [],
   "masks": {
     "walls_tile": {
       "pixels": 333499,
