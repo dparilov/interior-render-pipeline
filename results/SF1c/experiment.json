@@ -1,0 +1,12 @@
+{
+  "experiment": "SF1c",
+  "hypothesis": "IPAdapter with masks alone is sufficient for material application without ControlNet",
+  "timestamp": "2026-03-31T16:50:00+03:00",
+  "canny_source": "none",
+  "depth_enabled": false,
+  "controlnet_mode": "none",
+  "entities_applied": ["floor", "walls_tile"],
+  "entities_skipped": ["walls_upper", "window"],
+  "output_file": "IRP_render_00007_.png",
+  "status": "ok"
+}

@@ -1,0 +1,12 @@
+{
+  "experiment": "SF1a",
+  "hypothesis": "Canny from surfaces_combined provides clean geometric guidance without fixture contamination",
+  "timestamp": "2026-03-31T16:50:00+03:00",
+  "canny_source": "surfaces_combined",
+  "depth_enabled": false,
+  "controlnet_mode": "canny_surfaces",
+  "entities_applied": ["floor", "walls_tile"],
+  "entities_skipped": ["walls_upper", "window"],
+  "output_file": "IRP_render_00005_.png",
+  "status": "ok"
+}

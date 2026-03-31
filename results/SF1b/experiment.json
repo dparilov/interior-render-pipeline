@@ -1,0 +1,12 @@
+{
+  "experiment": "SF1b",
+  "hypothesis": "Canny from boundary_mask provides minimal room outline guidance only",
+  "timestamp": "2026-03-31T16:50:00+03:00",
+  "canny_source": "boundary_mask",
+  "depth_enabled": false,
+  "controlnet_mode": "canny_boundary",
+  "entities_applied": ["floor", "walls_tile"],
+  "entities_skipped": ["walls_upper", "window"],
+  "output_file": "IRP_render_00006_.png",
+  "status": "ok"
+}
