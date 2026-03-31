@@ -51,13 +51,13 @@
       "class": "surface",
       "mask": "masks/walls_tile.png",
       "mask_derivation": "direct_face_render",
-      "mask_derivation_note": "Faces with material 'Материал1' projected directly to camera. 7 faces rendered as white on black background.",
+      "mask_derivation_note": "Faces with material '\u041c\u0430\u0442\u0435\u0440\u0438\u0430\u043b1' projected directly to camera. 7 faces rendered as white on black background.",
       "reference": "references/wall_tiles.png",
       "prompt": "white glossy wavy subway tiles, Equipe Costa Nova White style, 3D ribbed texture, vertical orientation",
       "critical": true,
       "render_mode": "regional_ipadapter",
       "ipadapter_weight": 0.55,
-      "source_material": "Материал1",
+      "source_material": "\u041c\u0430\u0442\u0435\u0440\u0438\u0430\u043b1",
       "mask_source": "skp_face_projection"
     },
     {
@@ -67,14 +67,14 @@
       "mask": "masks/walls_upper.png",
       "mask_source": "skp_face_projection",
       "mask_derivation": "direct_face_render",
-      "mask_derivation_note": "Faces with material '0131_Серебристый' projected directly to camera. 12 faces rendered as white on black background.",
+      "mask_derivation_note": "Faces with material '0131_\u0421\u0435\u0440\u0435\u0431\u0440\u0438\u0441\u0442\u044b\u0439' projected directly to camera. 12 faces rendered as white on black background.",
       "reference": null,
       "prompt": "smooth neutral gray painted wall, matte finish",
       "critical": true,
       "render_mode": "preserve",
       "ipadapter_weight": 0.0,
       "note": "No image reference. Evaluate by: technical_spec compliance, color accuracy (neutral gray ~RGB 203,203,203), clean boundary with tiles, consistency across renders",
-      "source_material": "0131_Серебристый"
+      "source_material": "0131_\u0421\u0435\u0440\u0435\u0431\u0440\u0438\u0441\u0442\u044b\u0439"
     },
     {
       "name": "window",
@@ -155,5 +155,7 @@
       "status": "DEPRECATED",
       "reason": "Uses walls.png as intermediate, not direct face projection"
     }
-  ]
+  ],
+  "positive_prompt": "photorealistic interior room, white glossy wavy subway tiles on walls, blue geometric patterned floor tiles, clean minimal surfaces, high quality render, architectural visualization",
+  "negative_prompt": "cartoon, anime, drawing, sketch, low quality, blurry, bathtub, sink, vanity, mirror, shower, towel warmer, toilet, furniture, fixtures, appliances, decorations, human figure, person"
 }

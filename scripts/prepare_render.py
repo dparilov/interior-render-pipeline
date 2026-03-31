@@ -107,12 +107,18 @@ def build_workflow(bundle_path: Path, base_workflow_path: Path) -> tuple:
     workflow_str = workflow_str.replace("BUNDLE_PATH", bundle_name)
     workflow = json.loads(workflow_str)
     
-    # Set positive prompt
-    positive_prompt = manifest.get("prompt", 
-        "photorealistic modern bathroom interior, high quality render, architectural visualization")
+    # Set prompts from manifest (positive/negative)
+    positive_prompt = manifest.get("positive_prompt", 
+        "photorealistic interior, high quality render")
+    negative_prompt = manifest.get("negative_prompt",
+        "cartoon, anime, drawing, sketch, low quality, blurry")
+    
     workflow["prompt"]["positive"]["inputs"]["text"] = positive_prompt
+    workflow["prompt"]["negative"]["inputs"]["text"] = negative_prompt
     
     metadata["entities_skipped"] = skipped_entities
+    metadata["positive_prompt"] = positive_prompt
+    metadata["negative_prompt"] = negative_prompt
     
     return workflow, metadata
 

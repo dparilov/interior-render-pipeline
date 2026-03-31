@@ -1,0 +1,14 @@
+{
+  "experiment": "SF1c-v2",
+  "hypothesis": "No ControlNet + surface-only prompts removes fixture hallucinations",
+  "timestamp": "2026-03-31T17:25:00+03:00",
+  "canny_source": "none",
+  "depth_enabled": false,
+  "controlnet_mode": "none",
+  "positive_prompt": "photorealistic interior room, white glossy wavy subway tiles on walls, blue geometric patterned floor tiles, clean minimal surfaces, high quality render, architectural visualization",
+  "negative_prompt": "cartoon, anime, drawing, sketch, low quality, blurry, bathtub, sink, vanity, mirror, shower, towel warmer, toilet, furniture, fixtures, appliances, decorations, human figure, person",
+  "entities_applied": ["floor", "walls_tile"],
+  "entities_skipped": ["walls_upper", "window"],
+  "output_file": "IRP_render_00010_.png",
+  "status": "ok"
+}
