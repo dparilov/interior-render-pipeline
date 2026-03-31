@@ -1,0 +1,42 @@
+{
+  "experiment_id": "SF1",
+  "workflow": "multi_ipadapter_regional",
+  "timestamp": "2026-03-31T16:01:00+03:00",
+  "platform": "runpod",
+  "gpu": "RTX 4090",
+  "pod_id": "xn9iekstyfidt8",
+  "bundle": "bathroom_01_surface_only",
+  "entities_applied": [
+    "floor",
+    "walls_tile"
+  ],
+  "entities_skipped": [
+    "walls_upper",
+    "window"
+  ],
+  "regional_ipadapter_count": 2,
+  "render_mode_summary": {
+    "floor": "regional_ipadapter",
+    "walls_tile": "regional_ipadapter",
+    "walls_upper": "preserve (skipped)",
+    "window": "preserve (skipped)"
+  },
+  "runtime_seconds": 20,
+  "output": "IRP_render_00003_.png",
+  "workflow_validation_passed": true,
+  "models_used": {
+    "checkpoint": "RealVisXL_V4.0.safetensors",
+    "clip_vision": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors",
+    "ipadapter": "ip-adapter-plus_sdxl_vit-h.safetensors",
+    "controlnet_canny": "controlnet-canny-sdxl.safetensors",
+    "controlnet_depth": "controlnet-depth-sdxl.safetensors"
+  },
+  "procedure_notes": {
+    "pod_startup": "OK - pod created via UI, SSH key already configured",
+    "comfyui_startup": "Required sqlalchemy install",
+    "bundle_setup": "Cloned delta branch, copied bathroom_01_surface_only to ComfyUI/input",
+    "workflow_generation": "Used workflow_builder.py with filtered manifest (preserve entities excluded)",
+    "render_execution": "Submitted via API, completed in ~20 seconds"
+  },
+  "workflow_hash": "sha256:7c9ba922e9313e34"
+}
