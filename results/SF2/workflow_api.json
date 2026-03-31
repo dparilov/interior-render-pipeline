@@ -1,0 +1,294 @@
+{
+  "prompt": {
+    "checkpoint": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "RealVisXL_V4.0.safetensors"
+      }
+    },
+    "clip_vision": {
+      "class_type": "CLIPVisionLoader",
+      "inputs": {
+        "clip_name": "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+      }
+    },
+    "ipadapter_model": {
+      "class_type": "IPAdapterModelLoader",
+      "inputs": {
+        "ipadapter_file": "ip-adapter-plus_sdxl_vit-h.safetensors"
+      }
+    },
+    "load_beauty": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "bathroom_01_surface_only/beauty.png"
+      }
+    },
+    "load_depth": {
+      "_comment": "SketchUp depth map - ground truth geometry",
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "bathroom_01_surface_only/depth.png"
+      }
+    },
+    "load_boundary": {
+      "_comment": "Boundary mask - prevents generation outside room",
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "bathroom_01_surface_only/boundary_mask.png",
+        "channel": "red"
+      }
+    },
+    "positive": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "checkpoint",
+          1
+        ],
+        "text": "photorealistic modern bathroom interior, high quality render, architectural visualization"
+      }
+    },
+    "negative": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "clip": [
+          "checkpoint",
+          1
+        ],
+        "text": "cartoon, anime, drawing, sketch, low quality, blurry, distorted, watermark, text, objects not in reference, extra fixtures, additional decorations, modified wall structure, added ledges, steps, shelves, extra towels, human figure, person"
+      }
+    },
+    "controlnet_canny": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-canny-sdxl.safetensors"
+      }
+    },
+    "controlnet_depth": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-depth-sdxl.safetensors"
+      }
+    },
+    "canny_preprocess": {
+      "class_type": "Canny",
+      "inputs": {
+        "image": [
+          "load_beauty",
+          0
+        ],
+        "low_threshold": 0.1,
+        "high_threshold": 0.4
+      }
+    },
+    "apply_controlnet_canny": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "positive",
+          0
+        ],
+        "negative": [
+          "negative",
+          0
+        ],
+        "control_net": [
+          "controlnet_canny",
+          0
+        ],
+        "image": [
+          "canny_preprocess",
+          0
+        ],
+        "strength": 0.8,
+        "start_percent": 0.0,
+        "end_percent": 0.9
+      }
+    },
+    "apply_controlnet_depth": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "apply_controlnet_canny",
+          0
+        ],
+        "negative": [
+          "apply_controlnet_canny",
+          1
+        ],
+        "control_net": [
+          "controlnet_depth",
+          0
+        ],
+        "image": [
+          "load_depth",
+          0
+        ],
+        "strength": 0.9,
+        "start_percent": 0.0,
+        "end_percent": 0.8
+      }
+    },
+    "empty_latent": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 1920,
+        "height": 1080,
+        "batch_size": 1
+      }
+    },
+    "set_latent_mask": {
+      "_comment": "Apply boundary mask to prevent generation outside room",
+      "class_type": "SetLatentNoiseMask",
+      "inputs": {
+        "samples": [
+          "empty_latent",
+          0
+        ],
+        "mask": [
+          "load_boundary",
+          0
+        ]
+      }
+    },
+    "sampler": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "entity_1_walls_tile_apply",
+          0
+        ],
+        "positive": [
+          "apply_controlnet_depth",
+          0
+        ],
+        "negative": [
+          "apply_controlnet_depth",
+          1
+        ],
+        "latent_image": [
+          "set_latent_mask",
+          0
+        ],
+        "seed": 42,
+        "steps": 50,
+        "cfg": 7.0,
+        "sampler_name": "dpmpp_2m_sde",
+        "scheduler": "karras",
+        "denoise": 1.0
+      }
+    },
+    "vae_decode": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "sampler",
+          0
+        ],
+        "vae": [
+          "checkpoint",
+          2
+        ]
+      }
+    },
+    "save_image": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "vae_decode",
+          0
+        ],
+        "filename_prefix": "IRP_render"
+      }
+    },
+    "entity_0_floor_ref": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "bathroom_01_surface_only/references/floor_tiles.jpg"
+      }
+    },
+    "entity_0_floor_mask": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "bathroom_01_surface_only/masks/floor.png",
+        "channel": "alpha"
+      }
+    },
+    "entity_0_floor_apply": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "checkpoint",
+          0
+        ],
+        "ipadapter": [
+          "ipadapter_model",
+          0
+        ],
+        "clip_vision": [
+          "clip_vision",
+          0
+        ],
+        "image": [
+          "entity_0_floor_ref",
+          0
+        ],
+        "weight": 0.55,
+        "weight_type": "linear",
+        "combine_embeds": "concat",
+        "start_at": 0.0,
+        "end_at": 1.0,
+        "embeds_scaling": "V only",
+        "attn_mask": [
+          "entity_0_floor_mask",
+          0
+        ]
+      }
+    },
+    "entity_1_walls_tile_ref": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "bathroom_01_surface_only/references/wall_tiles.png"
+      }
+    },
+    "entity_1_walls_tile_mask": {
+      "class_type": "LoadImageMask",
+      "inputs": {
+        "image": "bathroom_01_surface_only/masks/walls_tile.png",
+        "channel": "alpha"
+      }
+    },
+    "entity_1_walls_tile_apply": {
+      "class_type": "IPAdapterAdvanced",
+      "inputs": {
+        "model": [
+          "entity_0_floor_apply",
+          0
+        ],
+        "ipadapter": [
+          "ipadapter_model",
+          0
+        ],
+        "clip_vision": [
+          "clip_vision",
+          0
+        ],
+        "image": [
+          "entity_1_walls_tile_ref",
+          0
+        ],
+        "weight": 0.55,
+        "weight_type": "linear",
+        "combine_embeds": "concat",
+        "start_at": 0.0,
+        "end_at": 1.0,
+        "embeds_scaling": "V only",
+        "attn_mask": [
+          "entity_1_walls_tile_mask",
+          0
+        ]
+      }
+    }
+  }
+}

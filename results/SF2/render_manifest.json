@@ -1,0 +1,67 @@
+{
+  "experiment": "SF2",
+  "bundle": "examples/bathroom_01_surface_only",
+  "required_files": [
+    {
+      "path": "beauty.png",
+      "size": 302853,
+      "exists": true
+    },
+    {
+      "path": "depth.png",
+      "size": 57445,
+      "exists": true
+    },
+    {
+      "path": "boundary_mask.png",
+      "size": 5253,
+      "exists": true
+    },
+    {
+      "path": "references/floor_tiles.jpg",
+      "size": 434569,
+      "exists": true
+    },
+    {
+      "path": "masks/floor.png",
+      "size": 2841,
+      "exists": true
+    },
+    {
+      "path": "references/wall_tiles.png",
+      "size": 307027,
+      "exists": true
+    },
+    {
+      "path": "masks/walls_tile.png",
+      "size": 4395,
+      "exists": true
+    }
+  ],
+  "metadata": {
+    "workflow_mode": "multi_ipadapter_regional",
+    "entities_requested": [
+      "floor",
+      "walls_tile"
+    ],
+    "entities_applied": [
+      "floor",
+      "walls_tile"
+    ],
+    "entities_skipped": [
+      "walls_upper",
+      "window"
+    ],
+    "entity_order": [
+      "floor",
+      "walls_tile"
+    ],
+    "entity_weights": {
+      "floor": 0.55,
+      "walls_tile": 0.55
+    },
+    "regional_ipadapter_count": 2,
+    "refiner_enabled": false,
+    "workflow_hash": "sha256:84fde34a3f6585a5"
+  }
+}

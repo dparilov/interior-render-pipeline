@@ -1,4 +1,4 @@
-# IRP Quick Start Guide v1.1
+# IRP Quick Start Guide v1.2
 
 ## Prerequisites
 
@@ -202,3 +202,54 @@ Ensure `references/` folder contains all files from role_map.
 
 ### Validation errors
 Run `python validate.py` to get detailed error list.
+
+---
+
+## Optimized Render Flow (RunPod)
+
+For minimal GPU billing time, use the optimized 3-phase flow:
+
+### Phase 1: Offline Prep (local, no pod)
+
+```bash
+# Prepare everything before starting pod
+python3 scripts/prepare_render.py \
+  --bundle examples/bathroom_01_surface_only \
+  --experiment SF2 \
+  --output results/SF2/
+```
+
+**Output:**
+- `SF2_render_package.zip` — ready to upload
+- `workflow_api.json` — ComfyUI workflow
+- `render_manifest.json` — file list
+- `offline_prep_timing.json` — timing
+
+### Phase 2: Pod Init (once per session)
+
+```bash
+# Start pod via RunPod UI or API
+# Then verify readiness:
+./scripts/pod_init.sh <pod_ip> <pod_port>
+```
+
+### Phase 3: Render (per experiment)
+
+```bash
+# Upload, execute, download
+./scripts/pod_render.sh <pod_ip> <pod_port> results/SF2/SF2_render_package.zip
+```
+
+**Output:**
+- `IRP_render_*.png` — output image
+- `render_timing.json` — full timing breakdown
+
+### Stop Pod
+
+```bash
+# Via API or dashboard — don't leave running!
+```
+
+**Target:** < 2 min billable time per render
+
+See `docs/RENDER_OPTIMIZATION.md` for details.

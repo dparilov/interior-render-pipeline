@@ -1,0 +1,11 @@
+{
+  "experiment": "SF2",
+  "timestamp": "2026-03-31T13:08:15.402657Z",
+  "validate_sec": 0.0,
+  "build_workflow_sec": 0.0,
+  "list_files_sec": 0.0,
+  "package_sec": 0.02,
+  "total_sec": 0.02,
+  "package_size_bytes": 1097180,
+  "status": "ok"
+}
