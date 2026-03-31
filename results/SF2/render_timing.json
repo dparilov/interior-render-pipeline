@@ -1,0 +1,17 @@
+{
+  "experiment": "SF2-opt",
+  "timestamp": "2026-03-31T16:20:00+03:00",
+  "prompt_id": "8126dc0b-64da-4d15-9743-61a876fdb318",
+  "output_file": "IRP_render_00004_.png",
+  "phases": {
+    "offline_prep": {"duration_sec": 0.02, "status": "ok"},
+    "upload": {"duration_sec": 5.0, "bytes": 1101476},
+    "submit": {"duration_sec": 3.1},
+    "render": {"duration_sec": 96.0, "note": "includes model loading"},
+    "download": {"duration_sec": 2.4, "bytes": 1252879}
+  },
+  "total_pod_time_sec": 106.5,
+  "total_billable_sec": 106.5,
+  "notes": "First render on fresh pod - models loaded from disk. Subsequent renders would be ~20-30s.",
+  "status": "ok"
+}
