@@ -1,0 +1,79 @@
+{
+  "tests": [
+    {
+      "id": 1,
+      "positive": "interior surfaces, high quality render",
+      "ipadapter_weight": 0.55,
+      "ipadapter_end_at": 1.0,
+      "canny_strength": 0.8,
+      "hypothesis": "Baseline minimal prompt"
+    },
+    {
+      "id": 2,
+      "positive": "interior surfaces, high quality render",
+      "ipadapter_weight": 0.7,
+      "ipadapter_end_at": 1.0,
+      "canny_strength": 0.8,
+      "hypothesis": "Stronger IPAdapter"
+    },
+    {
+      "id": 3,
+      "positive": "interior surfaces, high quality render",
+      "ipadapter_weight": 0.85,
+      "ipadapter_end_at": 1.0,
+      "canny_strength": 0.8,
+      "hypothesis": "Max IPAdapter"
+    },
+    {
+      "id": 4,
+      "positive": "interior surfaces, high quality render",
+      "ipadapter_weight": 0.7,
+      "ipadapter_end_at": 0.6,
+      "canny_strength": 0.8,
+      "hypothesis": "IPAdapter early only"
+    },
+    {
+      "id": 5,
+      "positive": "interior surfaces, high quality render",
+      "ipadapter_weight": 0.7,
+      "ipadapter_end_at": 1.0,
+      "canny_strength": 0.5,
+      "hypothesis": "Weaker Canny"
+    },
+    {
+      "id": 6,
+      "positive": "interior room surfaces only, material textures from reference images, high quality render",
+      "ipadapter_weight": 0.7,
+      "ipadapter_end_at": 1.0,
+      "canny_strength": 0.8,
+      "hypothesis": "Explicit reference binding"
+    },
+    {
+      "id": 7,
+      "positive": "",
+      "ipadapter_weight": 0.7,
+      "ipadapter_end_at": 1.0,
+      "canny_strength": 0.8,
+      "hypothesis": "Zero prompt"
+    },
+    {
+      "id": 8,
+      "positive": "interior room surfaces only, material textures from reference images, high quality render",
+      "ipadapter_weight": 0.85,
+      "ipadapter_end_at": 0.7,
+      "canny_strength": 0.6,
+      "hypothesis": "Combined tuning"
+    }
+  ],
+  "negative_prompt": "cartoon, anime, sketch, low quality, blurry, bathtub, sink, vanity, mirror, shower, toilet, furniture, fixtures, appliances, window, door, lamp, light fixture, new objects, added elements, hallucinated details, distorted geometry, wrong perspective, extra walls",
+  "base_config": {
+    "bundle": "bathroom_01_surface_only",
+    "canny_source": "boundary_mask.png",
+    "depth": "OFF",
+    "entities": [
+      "floor",
+      "walls_tile"
+    ],
+    "seed": 42
+  }
+}

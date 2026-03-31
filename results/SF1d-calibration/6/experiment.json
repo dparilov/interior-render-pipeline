@@ -1,0 +1,19 @@
+{
+  "experiment": "SF1d-6",
+  "hypothesis": "Explicit reference binding",
+  "positive_prompt": "interior room surfaces only, material textures from reference images, high quality render",
+  "negative_prompt": "cartoon, anime, sketch, low quality, blurry, bathtub, sink, vanity, mirror, shower, toilet, furniture, fixtures, appliances, window, door, lamp, light fixture, new objects, added elements, hallucinated details, distorted geometry, wrong perspective, extra walls",
+  "ipadapter_weight": 0.7,
+  "ipadapter_end_at": 1.0,
+  "canny_strength": 0.8,
+  "canny_source": "boundary_mask",
+  "depth_enabled": false,
+  "seed": 42,
+  "entities_applied": [
+    "floor",
+    "walls_tile"
+  ],
+  "status": "ok",
+  "output_file": "IRP_render_00016_.png",
+  "timestamp": "2026-03-31T17:55:00+03:00"
+}
