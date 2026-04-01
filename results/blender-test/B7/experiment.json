@@ -1,0 +1,16 @@
+{
+  "experiment": "B7",
+  "method": "Real mesh separation via bpy.ops.mesh.separate()",
+  "status": "SUCCESS",
+  "objects_created": [
+    "IRP_Floor",
+    "IRP_Other",
+    "IRP_Walls"
+  ],
+  "floor_faces": 1426,
+  "wall_faces": 58310,
+  "other_faces": 42498,
+  "total_faces": 102234,
+  "original_faces": 102234,
+  "verification": "PASS"
+}
