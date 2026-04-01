@@ -1,0 +1,23 @@
+{
+  "experiment": "B4c",
+  "method": "color_attributes + MixRGB shader",
+  "blender_version": "4.0",
+  "status": "SUCCESS",
+  "stats": {
+    "floor": 2135,
+    "wall": 55520,
+    "other": 44579
+  },
+  "observations": [
+    "Vertex colors (color_attributes in Blender 4.0) work correctly",
+    "MixRGB shader correctly blends textures based on face type",
+    "wall_tiles.png is a WHITE/light-gray texture - renders correctly",
+    "floor_tiles.jpg blue stripes visible in top-down view",
+    "Front camera doesn't show floor because camera angle"
+  ],
+  "acceptance": {
+    "floor_visible": "YES (in top-down view)",
+    "wall_visible": "YES (white texture = white render)",
+    "method_works": "YES"
+  }
+}

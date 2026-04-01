@@ -1,0 +1,14 @@
+{
+  "experiment": "B4a",
+  "method": "per-face material slots",
+  "face_assignment": {
+    "floor": 2135,
+    "wall": 55520,
+    "other": 44579
+  },
+  "material_slots": [
+    "other",
+    "floor",
+    "wall"
+  ]
+}
