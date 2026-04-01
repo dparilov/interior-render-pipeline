@@ -1,0 +1,16 @@
+{
+  "experiment": "D1",
+  "description": "IPAdapter sanity check - NO ControlNet, floor only, weight=1.0",
+  "canny": "OFF",
+  "depth": "OFF",
+  "ipadapter_weight": 1.0,
+  "ipadapter_end_at": 1.0,
+  "entities": [
+    "floor"
+  ],
+  "positive_prompt": "blue patterned floor tiles, high quality",
+  "expected": "Blue tiles from reference should be clearly visible",
+  "status": "PASS",
+  "output_file": "IRP_render_00019_.png",
+  "observation": "Blue patterned tiles clearly visible. IPAdapter works without ControlNet."
+}

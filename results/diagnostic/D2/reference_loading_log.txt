@@ -1,0 +1,17 @@
+# Reference Image Loading Log
+
+## floor
+
+- Path: references/floor_tiles.jpg
+- File exists: YES
+- File size: 434569 bytes (424.4 KB)
+- Dimensions: 1726x1679
+- Mode: RGB
+
+## walls_tile
+
+- Path: references/wall_tiles.png
+- File exists: YES
+- File size: 307027 bytes (299.8 KB)
+- Dimensions: 1024x1024
+- Mode: RGB

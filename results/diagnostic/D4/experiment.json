@@ -1,0 +1,18 @@
+{
+  "experiment": "D4",
+  "description": "Low Canny balance test - Canny 0.3, IPAdapter 0.7",
+  "canny_source": "boundary_mask",
+  "canny_strength": 0.3,
+  "depth": "OFF",
+  "ipadapter_weight": 0.7,
+  "ipadapter_end_at": 1.0,
+  "entities": [
+    "floor",
+    "walls_tile"
+  ],
+  "positive_prompt": "interior room surfaces only, material textures from reference images, high quality render",
+  "expected": "Geometry from Canny + textures from IPAdapter",
+  "status": "FAIL",
+  "output_file": "IRP_render_00020_.png",
+  "observation": "Dark texture, no blue tiles. Canny 0.3 still overrides IPAdapter."
+}
