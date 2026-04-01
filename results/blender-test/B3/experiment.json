@@ -1,0 +1,22 @@
+{
+  "experiment": "B3",
+  "description": "Geometric material assignment by face normal/position",
+  "assignment_mode": "geometric",
+  "floor_faces_count": 2135,
+  "wall_faces_count": 55520,
+  "other_faces_count": 44579,
+  "meshes_processed": 93,
+  "status": "partial",
+  "observations": [
+    "Geometric detection works (finds floor/wall faces)",
+    "Materials assigned per-face",
+    "Textures not rendering despite material assignment",
+    "Solid colors (red test) render correctly",
+    "Issue: material slot assignment or texture coords for per-face materials"
+  ],
+  "test_results": {
+    "solid_red_test": "PASS - red visible",
+    "full_mesh_texture": "PASS - texture visible when applied to all meshes",
+    "per_face_texture": "FAIL - texture not visible with geometric assignment"
+  }
+}
