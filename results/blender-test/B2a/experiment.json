@@ -1,0 +1,9 @@
+{
+  "experiment": "B2a",
+  "uv_method": "generated",
+  "floor_tile_size": "200x200",
+  "wall_tile_size": "50x200",
+  "camera_dot": 1.0,
+  "textures_visible": false,
+  "notes": "Camera fixed, textures not appearing"
+}
