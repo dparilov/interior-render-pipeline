@@ -32,3 +32,15 @@
 ## Conclusion
 B9b manual camera better matches reference intent.
 Original JSON camera is positioned OUTSIDE the room.
+
+## Root Cause Found
+
+**Camera from manifest is OUTSIDE the room:**
+- Scene Y bounds: [-0.74, 3.29] (4m depth)
+- Camera eye Y: -4.442 (5.7m IN FRONT of room!)
+- Camera target Y: 5.983 (2.7m BEHIND back wall)
+
+Camera looks THROUGH the entire room from outside. 
+In SketchUp this works because of clipping, but Blender renders everything.
+
+**Solution:** Use manual camera positioned INSIDE the room for Blender.
