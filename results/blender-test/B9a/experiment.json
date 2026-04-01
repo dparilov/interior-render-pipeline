@@ -1,0 +1,9 @@
+{
+  "experiment": "B9a",
+  "method": "FOV override 35° → 65°",
+  "camera": "from JSON",
+  "fov": 65,
+  "eye": [1.1475, -4.4416, 1.948],
+  "target": [1.1621, 5.9834, 1.5976],
+  "result": "Floor barely visible, camera outside room"
+}
