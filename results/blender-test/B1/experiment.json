@@ -1,0 +1,25 @@
+{
+  "experiment": "B1",
+  "description": "Blender Cycles material render test",
+  "method": "Blender Cycles GPU",
+  "model": "examples/bathroom_01/model/model.glb",
+  "camera": "examples/bathroom_01/camera_projection_audit.json",
+  "floor_texture": "examples/bathroom_01/references/floor_tiles.jpg",
+  "wall_texture": "examples/bathroom_01/references/wall_tiles.png",
+  "resolution": "1920x1080",
+  "samples": 64,
+  "render_engine": "Cycles",
+  "output_file": "render.png",
+  "status": "partial",
+  "observations": [
+    "Render pipeline works",
+    "Material assignment successful (floor: 1, wall: 5)",
+    "Camera position correct",
+    "ISSUE: Textures not visible - likely UV mapping problem",
+    "Model meshes may lack proper UV coordinates for texture projection"
+  ],
+  "next_steps": [
+    "Add UV projection (box/planar) for texture mapping",
+    "Or use generated coordinates instead of UV"
+  ]
+}
