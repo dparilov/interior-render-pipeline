@@ -1,0 +1,29 @@
+{
+  "experiment": "B10",
+  "method": "DAE camera extraction + manual adjustment",
+  "dae_camera_found": true,
+  "dae_source": "/tmp/irp_bundle_final/model.dae",
+  "dae_cameras": [
+    "skp_camera_Last_Saved_SketchUp_View",
+    "skp_camera_Сцена_№1",
+    "skp_camera_Сцена_№2"
+  ],
+  "dae_camera_scene1": {
+    "position_cm": [45.176, -174.865, 76.693],
+    "position_m": [0.452, -1.749, 0.767],
+    "forward": [0.0014, 0.9994, -0.034],
+    "fov": 35
+  },
+  "manifest_camera": {
+    "eye": [1.147, -4.442, 1.948],
+    "target": [1.162, 5.983, 1.598],
+    "note": "DIFFERENT from DAE - was exported incorrectly"
+  },
+  "final_camera": {
+    "eye": [0.9, -0.3, 1.6],
+    "target": [0.9, 1.5, 0.5],
+    "fov": 60,
+    "note": "Adjusted for Blender - inside room view"
+  },
+  "result": "Floor with blue stripes clearly visible"
+}
