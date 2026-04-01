@@ -1,0 +1,26 @@
+{
+  "method": "DAE position adjusted for Blender",
+  "dae_position_m": [
+    0.4518,
+    -1.7487,
+    0.7669
+  ],
+  "dae_fov_deg": 35,
+  "blender_position_m": [
+    0.9,
+    -0.5,
+    1.5
+  ],
+  "blender_fov_deg": 60,
+  "target_position": [
+    0.8999999761581421,
+    1.5,
+    0.5
+  ],
+  "look_direction": [
+    0.0,
+    0.8944272994995117,
+    -0.44721364974975586
+  ],
+  "note": "DAE camera was OUTSIDE room (Y=-1.75), adjusted to entrance (Y=-0.5)"
+}
