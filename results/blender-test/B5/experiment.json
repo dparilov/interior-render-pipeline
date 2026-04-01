@@ -1,0 +1,12 @@
+{
+  "experiment": "B5",
+  "tests": {
+    "cube": "PASS",
+    "plane": "PASS", 
+    "glb_all": "PASS"
+  },
+  "root_cause": "Per-face material assignment doesn't work with texture coords in Cycles",
+  "solution": "Apply material to entire mesh, use Object coordinates",
+  "texture_size": [1726, 1679],
+  "meshes_textured": 93
+}
