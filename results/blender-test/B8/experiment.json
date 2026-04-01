@@ -1,0 +1,16 @@
+{
+  "experiment": "B8",
+  "method": "Real mesh separation (bpy.ops.mesh.separate)",
+  "objects_created": [
+    "IRP_Floor",
+    "IRP_Walls",
+    "IRP_Other"
+  ],
+  "floor_faces": 1426,
+  "wall_faces": 58310,
+  "other_faces": 42498,
+  "floor_tile_size": "200x200",
+  "wall_tile_size": "50x200",
+  "resolution": "1920x1080",
+  "samples": 64
+}

@@ -1,6 +1,7 @@
 #!/usr/bin/env blender --background --python
 """
 Blender headless material renderer for IRP.
+Uses REAL mesh separation (not per-face assignment).
 """
 
 import bpy
@@ -28,8 +29,6 @@ def parse_args():
     parser.add_argument('--wall-texture', help='Wall texture image')
     parser.add_argument('--floor-tile-size', default='200x200', help='Floor tile size mm')
     parser.add_argument('--wall-tile-size', default='50x200', help='Wall tile size mm')
-    parser.add_argument('--uv-method', default='box', choices=['generated', 'box', 'auto'])
-    parser.add_argument('--assignment-mode', default='geometric', choices=['name', 'geometric'])
     parser.add_argument('--output', '-o', required=True, help='Output render path')
     parser.add_argument('--resolution', '-r', default='1920x1080', help='Resolution WxH')
     parser.add_argument('--samples', '-s', type=int, default=128, help='Render samples')
@@ -42,12 +41,13 @@ def clear_scene():
 
 
 def import_model(filepath):
+    filepath = os.path.abspath(filepath)
     ext = Path(filepath).suffix.lower()
     if ext in ['.glb', '.gltf']:
         bpy.ops.import_scene.gltf(filepath=filepath)
     elif ext == '.fbx':
         bpy.ops.import_scene.fbx(filepath=filepath)
-    print(f"Imported {filepath}: {len(bpy.data.objects)} objects")
+    print(f"Imported {filepath}: {len([o for o in bpy.data.objects if o.type == 'MESH'])} meshes")
 
 
 def setup_camera(camera_json_path):
@@ -87,15 +87,17 @@ def setup_camera(camera_json_path):
 
 
 def tile_scale(size_mm):
+    """Calculate texture scale based on tile size."""
     parts = size_mm.lower().replace('mm', '').split('x')
     w, h = int(parts[0]), int(parts[1])
-    # Object coords are in meters, texture spans [0,1] per meter with scale 1
-    # For 200mm tile, need 5 tiles per meter = scale 0.2 (each tile = 0.2m)
-    # But textures tile, so we use smaller scale to see pattern
-    return (0.5, 0.5, 1.0)  # Test scale - tiles visible
+    # For 200mm tiles: scale = 0.3 gives good density
+    # For 50x200mm tiles: scale = 0.5
+    base_scale = 1000.0 / max(w, h) * 0.06
+    return (base_scale, base_scale, 1.0)
 
 
-def create_texture_material(name, texture_path, tile_size_mm, uv_method='box'):
+def create_texture_material(name, texture_path, tile_size_mm):
+    """Create a textured material using Object coordinates."""
     mat = bpy.data.materials.new(name=name)
     mat.use_nodes = True
     nodes = mat.node_tree.nodes
@@ -108,148 +110,192 @@ def create_texture_material(name, texture_path, tile_size_mm, uv_method='box'):
     mapping = nodes.new('ShaderNodeMapping')
     tex_coord = nodes.new('ShaderNodeTexCoord')
     
+    texture_path = os.path.abspath(texture_path)
     tex_image.image = bpy.data.images.load(texture_path)
     tex_image.image.colorspace_settings.name = 'sRGB'
-    
-    # Object coords work best for 3D projection
-    coord_output = tex_coord.outputs['Object']
     
     scale = tile_scale(tile_size_mm)
     mapping.inputs['Scale'].default_value = scale
     
-    output.location = (400, 0)
-    bsdf.location = (100, 0)
-    tex_image.location = (-200, 0)
-    mapping.location = (-450, 0)
-    tex_coord.location = (-650, 0)
-    
-    links.new(coord_output, mapping.inputs['Vector'])
+    # Use Object coordinates for 3D projection (works without UVs)
+    links.new(tex_coord.outputs['Object'], mapping.inputs['Vector'])
     links.new(mapping.outputs['Vector'], tex_image.inputs['Vector'])
     links.new(tex_image.outputs['Color'], bsdf.inputs['Base Color'])
     links.new(bsdf.outputs['BSDF'], output.inputs['Surface'])
     
     bsdf.inputs['Roughness'].default_value = 0.3
     
-    print(f"Material '{name}': scale={scale}, uv={uv_method}")
+    print(f"Material '{name}': texture={Path(texture_path).name}, scale={scale}")
     return mat
 
 
-def is_floor_face(poly, obj):
-    """Face is floor if normal points UP and Z near ground."""
-    world_normal = (obj.matrix_world.to_3x3() @ poly.normal).normalized()
-    if world_normal.z > 0.9:  # Normal pointing up
-        # Check face center Z
-        mesh = obj.data
-        verts = [mesh.vertices[i].co for i in poly.vertices]
-        center = sum(verts, Vector()) / len(verts)
-        world_center = obj.matrix_world @ center
-        if world_center.z < 0.15:  # Near ground level
-            return True
-    return False
+def create_color_material(name, color):
+    """Create a simple colored material."""
+    mat = bpy.data.materials.new(name=name)
+    mat.use_nodes = True
+    mat.node_tree.nodes["Principled BSDF"].inputs['Base Color'].default_value = color
+    return mat
 
 
-def is_wall_face(poly, obj):
-    """Face is wall if normal is horizontal."""
-    world_normal = (obj.matrix_world.to_3x3() @ poly.normal).normalized()
-    horizontal = world_normal.x**2 + world_normal.y**2
-    if horizontal > 0.8 and abs(world_normal.z) < 0.3:
-        return True
-    return False
-
-
-def assign_materials_geometric(floor_mat, wall_mat):
-    """Assign materials based on face geometry (normal + position)."""
-    stats = {'floor': 0, 'wall': 0, 'other': 0, 'meshes': 0}
+def separate_geometry():
+    """
+    REAL mesh separation - creates separate objects for floor/walls/other.
+    This is required because per-face material assignment doesn't work
+    with texture coordinates in Cycles.
+    """
+    # Get all meshes
+    meshes = [o for o in bpy.data.objects if o.type == 'MESH']
+    if not meshes:
+        print("No meshes to separate")
+        return {'floor': 0, 'wall': 0, 'other': 0}
     
+    # Join all meshes into one
+    bpy.ops.object.select_all(action='DESELECT')
+    for m in meshes:
+        m.select_set(True)
+    bpy.context.view_layer.objects.active = meshes[0]
+    bpy.ops.object.join()
+    
+    combined = bpy.context.active_object
+    combined.name = "Combined"
+    total_faces = len(combined.data.polygons)
+    print(f"Combined {len(meshes)} meshes: {total_faces} faces")
+    
+    # === SEPARATE FLOOR ===
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    bm = bmesh.from_edit_mesh(combined.data)
+    bm.faces.ensure_lookup_table()
+    
+    floor_count = 0
+    for face in bm.faces:
+        center = combined.matrix_world @ face.calc_center_median()
+        normal = (combined.matrix_world.to_3x3() @ face.normal).normalized()
+        
+        # Floor: normal pointing up (z > 0.9) AND near ground (z < 0.15)
+        if center.z < 0.15 and normal.z > 0.9:
+            face.select = True
+            floor_count += 1
+    
+    bmesh.update_edit_mesh(combined.data)
+    print(f"Selected {floor_count} floor faces")
+    
+    # Separate floor into new object
+    if floor_count > 0:
+        bpy.ops.mesh.separate(type='SELECTED')
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Rename floor object (it gets ".001" suffix)
     for obj in bpy.data.objects:
-        if obj.type != 'MESH':
-            continue
-        
-        mesh = obj.data
-        stats['meshes'] += 1
-        
-        # Clear existing materials
-        mesh.materials.clear()
-        
-        # Add our materials (index 0 = default/other, 1 = floor, 2 = wall)
-        default_mat = bpy.data.materials.new(name=f"Default_{obj.name}")
-        default_mat.use_nodes = True
-        mesh.materials.append(default_mat)  # index 0
-        
-        floor_idx = -1
-        wall_idx = -1
-        
-        if floor_mat:
-            mesh.materials.append(floor_mat)
-            floor_idx = len(mesh.materials) - 1
-        
-        if wall_mat:
-            mesh.materials.append(wall_mat)
-            wall_idx = len(mesh.materials) - 1
-        
-        # Assign per-face
-        for poly in mesh.polygons:
-            if floor_mat and is_floor_face(poly, obj):
-                poly.material_index = floor_idx
-                stats['floor'] += 1
-            elif wall_mat and is_wall_face(poly, obj):
-                poly.material_index = wall_idx
-                stats['wall'] += 1
-            else:
-                poly.material_index = 0
-                stats['other'] += 1
+        if obj.type == 'MESH' and obj.name.startswith("Combined."):
+            obj.name = "IRP_Floor"
+            print(f"Created IRP_Floor: {len(obj.data.polygons)} faces")
+            break
     
-    print(f"Geometric assignment: {stats}")
+    # === SEPARATE WALLS ===
+    combined = bpy.data.objects.get("Combined")
+    if not combined:
+        print("Warning: Combined object not found after floor separation")
+        return {'floor': floor_count, 'wall': 0, 'other': 0}
+    
+    bpy.context.view_layer.objects.active = combined
+    combined.select_set(True)
+    bpy.ops.object.mode_set(mode='EDIT')
+    bpy.ops.mesh.select_all(action='DESELECT')
+    
+    bm = bmesh.from_edit_mesh(combined.data)
+    bm.faces.ensure_lookup_table()
+    
+    wall_count = 0
+    for face in bm.faces:
+        normal = (combined.matrix_world.to_3x3() @ face.normal).normalized()
+        horizontal = normal.x**2 + normal.y**2
+        
+        # Wall: horizontal normal (facing sideways)
+        if horizontal > 0.8 and abs(normal.z) < 0.3:
+            face.select = True
+            wall_count += 1
+    
+    bmesh.update_edit_mesh(combined.data)
+    print(f"Selected {wall_count} wall faces")
+    
+    # Separate walls into new object
+    if wall_count > 0:
+        bpy.ops.mesh.separate(type='SELECTED')
+    
+    bpy.ops.object.mode_set(mode='OBJECT')
+    
+    # Rename wall object
+    for obj in bpy.data.objects:
+        if obj.type == 'MESH' and obj.name.startswith("Combined.") and obj.name != "IRP_Floor":
+            obj.name = "IRP_Walls"
+            print(f"Created IRP_Walls: {len(obj.data.polygons)} faces")
+            break
+    
+    # Rename remaining as Other (fixtures, furniture, etc.)
+    other_count = 0
+    if bpy.data.objects.get("Combined"):
+        bpy.data.objects["Combined"].name = "IRP_Other"
+        other_count = len(bpy.data.objects["IRP_Other"].data.polygons)
+        print(f"Created IRP_Other: {other_count} faces")
+    
+    # Verify
+    mesh_objects = [o.name for o in bpy.data.objects if o.type == 'MESH']
+    print(f"Separated objects: {mesh_objects}")
+    
+    return {'floor': floor_count, 'wall': wall_count, 'other': other_count}
+
+
+def assign_materials_to_separated(floor_mat, wall_mat):
+    """
+    Assign materials to WHOLE OBJECTS (not per-face).
+    This works correctly with texture coordinates.
+    """
+    stats = {'floor': 0, 'wall': 0, 'other': 0}
+    
+    floor_obj = bpy.data.objects.get("IRP_Floor")
+    wall_obj = bpy.data.objects.get("IRP_Walls")
+    other_obj = bpy.data.objects.get("IRP_Other")
+    
+    # Create default material for other objects
+    other_mat = create_color_material("OtherMaterial", (0.7, 0.7, 0.7, 1.0))
+    
+    if floor_obj and floor_mat:
+        floor_obj.data.materials.clear()
+        floor_obj.data.materials.append(floor_mat)
+        stats['floor'] = len(floor_obj.data.polygons)
+        print(f"Assigned floor material: {stats['floor']} faces")
+    
+    if wall_obj and wall_mat:
+        wall_obj.data.materials.clear()
+        wall_obj.data.materials.append(wall_mat)
+        stats['wall'] = len(wall_obj.data.polygons)
+        print(f"Assigned wall material: {stats['wall']} faces")
+    
+    if other_obj:
+        other_obj.data.materials.clear()
+        other_obj.data.materials.append(other_mat)
+        stats['other'] = len(other_obj.data.polygons)
+        print(f"Assigned other material: {stats['other']} faces")
+    
     return stats
-
-
-def assign_materials_by_name(floor_mat, wall_mat, floor_tile_size, wall_tile_size, uv_method):
-    """Original name-based assignment."""
-    assigned = {'floor': 0, 'wall': 0, 'other': 0}
-    floor_meshes = []
-    wall_meshes = []
-    
-    for obj in bpy.data.objects:
-        name_lower = obj.name.lower()
-        if 'irp_floor' in name_lower:
-            for child in obj.children_recursive:
-                if child.type == 'MESH':
-                    floor_meshes.append(child)
-        elif 'irp_walls' in name_lower:
-            for child in obj.children_recursive:
-                if child.type == 'MESH':
-                    wall_meshes.append(child)
-    
-    for mesh in floor_meshes:
-        if floor_mat:
-            mesh.data.materials.clear()
-            mesh.data.materials.append(floor_mat)
-            assigned['floor'] += 1
-    
-    for mesh in wall_meshes:
-        if wall_mat:
-            mesh.data.materials.clear()
-            mesh.data.materials.append(wall_mat)
-            assigned['wall'] += 1
-    
-    print(f"Name assignment: {assigned}")
-    return assigned
 
 
 def setup_lighting():
     light_data = bpy.data.lights.new(name="SunLight", type='SUN')
-    light_data.energy = 3.0
+    light_data.energy = 5.0
     light_obj = bpy.data.objects.new(name="SunLight", object_data=light_data)
     bpy.context.scene.collection.objects.link(light_obj)
-    light_obj.location = (5, -5, 10)
-    light_obj.rotation_euler = (math.radians(45), 0, math.radians(45))
+    light_obj.rotation_euler = (0.7, 0, 0.4)
     
     world = bpy.data.worlds.new("IRPWorld")
     bpy.context.scene.world = world
     world.use_nodes = True
     bg = world.node_tree.nodes['Background']
     bg.inputs['Color'].default_value = (0.9, 0.92, 0.95, 1.0)
-    bg.inputs['Strength'].default_value = 0.8
+    bg.inputs['Strength'].default_value = 0.3
 
 
 def setup_render(resolution, samples):
@@ -285,30 +331,30 @@ def render(output_path):
 def main():
     args = parse_args()
     
-    print("=== Blender Material Render ===")
-    print(f"Assignment mode: {args.assignment_mode}")
-    print(f"UV method: {args.uv_method}")
+    print("=== Blender Material Render (B8: Real Mesh Separation) ===")
     
     clear_scene()
     import_model(args.model)
+    
+    # CRITICAL: Separate geometry BEFORE material assignment
+    # Per-face assignment doesn't work with textures in Cycles
+    sep_stats = separate_geometry()
+    
     setup_camera(args.camera)
     
+    # Create materials
     floor_mat = None
     wall_mat = None
     
     if args.floor_texture:
         floor_mat = create_texture_material("FloorMaterial", args.floor_texture, 
-                                            args.floor_tile_size, args.uv_method)
+                                            args.floor_tile_size)
     if args.wall_texture:
         wall_mat = create_texture_material("WallMaterial", args.wall_texture,
-                                           args.wall_tile_size, args.uv_method)
+                                           args.wall_tile_size)
     
-    if args.assignment_mode == 'geometric':
-        stats = assign_materials_geometric(floor_mat, wall_mat)
-    else:
-        stats = assign_materials_by_name(floor_mat, wall_mat, 
-                                         args.floor_tile_size, args.wall_tile_size,
-                                         args.uv_method)
+    # Assign materials to WHOLE OBJECTS (not per-face)
+    mat_stats = assign_materials_to_separated(floor_mat, wall_mat)
     
     setup_lighting()
     setup_render(args.resolution, args.samples)
@@ -316,17 +362,19 @@ def main():
     print("\nRendering...")
     render(args.output)
     
-    # Save stats to experiment.json
+    # Save experiment.json
     exp_path = str(Path(args.output).parent / "experiment.json")
     exp_data = {
-        "assignment_mode": args.assignment_mode,
-        "uv_method": args.uv_method,
+        "experiment": "B8",
+        "method": "Real mesh separation (bpy.ops.mesh.separate)",
+        "objects_created": ["IRP_Floor", "IRP_Walls", "IRP_Other"],
+        "floor_faces": mat_stats.get('floor', 0),
+        "wall_faces": mat_stats.get('wall', 0),
+        "other_faces": mat_stats.get('other', 0),
         "floor_tile_size": args.floor_tile_size,
         "wall_tile_size": args.wall_tile_size,
-        "floor_faces_count": stats.get('floor', 0),
-        "wall_faces_count": stats.get('wall', 0),
-        "other_faces_count": stats.get('other', 0),
-        "meshes_processed": stats.get('meshes', 0)
+        "resolution": args.resolution,
+        "samples": args.samples
     }
     with open(exp_path, 'w') as f:
         json.dump(exp_data, f, indent=2)
