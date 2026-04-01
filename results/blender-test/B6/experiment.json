@@ -1,0 +1,17 @@
+{
+  "experiment": "B6",
+  "method": "Separate geometry by face type",
+  "status": "SUCCESS",
+  "floor_faces": 1426,
+  "wall_faces": 58310,
+  "other_faces": 42498,
+  "floor_object": "IRP_Floor",
+  "wall_object": "IRP_Walls", 
+  "other_object": "IRP_Other",
+  "acceptance": {
+    "floor_textured": "YES - blue stripe pattern visible",
+    "wall_textured": "YES - white tile texture (wall_tiles.png is white)",
+    "fixtures_separate": "YES - gray color, not tiled",
+    "tile_scale": "OK - 0.3 for floor, 0.5 for walls"
+  }
+}
