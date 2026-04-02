@@ -40,6 +40,62 @@ def clear_scene():
     bpy.ops.wm.read_factory_settings(use_empty=True)
 
 
+def apply_scene_visibility(manifest_path):
+    """Hide objects that were hidden in SketchUp Scene.
+    
+    Uses hidden_pids from manifest.json to hide matching objects.
+    PIDs are matched against object names (IRP_name_PID format).
+    """
+    if not os.path.exists(manifest_path):
+        print(f"No manifest found at {manifest_path}, skipping visibility")
+        return 0
+    
+    with open(manifest_path) as f:
+        manifest = json.load(f)
+    
+    visibility = manifest.get('scene_visibility', {})
+    hidden_pids = set(visibility.get('hidden_pids', []))
+    hidden_layers = visibility.get('hidden_layers', [])
+    
+    if not hidden_pids and not hidden_layers:
+        print("No hidden entities in manifest")
+        return 0
+    
+    print(f"Scene visibility: {len(hidden_pids)} hidden PIDs, {len(hidden_layers)} hidden layers")
+    
+    hidden_count = 0
+    for obj in bpy.data.objects:
+        if obj.type != 'MESH':
+            continue
+        
+        # Try to extract PID from object name
+        # Names might be: IRP_name_12345, name.001, etc.
+        name_parts = obj.name.replace('IRP_', '').replace('.', '_').split('_')
+        
+        should_hide = False
+        for part in name_parts:
+            if part.isdigit():
+                pid = int(part)
+                if pid in hidden_pids:
+                    should_hide = True
+                    break
+        
+        # Also check if object name matches hidden layer
+        for layer_name in hidden_layers:
+            if layer_name.lower() in obj.name.lower():
+                should_hide = True
+                break
+        
+        if should_hide:
+            obj.hide_render = True
+            obj.hide_viewport = True
+            hidden_count += 1
+            print(f"  Hidden: {obj.name}")
+    
+    print(f"Scene visibility applied: {hidden_count} objects hidden")
+    return hidden_count
+
+
 def import_model(filepath):
     filepath = os.path.abspath(filepath)
     ext = Path(filepath).suffix.lower()
@@ -336,6 +392,10 @@ def main():
     clear_scene()
     import_model(args.model)
     
+    # Apply scene visibility from manifest (hide entities hidden in SketchUp)
+    manifest_path = Path(args.model).parent.parent / 'manifest.json'
+    hidden_count = apply_scene_visibility(str(manifest_path))
+    
     # CRITICAL: Separate geometry BEFORE material assignment
     # Per-face assignment doesn't work with textures in Cycles
     sep_stats = separate_geometry()
@@ -371,6 +431,7 @@ def main():
         "floor_faces": mat_stats.get('floor', 0),
         "wall_faces": mat_stats.get('wall', 0),
         "other_faces": mat_stats.get('other', 0),
+        "hidden_objects": hidden_count,
         "floor_tile_size": args.floor_tile_size,
         "wall_tile_size": args.wall_tile_size,
         "resolution": args.resolution,
