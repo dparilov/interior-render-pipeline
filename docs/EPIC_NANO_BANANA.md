@@ -141,3 +141,78 @@ Turn 4: Adjust lighting
 - Nano Banana решает ДРУГУЮ задачу: быстрые эскизы vs детальные рендеры
 - Но качество Pro версии может быть достаточным для production
 - Критический тест: точность паттернов плитки
+
+---
+
+## Prompting Strategy (Extended)
+
+### Prompt Structure
+
+```
+[STRUCTURE] + [MATERIALS] + [LIGHTING] + [CAMERA] + [STYLE]
+```
+
+### ТЗ → Prompt Mapping
+
+| ТЗ Section | Prompt Component |
+|------------|------------------|
+| Напольная плитка | `floor tiles from ref1, blue ceramic quatrefoil, 200x200mm` |
+| Настенная плитка | `wall tiles from ref2, white glossy wavy subway, vertical` |
+| Ванна | `white cast iron bathtub, front panel matching wall tiles` |
+| Освещение | `natural daylight from left window, soft shadows` |
+
+### Reference Strategies
+
+**A) Per-Surface (recommended):**
+- Ref 1: floor_tiles.jpg
+- Ref 2: wall_tiles.png
+- Ref 3-4: fixtures
+- Ref 5-6: lighting/style mood
+
+**B) Composite Moodboard:**
+- Single collage with labeled sections
+- Prompt references quadrants
+
+**C) High-Fidelity Swatches:**
+- Tileable pattern at correct scale
+- 3x3 grid showing repeat
+- Explicit "replicate exactly" instruction
+
+### Multi-turn Workflow
+
+```
+Turn 1: Base photorealistic room (white materials)
+Turn 2: Apply floor material + reference
+Turn 3: Apply wall material + reference
+Turn 4: Enhance fixtures
+Turn 5: Adjust lighting
+Turn 6: Final polish
+```
+
+### Prompt Experiments
+
+| Experiment | Prompt Type | Expected |
+|------------|-------------|----------|
+| E5 | Minimal | Baseline quality |
+| E6 | Detailed | Better accuracy |
+| E7 | ТЗ-based auto | Production-ready |
+| E8 | Multi-turn | Best precision |
+
+### Auto-generation from Manifest
+
+```python
+def generate_prompt(manifest, references):
+    prompt = "Transform SketchUp view into photorealistic render.\n"
+    prompt += "GEOMETRY: Preserve exact layout, camera, fixtures.\n"
+    prompt += "SURFACES:\n"
+    
+    for entity in manifest['entities']:
+        if entity['class'] == 'surface':
+            ref_idx = references.index(entity['reference']) + 1
+            prompt += f"- {entity['name']}: ref{ref_idx}, {entity['prompt']}\n"
+    
+    prompt += "LIGHTING: Natural daylight, soft shadows.\n"
+    prompt += "STYLE: Professional interior photography, 4K.\n"
+    
+    return prompt
+```
