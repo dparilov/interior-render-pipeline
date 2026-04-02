@@ -1,0 +1,23 @@
+{
+  "experiment": "B22",
+  "method": "Remove front wall + interior camera position",
+  "bundle": "bathroom_04",
+  "camera": {
+    "position": [0.93, 0.0, 2.2],
+    "rotation_deg": [70, 0, 0],
+    "fov": 75,
+    "note": "Interior view: elevated, looking down"
+  },
+  "front_wall_removed": {
+    "hidden_objects": 7,
+    "objects": "Geom3D, Geom3D.001-006"
+  },
+  "visible": [
+    "floor with quatrefoil pattern",
+    "vanity (gray, two drawers)",
+    "sink (white)",
+    "mirror (black - no reflection)",
+    "basket (orange, bottom left)",
+    "bathtub (right side)"
+  ]
+}
