@@ -1,0 +1,31 @@
+{
+  "experiment": "B16",
+  "method": "GLB geometry + calculated interior camera",
+  "scene_bounds": {
+    "x": [
+      -0.6856490969657898,
+      2.549166679382324
+    ],
+    "y": [
+      -0.7413273453712463,
+      3.286500930786133
+    ],
+    "z": [
+      -0.0007420961046591401,
+      3.500000238418579
+    ]
+  },
+  "camera_position": [
+    0.9317587614059448,
+    -1.0413273572921753,
+    1.5
+  ],
+  "camera_target": [
+    0.9317587614059448,
+    1.2725868225097656,
+    0.5
+  ],
+  "camera_fov": 60,
+  "front_wall_removed": 11881,
+  "comparison_result": "GLB preferred for geometry, DAE camera not compatible"
+}

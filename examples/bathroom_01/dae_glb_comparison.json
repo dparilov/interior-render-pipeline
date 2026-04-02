@@ -1,0 +1,46 @@
+{
+  "glb": {
+    "objects": 93,
+    "vertices": 200416,
+    "faces": 102234,
+    "bounds": {
+      "x": [
+        -0.686,
+        2.549
+      ],
+      "y": [
+        -0.741,
+        3.287
+      ],
+      "z": [
+        -0.001,
+        3.5
+      ]
+    }
+  },
+  "dae": {
+    "objects": 983,
+    "vertices": 174995,
+    "faces": 190636,
+    "bounds": {
+      "x": [
+        -0.658,
+        1.756
+      ],
+      "y": [
+        -0.583,
+        2.416
+      ],
+      "z": [
+        -0.0,
+        2.01
+      ]
+    }
+  },
+  "comparison": {
+    "objects_diff": 890,
+    "vertices_diff": -25421,
+    "faces_diff": 88402,
+    "glb_preferred": false
+  }
+}
