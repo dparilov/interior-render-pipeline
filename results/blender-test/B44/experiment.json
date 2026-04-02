@@ -1,0 +1,23 @@
+{
+  "experiment": "B44",
+  "method": "Cycles Ultimate (4096 samples + Path Guiding)",
+  "gpu_type": "CUDA",
+  "gpu_name": "NVIDIA GeForce RTX 4090",
+  "denoiser": "OPENIMAGEDENOISE",
+  "samples": 4096,
+  "adaptive_threshold": 0.001,
+  "path_guiding": true,
+  "caustics": true,
+  "light_bounces": {
+    "max": 16,
+    "diffuse": 8,
+    "glossy": 8,
+    "transmission": 16
+  },
+  "render_time_seconds": 55.3,
+  "render_time_minutes": 0.92,
+  "resolution": [
+    1066,
+    1239
+  ]
+}
