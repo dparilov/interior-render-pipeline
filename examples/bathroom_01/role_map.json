@@ -1,0 +1,123 @@
+{
+  "version": "1.0",
+  "model": "bathroom_01",
+  "entities": [
+    {
+      "pid": 36696,
+      "name": "walls",
+      "role": "surface.walls",
+      "class": "surface",
+      "surface_kind": "wall_tiles",
+      "prompt": "white glossy wavy subway tiles, Equipe Costa Nova White style, 3D ribbed texture, vertical orientation, 50x200mm",
+      "prompt_source": "ТЗ.md section 'Настенная плитка'",
+      "reference": "references/wall_tiles.png",
+      "critical": true
+    },
+    {
+      "pid": 36828,
+      "name": "floor",
+      "role": "surface.floor",
+      "class": "surface",
+      "surface_kind": "floor_tiles",
+      "prompt": "blue ceramic floor tiles with white geometric pattern, Equipe Rivoli Bergen Azul style, intersecting circles/petals, mediterranean, 200x200mm",
+      "prompt_source": "ТЗ.md section 'Напольная плитка'",
+      "reference": "references/floor_tiles.jpg",
+      "critical": true
+    },
+    {
+      "pid": 43754,
+      "name": "bathtub",
+      "role": "fixture.bathtub",
+      "class": "fixture",
+      "surface_kind": null,
+      "prompt": "white cast iron bathtub Jacob Delafon Soissons 160x70cm, front panel covered with white Costa Nova tiles",
+      "prompt_source": "ТЗ.md section 'Ванна'",
+      "reference": "references/bathtub.jpg",
+      "critical": false
+    },
+    {
+      "pid": 124416,
+      "name": "vanity",
+      "role": "fixture.vanity",
+      "class": "fixture",
+      "surface_kind": null,
+      "prompt": "wall-mounted dark charcoal gray vanity cabinet IDDIS Edifice 100cm, two soft-close drawers, white ceramic sink on top, chrome faucet IDDIS Aiger",
+      "prompt_source": "ТЗ.md sections 'Тумба с раковиной' + 'Смеситель'",
+      "reference": "references/vanity.jpg",
+      "critical": true
+    },
+    {
+      "pid": 143585,
+      "name": "shower_screen",
+      "role": "fixture.shower_screen",
+      "class": "fixture",
+      "surface_kind": null,
+      "prompt": "glass shower screen panel, minimalist frameless design, transparent",
+      "prompt_source": "Inferred from beauty.png - glass partition visible",
+      "reference": "references/shower.jpg",
+      "critical": false
+    },
+    {
+      "pid": 229917,
+      "name": "rainshower",
+      "role": "fixture.rainshower",
+      "class": "fixture",
+      "surface_kind": null,
+      "prompt": "chrome shower system IDDIS Aiger with large 228mm rain shower head and handheld shower",
+      "prompt_source": "ТЗ.md section 'Душевая система'",
+      "reference": "references/shower.jpg",
+      "critical": false
+    },
+    {
+      "pid": 359764,
+      "name": "towel_warmer",
+      "role": "fixture.towel_warmer",
+      "class": "fixture",
+      "surface_kind": null,
+      "prompt": "WHITE vertical electric heated towel rail Ewrika Penelopa X5 270x1200mm, NOT black NOT chrome, white color only",
+      "prompt_source": "ТЗ.md section 'Полотенцесушитель' - CRITICAL: must be WHITE",
+      "reference": "references/towel_warmer.jpg",
+      "critical": true
+    },
+    {
+      "pid": 352872,
+      "name": "window",
+      "role": "opening.window",
+      "class": "opening",
+      "surface_kind": null,
+      "prompt": "small window with white PVC frame, frosted glass, warm natural daylight source",
+      "prompt_source": "ТЗ.md 'Освещение: тёплый естественный свет из небольшого окна'",
+      "reference": null,
+      "critical": false
+    },
+    {
+      "pid": 424271,
+      "name": "basket",
+      "role": "fixture.basket",
+      "class": "fixture",
+      "surface_kind": null,
+      "prompt": "round woven natural rattan laundry basket La Redoute bohemian style with lid, beige color",
+      "prompt_source": "ТЗ.md section 'Корзина для белья'",
+      "reference": "references/basket.jpg",
+      "critical": false
+    },
+    {
+      "pid": 471300,
+      "name": "mirror",
+      "role": "fixture.mirror",
+      "class": "fixture",
+      "surface_kind": null,
+      "prompt": "rectangular mirror IDDIS Uniq with rounded corners and integrated warm LED backlight 3000K around perimeter",
+      "prompt_source": "ТЗ.md section 'Зеркало'",
+      "reference": "references/mirror.jpg",
+      "critical": true
+    }
+  ],
+  "excluded": [
+    {
+      "pid": 27700,
+      "name": "Sumele",
+      "reason": "Human figure for scale reference, position outside room (x=-0.44)"
+    }
+  ]
+}
