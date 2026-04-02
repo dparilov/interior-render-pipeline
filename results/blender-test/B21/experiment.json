@@ -1,0 +1,16 @@
+{
+  "experiment": "B21",
+  "method": "Camera from DAE position + 90° X rotation",
+  "bundle": "bathroom_04",
+  "camera": {
+    "position": [1.147, -4.442, 1.948],
+    "rotation_deg": [90, 0, 0],
+    "fov": 35,
+    "note": "DAE position as-is (camera outside scene looking +Y)"
+  },
+  "result": {
+    "view": "Through doorway into bathroom",
+    "visible": ["mirror", "vanity", "sink", "walls"],
+    "fov_comment": "35° is narrow, shows mainly vanity area"
+  }
+}
