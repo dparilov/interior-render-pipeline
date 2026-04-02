@@ -1,0 +1,15 @@
+{
+  "experiment": "B42",
+  "method": "Cycles GPU high samples",
+  "device": "GPU",
+  "gpu_type": "CUDA",
+  "gpu_name": "NVIDIA GeForce RTX 4090",
+  "denoiser": "OPENIMAGEDENOISE",
+  "samples": 2048,
+  "render_time_seconds": 29.4,
+  "render_time_minutes": 0.49,
+  "resolution": [
+    1066,
+    1239
+  ]
+}
