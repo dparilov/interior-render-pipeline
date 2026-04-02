@@ -140,6 +140,50 @@ def apply_visibility(manifest):
     return hidden_count
 
 
+def apply_section_planes(manifest):
+    """Apply section planes as camera near clip distance.
+    
+    Section plane from SketchUp: ax + by + cz + d = 0
+    If plane is perpendicular to Y (normal.y ≈ 1), it clips in Y direction.
+    """
+    planes = manifest.get('section_planes', [])
+    
+    if not planes:
+        print("No section planes in manifest")
+        return 0
+    
+    camera = bpy.context.scene.camera
+    if not camera:
+        print("No camera in scene")
+        return 0
+    
+    applied = 0
+    
+    for i, plane in enumerate(planes):
+        normal = plane['normal']
+        dist_m = plane['distance_meters']
+        
+        print(f"Section plane {i}: normal={normal}, dist={dist_m:.3f}m")
+        
+        # Check if plane is perpendicular to Y (camera looking direction)
+        if abs(normal[1]) > 0.9:
+            # Plane equation: y + d = 0 → y = -d
+            plane_y = -dist_m
+            cam_y = camera.location.y
+            
+            # Distance from camera to section plane
+            near_clip = abs(cam_y - plane_y)
+            
+            # Set camera near clip (with small margin)
+            camera.data.clip_start = max(0.01, near_clip - 0.1)
+            
+            print(f"  Camera Y={cam_y:.2f}, Plane Y={plane_y:.2f}")
+            print(f"  Set clip_start={camera.data.clip_start:.2f}m")
+            applied += 1
+    
+    return applied
+
+
 def setup_lighting():
     """Basic lighting."""
     sun_data = bpy.data.lights.new("Sun", 'SUN')
@@ -222,6 +266,9 @@ def main():
     
     print("\n=== VISIBILITY ===")
     hidden = apply_visibility(manifest)
+    
+    print("\n=== SECTION PLANES ===")
+    section_planes_applied = apply_section_planes(manifest)
     
     print("\n=== LIGHTING ===")
     setup_lighting()

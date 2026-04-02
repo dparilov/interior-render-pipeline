@@ -735,6 +735,25 @@ module IRP
   end
   
   # ============================================
+  # SECTION PLANES
+  # ============================================
+  
+  def self.get_active_section_planes
+    """Export active section planes for Blender clipping."""
+    planes = model.entities.grep(Sketchup::SectionPlane).select(&:active?)
+    
+    planes.map do |sp|
+      plane = sp.get_plane  # [a, b, c, d] where ax + by + cz + d = 0
+      {
+        normal: [plane[0], plane[1], plane[2]],
+        distance_inches: plane[3],
+        distance_meters: (plane[3] * 0.0254).round(4),
+        equation: "#{plane[0]}x + #{plane[1]}y + #{plane[2]}z + #{plane[3]} = 0"
+      }
+    end
+  end
+  
+  # ============================================
   # MANIFEST
   # ============================================
   
@@ -804,7 +823,8 @@ module IRP
       excluded: @excluded,
       visibility: collect_visibility,
       coordinate_transform: calculate_coordinate_transform,
-      entity_mapping: build_entity_mapping
+      entity_mapping: build_entity_mapping,
+      section_planes: get_active_section_planes
     }
     
     File.write(File.join(output_dir, 'manifest.json'), JSON.pretty_generate(manifest))

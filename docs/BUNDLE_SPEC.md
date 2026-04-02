@@ -112,6 +112,7 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
 | entities | array | ✅ | Mapped entities |
 | excluded | array | ❌ | Excluded entities with reasons |
 | visibility | object | ❌ | Hidden entities (global + scene-specific) |
+| section_planes | array | ❌ | Active section planes for clipping |
 
 ### visibility Object
 
@@ -248,3 +249,30 @@ Maps entity names to PIDs and GLB names for lookup:
 - Added `coverage_pct` as REQUIRED
 - Added `surface_kind` for surface entities
 - Added `excluded` array for documenting exclusions
+
+### section_planes Array
+
+Active section planes from SketchUp for viewport clipping:
+
+```json
+"section_planes": [
+  {
+    "normal": [0, 1, 0],
+    "distance_inches": -51.19,
+    "distance_meters": -1.3,
+    "equation": "0x + 1y + 0z + -51.19 = 0"
+  }
+]
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| normal | array | Plane normal vector [a, b, c] |
+| distance_inches | float | Distance from origin (inches) |
+| distance_meters | float | Distance from origin (meters) |
+| equation | string | Human-readable plane equation |
+
+**Usage in Blender:**
+- If normal.y ≈ 1, plane clips in Y direction
+- Set camera.clip_start = distance from camera to plane
+- This hides geometry between camera and section plane
