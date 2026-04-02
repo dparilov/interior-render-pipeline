@@ -1,0 +1,13 @@
+{
+  "experiment": "B38",
+  "method": "FOV = fov_sketchup / aspect",
+  "formula": "fov_adjusted = fov_sketchup / aspect",
+  "fov_sketchup": 35,
+  "aspect": 0.86,
+  "fov_adjusted": 40.7,
+  "resolution": [
+    1066,
+    1239
+  ],
+  "clip_start": 5.899
+}
