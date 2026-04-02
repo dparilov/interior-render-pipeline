@@ -1,0 +1,22 @@
+{
+  "experiment": "B12",
+  "tile_scale_floor": [
+    2.0,
+    2.0,
+    1.0
+  ],
+  "tile_scale_wall": [
+    5.0,
+    2.5,
+    1.0
+  ],
+  "floor_threshold_z": 0.25,
+  "floor_faces": 1605,
+  "camera_position": [
+    0.9,
+    -0.3,
+    1.5
+  ],
+  "camera_fov_deg": 65,
+  "note": "Floor scale=2.0 shows quatrefoil pattern, wider floor threshold"
+}
