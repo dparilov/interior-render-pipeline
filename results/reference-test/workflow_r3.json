@@ -1,0 +1,99 @@
+{
+  "prompt": {
+    "checkpoint": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "RealVisXL_V4.0.safetensors"
+      }
+    },
+    "positive": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "blue and white geometric floor tiles, high quality render, seamless texture",
+        "clip": [
+          "checkpoint",
+          1
+        ]
+      }
+    },
+    "negative": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "blurry, distorted, wrong pattern, low quality",
+        "clip": [
+          "checkpoint",
+          1
+        ]
+      }
+    },
+    "load_init": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "reference-test/R3_init_tiled.png"
+      }
+    },
+    "vae_encode": {
+      "class_type": "VAEEncode",
+      "inputs": {
+        "pixels": [
+          "load_init",
+          0
+        ],
+        "vae": [
+          "checkpoint",
+          2
+        ]
+      }
+    },
+    "sampler": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "checkpoint",
+          0
+        ],
+        "positive": [
+          "positive",
+          0
+        ],
+        "negative": [
+          "negative",
+          0
+        ],
+        "latent_image": [
+          "vae_encode",
+          0
+        ],
+        "seed": 42,
+        "steps": 25,
+        "cfg": 7.0,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 0.3
+      }
+    },
+    "vae_decode": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "sampler",
+          0
+        ],
+        "vae": [
+          "checkpoint",
+          2
+        ]
+      }
+    },
+    "save_image": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "vae_decode",
+          0
+        ],
+        "filename_prefix": "R3_img2img"
+      }
+    }
+  }
+}

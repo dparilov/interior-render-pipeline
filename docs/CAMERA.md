@@ -1,71 +1,113 @@
-# Camera Transform — SketchUp to Blender
+# Camera Pipeline: SketchUp → Blender
 
-## The Problem
+## Coordinate Transform
 
-SketchUp DAE exports camera position and rotation matrix.
-Blender GLB uses different coordinate conventions.
-Getting the camera right is critical for matching beauty.png.
+- **DAE**: inches, Z-up
+- **GLB**: meters, Y-up
+- **Formula**: `glb_pos = (dae_x * 0.0254, dae_z * 0.0254, -dae_y * 0.0254)`
 
-## Solution (Phase B Finding)
+## FOV Conversion
 
-**Don't use complex matrix transforms.** Use DAE position as-is with fixed rotation.
+SketchUp `fov_is_height? = true` → vertical FOV
 
-### Working Formula
-
-```python
-import math
-
-# From manifest.json camera.eye (already in meters)
-dae_eye = [1.147, -4.442, 1.948]
-
-# Position: use as-is
-camera.location = (dae_eye[0], dae_eye[1], dae_eye[2])
-
-# Rotation: 90° around X axis (camera looks +Y direction)
-camera.rotation_mode = 'XYZ'
-camera.rotation_euler = (math.radians(90), 0, 0)
-
-# FOV from manifest
-camera.data.angle = math.radians(35.0)
-```
-
-### Why This Works
-
-1. Both SketchUp GLB and Blender use **Z-up** coordinate system
-2. Camera Y=-4.44 places it **outside** the room (in front of entrance)
-3. 90° X rotation makes camera look **+Y** (into the room)
-
-### What Doesn't Work
-
-❌ Transform `(x, z, -y)` — puts camera outside scene bounds
-❌ Using DAE rotation matrix directly — axis conventions differ
-❌ Track-to constraint with DAE target — target coordinates also wrong
-
-## Coordinate Systems
-
-| System | X | Y | Z |
-|--------|---|---|---|
-| SketchUp | Right | Forward | Up |
-| Blender | Right | Forward | Up |
-| GLB | Right | Forward | Up |
-
-All are Z-up! The issue is **camera facing direction**, not coordinates.
-
-## Scene Bounds Check
-
-Always verify camera is near the scene:
+### Formula for portrait aspect (< 1):
 
 ```python
-# Scene bounds for bathroom_04
-Y: [-0.74, 3.29]
-Z: [0, 3.50]
-
-# Camera at Y=-4.44 is OUTSIDE (correct - in front of door)
-# Camera at Z=1.95 is INSIDE bounds (correct - eye height)
+fov_adjusted = fov_sketchup / aspect
 ```
 
-## Known Issues
+**Example:**
+- SketchUp FOV: 35°
+- Viewport: 1066 x 1239 (aspect = 0.86)
+- Blender FOV: 35 / 0.86 = **40.7°**
 
-1. **Narrow FOV**: DAE FOV=35° shows limited view through doorway
-2. **Front wall blocking**: Need to hide front wall for wider interior view
-3. **Mirror reflection**: Renders black without proper material setup
+### Formula for landscape aspect (> 1):
+
+```python
+# Convert vertical to horizontal
+hfov = 2 * atan(tan(vfov/2) * aspect)
+```
+
+## Resolution
+
+Use exact viewport dimensions from SketchUp:
+
+```python
+scene.render.resolution_x = manifest['viewport']['width']
+scene.render.resolution_y = manifest['viewport']['height']
+scene.render.resolution_percentage = 100  # No scaling!
+```
+
+## Camera Offset (Wall Thickness)
+
+Section plane clips at inner wall face. To see fixtures at outer wall:
+
+```python
+wall_thickness = section_plane_y - walls_outer_y
+camera.location.y -= wall_thickness
+```
+
+## Clip Start
+
+Apply section plane as near clip:
+
+```python
+clip_start = abs(camera_y_adjusted - section_plane_y)
+camera.data.clip_start = clip_start
+```
+
+## Complete Pipeline
+
+```python
+# 1. Load manifest
+manifest = json.load('manifest.json')
+
+# 2. Camera position
+eye = manifest['camera']['eye']
+camera.location = (eye[0], eye[1], eye[2])
+
+# 3. Camera rotation (look +Y)
+camera.rotation_euler = (radians(90), 0, 0)
+
+# 4. FOV adjustment
+aspect = manifest['viewport']['width'] / manifest['viewport']['height']
+fov_adjusted = manifest['camera']['fov'] / aspect
+camera.data.angle = radians(fov_adjusted)
+
+# 5. Wall offset
+wall_geo = manifest['wall_geometry']
+camera.location.y -= wall_geo['wall_thickness']
+
+# 6. Clip start
+clip_start = abs(camera.location.y - wall_geo['section_plane_y'])
+camera.data.clip_start = clip_start
+
+# 7. Render resolution
+scene.render.resolution_x = manifest['viewport']['width']
+scene.render.resolution_y = manifest['viewport']['height']
+```
+
+## Manifest Fields
+
+```json
+{
+  "camera": {
+    "eye": [1.147, -4.442, 1.948],
+    "fov": 35.0
+  },
+  "viewport": {
+    "width": 1066,
+    "height": 1239,
+    "aspect": 0.86
+  },
+  "wall_geometry": {
+    "section_plane_y": 1.3,
+    "walls_outer_y": 1.143,
+    "wall_thickness": 0.157
+  },
+  "section_planes": [{
+    "normal": [0, 1, 0],
+    "distance_meters": -1.3
+  }]
+}
+```

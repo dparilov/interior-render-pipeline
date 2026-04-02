@@ -288,5 +288,16 @@
       "distance_meters": -1.3,
       "equation": "0x + 1y + 0z + -51.19 = 0"
     }
-  ]
+  ],
+  "viewport": {
+    "width": 1066,
+    "height": 1239,
+    "aspect": 0.86,
+    "source": "sketchup_viewport"
+  },
+  "wall_geometry": {
+    "section_plane_y": 1.3,
+    "walls_outer_y": 1.143,
+    "wall_thickness": 0.157
+  }
 }

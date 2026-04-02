@@ -1,0 +1,124 @@
+{
+  "prompt": {
+    "checkpoint": {
+      "class_type": "CheckpointLoaderSimple",
+      "inputs": {
+        "ckpt_name": "RealVisXL_V4.0.safetensors"
+      }
+    },
+    "positive": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "blue and white geometric floor tiles, Mediterranean pattern, high quality, seamless texture",
+        "clip": [
+          "checkpoint",
+          1
+        ]
+      }
+    },
+    "negative": {
+      "class_type": "CLIPTextEncode",
+      "inputs": {
+        "text": "blurry, distorted, wrong pattern, low quality",
+        "clip": [
+          "checkpoint",
+          1
+        ]
+      }
+    },
+    "load_tile_ref": {
+      "class_type": "LoadImage",
+      "inputs": {
+        "image": "bathroom_01_surface_only/references/floor_tiles.jpg"
+      }
+    },
+    "controlnet_tile": {
+      "class_type": "ControlNetLoader",
+      "inputs": {
+        "control_net_name": "controlnet-tile-sdxl.safetensors"
+      }
+    },
+    "apply_controlnet": {
+      "class_type": "ControlNetApplyAdvanced",
+      "inputs": {
+        "positive": [
+          "positive",
+          0
+        ],
+        "negative": [
+          "negative",
+          0
+        ],
+        "control_net": [
+          "controlnet_tile",
+          0
+        ],
+        "image": [
+          "load_tile_ref",
+          0
+        ],
+        "strength": 0.9,
+        "start_percent": 0.0,
+        "end_percent": 1.0
+      }
+    },
+    "empty_latent": {
+      "class_type": "EmptyLatentImage",
+      "inputs": {
+        "width": 1920,
+        "height": 1080,
+        "batch_size": 1
+      }
+    },
+    "sampler": {
+      "class_type": "KSampler",
+      "inputs": {
+        "model": [
+          "checkpoint",
+          0
+        ],
+        "positive": [
+          "apply_controlnet",
+          0
+        ],
+        "negative": [
+          "apply_controlnet",
+          1
+        ],
+        "latent_image": [
+          "empty_latent",
+          0
+        ],
+        "seed": 42,
+        "steps": 25,
+        "cfg": 7.0,
+        "sampler_name": "euler",
+        "scheduler": "normal",
+        "denoise": 1.0
+      }
+    },
+    "vae_decode": {
+      "class_type": "VAEDecode",
+      "inputs": {
+        "samples": [
+          "sampler",
+          0
+        ],
+        "vae": [
+          "checkpoint",
+          2
+        ]
+      }
+    },
+    "save_image": {
+      "class_type": "SaveImage",
+      "inputs": {
+        "images": [
+          "vae_decode",
+          0
+        ],
+        "filename_prefix": "R2_controlnet_tile"
+      }
+    }
+  }
+}
