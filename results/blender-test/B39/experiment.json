@@ -1,0 +1,13 @@
+{
+  "experiment": "B39",
+  "method": "Wall tiles texture",
+  "texture": "wall_tiles.png",
+  "tile_size_mm": [
+    50,
+    200
+  ],
+  "walls_found": 1,
+  "wall_names": [
+    "Geom3D_IRP_walls"
+  ]
+}
