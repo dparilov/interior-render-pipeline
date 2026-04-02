@@ -1,0 +1,26 @@
+{
+  "experiment": "B13",
+  "camera_source": "pycollada + manual adjustment",
+  "blender_position_m": [
+    0.9300000071525574,
+    -1.75,
+    1.5
+  ],
+  "target_position_m": [
+    0.9300000071525574,
+    1.5,
+    0.30000001192092896
+  ],
+  "blender_fov_deg": 55,
+  "look_direction": [
+    0.0,
+    0.9380965232849121,
+    -0.3463740348815918
+  ],
+  "tile_scale_floor": [
+    2.0,
+    2.0,
+    1.0
+  ],
+  "note": "Camera raised and looking at floor to match beauty.png composition"
+}
