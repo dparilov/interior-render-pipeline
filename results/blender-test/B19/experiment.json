@@ -1,0 +1,26 @@
+{
+  "experiment": "B19",
+  "method": "Calculated camera from GLB bounds + fixed visibility",
+  "camera": {
+    "eye": [0.93, -0.24, 1.6],
+    "target": [0.93, 2.99, 0.8],
+    "fov": 60
+  },
+  "scene_bounds": {
+    "x": [-0.69, 2.55],
+    "y": [-0.74, 3.29],
+    "z": [0.0, 3.50]
+  },
+  "visibility": {
+    "hidden_count": 0,
+    "note": "No hidden objects in manifest"
+  },
+  "result": {
+    "floor_visible": true,
+    "vanity_visible": true,
+    "mirror_visible": true,
+    "bathtub_visible": true,
+    "basket_visible": true,
+    "floor_pattern": "quatrefoil visible"
+  }
+}
