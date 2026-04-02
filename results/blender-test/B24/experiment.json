@@ -1,0 +1,19 @@
+{
+  "experiment": "B24",
+  "method": "B21 camera variants + Z threshold face removal",
+  "bundle": "bathroom_04",
+  "camera_tests": [
+    {"position": "(1.147, 1.948, 4.442)", "result": "gray - camera above ceiling, looks +Y into void"},
+    {"position": "(1.147, -1.948, 4.442)", "result": "gray - Y inverted, still above ceiling"},
+    {"position": "(1.147, 4.442, 1.948)", "result": "gray - Y outside scene bounds"}
+  ],
+  "scene_bounds": {
+    "Y": [-0.74, 3.29],
+    "Z": [0, 3.5]
+  },
+  "diagnosis": "B21 camera matrix transform produces positions outside scene bounds",
+  "front_wall_removal": {
+    "threshold": "Z > 2.5m",
+    "faces_deleted": 111
+  }
+}
