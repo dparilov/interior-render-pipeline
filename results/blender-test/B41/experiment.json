@@ -1,0 +1,20 @@
+{
+  "experiment": "B41",
+  "method": "High-quality Cycles CPU benchmark",
+  "samples": 256,
+  "device": "CPU",
+  "denoiser": "OPENIMAGEDENOISE",
+  "render_time_seconds": 48.3,
+  "render_time_minutes": 0.81,
+  "resolution": [
+    1066,
+    1239
+  ],
+  "lighting": "Nishita sky + Sun + Area lights",
+  "light_bounces": {
+    "max": 12,
+    "diffuse": 4,
+    "glossy": 4,
+    "transmission": 12
+  }
+}
