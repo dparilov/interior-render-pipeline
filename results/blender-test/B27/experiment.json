@@ -1,0 +1,21 @@
+{
+  "experiment": "B27",
+  "method": "B26 camera + remove faces with Y < 0",
+  "camera": {
+    "position": [
+      1.147482,
+      -4.441579,
+      1.947995
+    ],
+    "rotation_deg": [
+      90,
+      0,
+      0
+    ],
+    "fov": 35
+  },
+  "front_wall_removal": {
+    "threshold": "Y < 0",
+    "faces_deleted": 11881
+  }
+}
