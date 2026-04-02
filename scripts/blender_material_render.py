@@ -41,10 +41,13 @@ def clear_scene():
 
 
 def apply_scene_visibility(manifest_path):
-    """Hide objects that were hidden in SketchUp Scene.
+    """Hide objects that were hidden in SketchUp.
     
-    Uses hidden_pids from manifest.json to hide matching objects.
-    PIDs are matched against object names (IRP_name_PID format).
+    Supports both new format (visibility.global/scene) and legacy (scene_visibility).
+    Objects are matched by:
+    1. Name prefix: HIDDEN_S_*, HIDDEN_G_* (new naming convention)
+    2. PID in object name (legacy)
+    3. Layer name match (legacy)
     """
     if not os.path.exists(manifest_path):
         print(f"No manifest found at {manifest_path}, skipping visibility")
@@ -53,38 +56,52 @@ def apply_scene_visibility(manifest_path):
     with open(manifest_path) as f:
         manifest = json.load(f)
     
-    visibility = manifest.get('scene_visibility', {})
-    hidden_pids = set(visibility.get('hidden_pids', []))
-    hidden_layers = visibility.get('hidden_layers', [])
-    
-    if not hidden_pids and not hidden_layers:
-        print("No hidden entities in manifest")
+    # Support both new and legacy format
+    if 'visibility' in manifest:
+        # New format: visibility.global + visibility.scene
+        vis = manifest['visibility']
+        global_pids = set(vis.get('global', {}).get('hidden_pids', []))
+        scene_pids = set(vis.get('scene', {}).get('hidden_pids', []))
+        hidden_pids = global_pids | scene_pids
+        hidden_layers = vis.get('scene', {}).get('hidden_layers', [])
+        print(f"Visibility (new format): {len(global_pids)} global + {len(scene_pids)} scene hidden")
+    elif 'scene_visibility' in manifest:
+        # Legacy format
+        vis = manifest['scene_visibility']
+        hidden_pids = set(vis.get('hidden_pids', []))
+        hidden_layers = vis.get('hidden_layers', [])
+        print(f"Visibility (legacy): {len(hidden_pids)} hidden PIDs")
+    else:
+        print("No visibility data in manifest")
         return 0
-    
-    print(f"Scene visibility: {len(hidden_pids)} hidden PIDs, {len(hidden_layers)} hidden layers")
     
     hidden_count = 0
     for obj in bpy.data.objects:
         if obj.type != 'MESH':
             continue
         
-        # Try to extract PID from object name
-        # Names might be: IRP_name_12345, name.001, etc.
-        name_parts = obj.name.replace('IRP_', '').replace('.', '_').split('_')
-        
         should_hide = False
-        for part in name_parts:
-            if part.isdigit():
-                pid = int(part)
-                if pid in hidden_pids:
+        
+        # Method 1: Check for HIDDEN_S_ or HIDDEN_G_ prefix (new naming)
+        if obj.name.startswith('HIDDEN_S_') or obj.name.startswith('HIDDEN_G_'):
+            should_hide = True
+        
+        # Method 2: Try to extract PID from object name
+        if not should_hide:
+            name_parts = obj.name.replace('IRP_', '').replace('.', '_').split('_')
+            for part in name_parts:
+                if part.isdigit():
+                    pid = int(part)
+                    if pid in hidden_pids:
+                        should_hide = True
+                        break
+        
+        # Method 3: Check if object name matches hidden layer
+        if not should_hide:
+            for layer_name in hidden_layers:
+                if layer_name.lower() in obj.name.lower():
                     should_hide = True
                     break
-        
-        # Also check if object name matches hidden layer
-        for layer_name in hidden_layers:
-            if layer_name.lower() in obj.name.lower():
-                should_hide = True
-                break
         
         if should_hide:
             obj.hide_render = True
@@ -92,7 +109,7 @@ def apply_scene_visibility(manifest_path):
             hidden_count += 1
             print(f"  Hidden: {obj.name}")
     
-    print(f"Scene visibility applied: {hidden_count} objects hidden")
+    print(f"Visibility applied: {hidden_count} objects hidden")
     return hidden_count
 
 

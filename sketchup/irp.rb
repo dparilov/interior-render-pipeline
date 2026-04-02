@@ -504,66 +504,164 @@ module IRP
   end
   
   # ============================================
-  # SCENE VISIBILITY
+  # VISIBILITY — Global + Scene Level
   # ============================================
   
-  def self.collect_scene_visibility
+  # Cache for visibility data
+  @scene_hidden_pids = []
+  @global_hidden_pids = []
+  
+  def self.collect_visibility
+    """Collect visibility info at both global and scene levels."""
     page = model.pages.selected_page
-    hidden_pids = []
-    hidden_layers = []
     
-    # Hidden layers for current Scene
+    # GLOBAL hidden (entity.hidden? flag - always hidden)
+    global_hidden = []
+    collect_global_hidden(model.entities, global_hidden)
+    @global_hidden_pids = global_hidden
+    
+    # SCENE hidden (layer visibility for this specific scene)
+    scene_hidden = []
+    scene_hidden_layers = []
+    
     if page
-      # Get layers that are OFF for this scene
       model.layers.each do |layer|
-        # In SketchUp, page.layers returns layers that are visible
-        # We want layers that are NOT visible
+        # Use get_visibility for scene-specific layer state
         begin
-          layer_visible = page.get_status(layer)
-          unless layer_visible
+          unless page.get_visibility(layer)
             layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
-            hidden_layers << layer_name
+            scene_hidden_layers << layer_name
           end
         rescue
-          # Fallback for older API
-          unless page.layers.include?(layer)
-            layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
-            hidden_layers << layer_name
+          # Fallback for older API versions
+          begin
+            unless page.get_status(layer)
+              layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
+              scene_hidden_layers << layer_name
+            end
+          rescue
+            # Last resort fallback
+            unless page.layers.include?(layer)
+              layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
+              scene_hidden_layers << layer_name
+            end
           end
         end
       end
+      collect_scene_hidden(model.entities, scene_hidden, scene_hidden_layers)
     end
-    
-    # Collect hidden entities recursively
-    collect_hidden_recursive(model.entities, hidden_pids, hidden_layers)
+    @scene_hidden_pids = scene_hidden
     
     scene_name = page ? page.name : 'Default'
     scene_name = scene_name.encode('UTF-8', invalid: :replace, undef: :replace) rescue 'Default'
     
     {
-      scene_name: scene_name,
-      hidden_pids: hidden_pids,
-      hidden_layers: hidden_layers,
-      hidden_count: hidden_pids.length
+      global: {
+        hidden_pids: global_hidden,
+        count: global_hidden.length
+      },
+      scene: {
+        name: scene_name,
+        hidden_pids: scene_hidden,
+        hidden_layers: scene_hidden_layers,
+        count: scene_hidden.length
+      }
     }
   end
   
-  def self.collect_hidden_recursive(entities, hidden_pids, hidden_layers)
+  def self.collect_global_hidden(entities, result)
+    """Collect entities with entity.hidden? = true (always hidden)."""
+    entities.each do |e|
+      next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
+      result << e.persistent_id if e.hidden?
+      inner = e.is_a?(Sketchup::Group) ? e.entities : e.definition.entities
+      collect_global_hidden(inner, result)
+    end
+  end
+  
+  def self.collect_scene_hidden(entities, result, hidden_layers)
+    """Collect entities on hidden layers for current scene."""
     entities.each do |e|
       next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
       
-      # Check if entity is hidden or on a hidden layer
       layer_name = e.layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue e.layer.name
       
-      if e.hidden? || hidden_layers.include?(layer_name)
-        hidden_pids << e.persistent_id
-        next  # Don't recurse into hidden entities
+      if hidden_layers.include?(layer_name)
+        result << e.persistent_id
+      else
+        inner = e.is_a?(Sketchup::Group) ? e.entities : e.definition.entities
+        collect_scene_hidden(inner, result, hidden_layers)
       end
-      
-      # Recurse into visible entities
-      inner = e.is_a?(Sketchup::Group) ? e.entities : e.definition.entities
-      collect_hidden_recursive(inner, hidden_pids, hidden_layers)
     end
+  end
+  
+  # Legacy wrapper for backward compatibility
+  def self.collect_scene_visibility
+    vis = collect_visibility
+    {
+      scene_name: vis[:scene][:name],
+      hidden_pids: vis[:global][:hidden_pids] + vis[:scene][:hidden_pids],
+      hidden_layers: vis[:scene][:hidden_layers],
+      hidden_count: vis[:global][:count] + vis[:scene][:count]
+    }
+  end
+  
+  # ============================================
+  # ENTITY NAMING FOR EXPORT
+  # ============================================
+  
+  def self.name_all_for_export
+    """Name all entities for unique identification in GLB export."""
+    
+    # Ensure visibility is collected
+    collect_visibility if @scene_hidden_pids.empty? && @global_hidden_pids.empty?
+    
+    named_count = 0
+    
+    # 1. Mapped entities → IRP_{name}
+    @role_map.each do |pid, info|
+      entity = find_by_pid(pid)
+      if entity
+        entity.name = "IRP_#{info[:name]}"
+        named_count += 1
+      end
+    end
+    puts "  Named #{named_count} mapped entities (IRP_*)"
+    
+    # 2. Scene-hidden → HIDDEN_S_{pid}
+    scene_count = 0
+    @scene_hidden_pids.each do |pid|
+      entity = find_by_pid(pid)
+      if entity && !entity.name.to_s.start_with?("IRP_")
+        entity.name = "HIDDEN_S_#{pid}"
+        scene_count += 1
+      end
+    end
+    puts "  Named #{scene_count} scene-hidden entities (HIDDEN_S_*)"
+    
+    # 3. Global-hidden → HIDDEN_G_{pid}
+    global_count = 0
+    @global_hidden_pids.each do |pid|
+      entity = find_by_pid(pid)
+      if entity && !entity.name.to_s.start_with?("IRP_", "HIDDEN_S_")
+        entity.name = "HIDDEN_G_#{pid}"
+        global_count += 1
+      end
+    end
+    puts "  Named #{global_count} global-hidden entities (HIDDEN_G_*)"
+    
+    # 4. Excluded → EXCLUDED_{name}
+    excluded_count = 0
+    @excluded.each do |ex|
+      entity = find_by_pid(ex[:pid])
+      if entity
+        entity.name = "EXCLUDED_#{ex[:name]}"
+        excluded_count += 1
+      end
+    end
+    puts "  Named #{excluded_count} excluded entities (EXCLUDED_*)"
+    
+    named_count + scene_count + global_count + excluded_count
   end
   
   # ============================================
@@ -634,7 +732,7 @@ module IRP
       },
       entities: entities,
       excluded: @excluded,
-      scene_visibility: collect_scene_visibility
+      visibility: collect_visibility
     }
     
     File.write(File.join(output_dir, 'manifest.json'), JSON.pretty_generate(manifest))
@@ -714,13 +812,8 @@ module IRP
   # ============================================
   
   def self.name_entities_for_export
-    @role_map.each do |pid, info|
-      entity = find_by_pid(pid)
-      if entity
-        entity.name = "IRP_#{info[:name]}"
-      end
-    end
-    puts "  Named #{@role_map.length} entities with IRP_ prefix"
+    # Use new comprehensive naming (IRP_, HIDDEN_S_, HIDDEN_G_, EXCLUDED_)
+    name_all_for_export
   end
   
   def self.export_models(output_dir)

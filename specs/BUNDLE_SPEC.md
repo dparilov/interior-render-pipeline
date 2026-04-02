@@ -79,11 +79,17 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
     }
   ],
   
-  "scene_visibility": {
-    "scene_name": "Сцена №1",
-    "hidden_pids": [12345, 67890],
-    "hidden_layers": ["Front Wall"],
-    "hidden_count": 2
+  "visibility": {
+    "global": {
+      "hidden_pids": [12345],
+      "count": 1
+    },
+    "scene": {
+      "name": "Сцена №1",
+      "hidden_pids": [67890],
+      "hidden_layers": ["Front Wall"],
+      "count": 1
+    }
   }
 }
 ```
@@ -105,28 +111,43 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
 | technical_spec | object | ✅ | ТЗ traceability info |
 | entities | array | ✅ | Mapped entities |
 | excluded | array | ❌ | Excluded entities with reasons |
-| scene_visibility | object | ❌ | Hidden entities for current scene |
+| visibility | object | ❌ | Hidden entities (global + scene-specific) |
 
-### scene_visibility Object
+### visibility Object
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| scene_name | string | ✅ | Name of the active SketchUp scene |
-| hidden_pids | array | ✅ | List of persistent IDs of hidden entities |
-| hidden_layers | array | ✅ | List of layer names that are OFF for this scene |
-| hidden_count | integer | ✅ | Total count of hidden entities |
+Contains both global and scene-specific hidden entities:
 
-Example:
 ```json
-"scene_visibility": {
-  "scene_name": "Сцена №1",
-  "hidden_pids": [12345, 67890],
-  "hidden_layers": ["Front Wall", "Section Cut"],
-  "hidden_count": 2
+"visibility": {
+  "global": {
+    "hidden_pids": [12345],
+    "count": 1
+  },
+  "scene": {
+    "name": "Сцена №1",
+    "hidden_pids": [67890, 11111],
+    "hidden_layers": ["Front Wall", "Section Cut"],
+    "count": 2
+  }
 }
 ```
 
-This allows renderers to hide the same entities that were hidden in the original SketchUp scene (e.g., front wall for interior views).
+| Field | Type | Description |
+|-------|------|-------------|
+| global.hidden_pids | array | PIDs of entities with `entity.hidden? = true` (always hidden) |
+| global.count | integer | Count of global hidden |
+| scene.name | string | Name of the active SketchUp scene |
+| scene.hidden_pids | array | PIDs of entities on hidden layers for this scene |
+| scene.hidden_layers | array | Layer names that are OFF for this scene |
+| scene.count | integer | Count of scene-specific hidden |
+
+**Entity Naming Convention in GLB:**
+- `IRP_{name}` — mapped entities from role_map
+- `HIDDEN_S_{pid}` — scene-hidden entities (layer OFF)
+- `HIDDEN_G_{pid}` — global-hidden entities (entity.hidden?)
+- `EXCLUDED_{name}` — excluded entities
+
+This allows renderers to hide entities by name pattern matching.
 
 ### technical_spec Object
 
