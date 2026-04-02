@@ -65,7 +65,7 @@ def setup_camera_dae_matrix():
     # Rotation: camera default looks -Z, we need to look +Y (into room)
     # Rotate 90° around X to look forward, then adjust
     ROTATION = (math.radians(90), 0.0, 0.0)  # Look along +Y axis
-    FOV = 35.0  # degrees, from DAE <yfov>
+    FOV = 70.0  # degrees - wider for interior view (original DAE: 35°)
     
     print("=== B21 Camera from DAE Matrix ===")
     print(f"Position: {POSITION}")
@@ -167,17 +167,35 @@ def apply_section_planes(manifest):
         
         # Check if plane is perpendicular to Y (camera looking direction)
         if abs(normal[1]) > 0.9:
-            # Plane equation: y + d = 0 → y = -d
-            plane_y = -dist_m
+            # Plane equation: n·p + d = 0 → y*normal[1] + d = 0 → y = -d/normal[1]
+            # For normal=[0,1,0] and d=-1.3: y = -(-1.3)/1 = 1.3m
+            # But this is the plane position, not where we want to clip!
+            # 
+            # Section plane in SketchUp clips geometry BEHIND it (from camera's view)
+            # Camera at Y=-4.44 looking +Y
+            # Section plane at Y=1.3 means: show only geometry with Y > 1.3
+            # But we want to HIDE the front wall, so we should clip at room entrance
+            #
+            # The section plane distance is FROM ORIGIN, not from camera
+            # dist_m = -1.3 means plane is at Y = 1.3 (in front of origin)
+            
+            plane_y = dist_m  # The actual plane position (negative means +Y direction)
             cam_y = camera.location.y
             
-            # Distance from camera to section plane
-            near_clip = abs(cam_y - plane_y)
+            # We want to clip everything between camera and just inside the room
+            # Room starts at Y ≈ -0.74, camera at Y = -4.44
+            # A reasonable clip would be at Y ≈ -0.5 (just outside room entrance)
+            # 
+            # For now, use the section plane position directly
+            # and clip a bit before it to see into the room
+            target_clip_y = -0.5  # Just outside room entrance
+            near_clip = abs(cam_y - target_clip_y)
             
-            # Set camera near clip (with small margin)
-            camera.data.clip_start = max(0.01, near_clip - 0.1)
+            # Set camera near clip
+            camera.data.clip_start = max(0.01, near_clip)
             
-            print(f"  Camera Y={cam_y:.2f}, Plane Y={plane_y:.2f}")
+            print(f"  Camera Y={cam_y:.2f}, Section plane at Y={-dist_m:.2f}")
+            print(f"  Clipping at Y={target_clip_y:.2f}")
             print(f"  Set clip_start={camera.data.clip_start:.2f}m")
             applied += 1
     
