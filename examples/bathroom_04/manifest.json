@@ -1,0 +1,290 @@
+{
+  "version": "1.1",
+  "scene_id": "___________________________1",
+  "created": "2026-04-02T15:14:09Z",
+  "base_image": "beauty.png",
+  "depth_map": "depth.png",
+  "boundary_mask": "boundary_mask.png",
+  "image_size": {
+    "width": 1920,
+    "height": 1080
+  },
+  "camera": {
+    "eye": [
+      1.147,
+      -4.442,
+      1.948
+    ],
+    "target": [
+      1.162,
+      5.983,
+      1.598
+    ],
+    "up": [
+      4.703432067261298e-05,
+      0.03359354114074483,
+      0.9994355766038139
+    ],
+    "fov": 35.0
+  },
+  "technical_spec": {
+    "path": null,
+    "hash": "missing",
+    "summary": "ТЗ not found - manual verification required"
+  },
+  "entities": [
+    {
+      "pid": 36696,
+      "name": "walls",
+      "role": "surface.walls",
+      "class": "surface",
+      "surface_kind": "wall_tiles",
+      "mask": "masks/walls.png",
+      "coverage_pct": 2.7,
+      "reference": "references/wall_tiles.png",
+      "prompt": "white glossy wavy subway tiles, Equipe Costa Nova White style, 3D ribbed texture, vertical orientation, 50x200mm",
+      "prompt_source": "ТЗ.md section 'Настенная плитка'",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.55
+    },
+    {
+      "pid": 36828,
+      "name": "floor",
+      "role": "surface.floor",
+      "class": "surface",
+      "surface_kind": "floor_tiles",
+      "mask": "masks/floor.png",
+      "coverage_pct": 1.5,
+      "reference": "references/floor_tiles.jpg",
+      "prompt": "blue ceramic floor tiles with white geometric pattern, Equipe Rivoli Bergen Azul style, intersecting circles/petals, mediterranean, 200x200mm",
+      "prompt_source": "ТЗ.md section 'Напольная плитка'",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.55
+    },
+    {
+      "pid": 43754,
+      "name": "bathtub",
+      "role": "fixture.bathtub",
+      "class": "fixture",
+      "surface_kind": null,
+      "mask": "masks/bathtub.png",
+      "coverage_pct": 3.5,
+      "reference": "references/bathtub.jpg",
+      "prompt": "white cast iron bathtub Jacob Delafon Soissons 160x70cm, front panel covered with white Costa Nova tiles",
+      "prompt_source": "ТЗ.md section 'Ванна'",
+      "critical": false,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 124416,
+      "name": "vanity",
+      "role": "fixture.vanity",
+      "class": "fixture",
+      "surface_kind": null,
+      "mask": "masks/vanity.png",
+      "coverage_pct": 1.5,
+      "reference": "references/vanity.jpg",
+      "prompt": "wall-mounted dark charcoal gray vanity cabinet IDDIS Edifice 100cm, two soft-close drawers, white ceramic sink on top, chrome faucet IDDIS Aiger",
+      "prompt_source": "ТЗ.md sections 'Тумба с раковиной' + 'Смеситель'",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 143585,
+      "name": "shower_screen",
+      "role": "fixture.shower_screen",
+      "class": "fixture",
+      "surface_kind": null,
+      "mask": "masks/shower_screen.png",
+      "coverage_pct": 2.2,
+      "reference": "references/shower.jpg",
+      "prompt": "glass shower screen panel, minimalist frameless design, transparent",
+      "prompt_source": "Inferred from beauty.png - glass partition visible",
+      "critical": false,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 229917,
+      "name": "rainshower",
+      "role": "fixture.rainshower",
+      "class": "fixture",
+      "surface_kind": null,
+      "mask": "masks/rainshower.png",
+      "coverage_pct": 2.4,
+      "reference": "references/shower.jpg",
+      "prompt": "chrome shower system IDDIS Aiger with large 228mm rain shower head and handheld shower",
+      "prompt_source": "ТЗ.md section 'Душевая система'",
+      "critical": false,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 359764,
+      "name": "towel_warmer",
+      "role": "fixture.towel_warmer",
+      "class": "fixture",
+      "surface_kind": null,
+      "mask": "masks/towel_warmer.png",
+      "coverage_pct": 2.1,
+      "reference": "references/towel_warmer.jpg",
+      "prompt": "WHITE vertical electric heated towel rail Ewrika Penelopa X5 270x1200mm, NOT black NOT chrome, white color only",
+      "prompt_source": "ТЗ.md section 'Полотенцесушитель' - CRITICAL: must be WHITE",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 352872,
+      "name": "window",
+      "role": "opening.window",
+      "class": "opening",
+      "surface_kind": null,
+      "mask": "masks/window.png",
+      "coverage_pct": 1.5,
+      "reference": null,
+      "prompt": "small window with white PVC frame, frosted glass, warm natural daylight source",
+      "prompt_source": "ТЗ.md 'Освещение: тёплый естественный свет из небольшого окна'",
+      "critical": false,
+      "render_mode": "structural_controlnet",
+      "ipadapter_weight": 0.0
+    },
+    {
+      "pid": 424271,
+      "name": "basket",
+      "role": "fixture.basket",
+      "class": "fixture",
+      "surface_kind": null,
+      "mask": "masks/basket.png",
+      "coverage_pct": 3.4,
+      "reference": "references/basket.jpg",
+      "prompt": "round woven natural rattan laundry basket La Redoute bohemian style with lid, beige color",
+      "prompt_source": "ТЗ.md section 'Корзина для белья'",
+      "critical": false,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    },
+    {
+      "pid": 471300,
+      "name": "mirror",
+      "role": "fixture.mirror",
+      "class": "fixture",
+      "surface_kind": null,
+      "mask": "masks/mirror.png",
+      "coverage_pct": 1.4,
+      "reference": "references/mirror.jpg",
+      "prompt": "rectangular mirror IDDIS Uniq with rounded corners and integrated warm LED backlight 3000K around perimeter",
+      "prompt_source": "ТЗ.md section 'Зеркало'",
+      "critical": true,
+      "render_mode": "regional_ipadapter",
+      "ipadapter_weight": 0.5
+    }
+  ],
+  "excluded": [
+    {
+      "pid": 27700,
+      "name": "Sumele",
+      "reason": "Human figure for scale reference, position outside room (x=-0.44)"
+    }
+  ],
+  "visibility": {
+    "global": {
+      "hidden_pids": [
+
+      ],
+      "hidden_names": [
+
+      ],
+      "count": 0
+    },
+    "scene": {
+      "name": "Сцена №1",
+      "hidden_pids": [
+
+      ],
+      "hidden_names": [
+
+      ],
+      "hidden_layers": [
+
+      ],
+      "count": 0
+    }
+  },
+  "coordinate_transform": {
+    "dae_unit_meters": 0.0254,
+    "axis_swap": "Z-up → Y-up: (x,y,z) → (x,z,-y)",
+    "note": "Apply after loading DAE camera into GLB scene",
+    "glb_offset": [
+      0.0,
+      0.0,
+      0.0
+    ]
+  },
+  "entity_mapping": {
+    "walls": {
+      "pid": 36696,
+      "glb_name": "IRP_walls",
+      "role": "surface.walls",
+      "entity_class": "surface"
+    },
+    "floor": {
+      "pid": 36828,
+      "glb_name": "IRP_floor",
+      "role": "surface.floor",
+      "entity_class": "surface"
+    },
+    "bathtub": {
+      "pid": 43754,
+      "glb_name": "IRP_bathtub",
+      "role": "fixture.bathtub",
+      "entity_class": "fixture"
+    },
+    "vanity": {
+      "pid": 124416,
+      "glb_name": "IRP_vanity",
+      "role": "fixture.vanity",
+      "entity_class": "fixture"
+    },
+    "shower_screen": {
+      "pid": 143585,
+      "glb_name": "IRP_shower_screen",
+      "role": "fixture.shower_screen",
+      "entity_class": "fixture"
+    },
+    "rainshower": {
+      "pid": 229917,
+      "glb_name": "IRP_rainshower",
+      "role": "fixture.rainshower",
+      "entity_class": "fixture"
+    },
+    "towel_warmer": {
+      "pid": 359764,
+      "glb_name": "IRP_towel_warmer",
+      "role": "fixture.towel_warmer",
+      "entity_class": "fixture"
+    },
+    "window": {
+      "pid": 352872,
+      "glb_name": "IRP_window",
+      "role": "opening.window",
+      "entity_class": "opening"
+    },
+    "basket": {
+      "pid": 424271,
+      "glb_name": "IRP_basket",
+      "role": "fixture.basket",
+      "entity_class": "fixture"
+    },
+    "mirror": {
+      "pid": 471300,
+      "glb_name": "IRP_mirror",
+      "role": "fixture.mirror",
+      "entity_class": "fixture"
+    }
+  }
+}
