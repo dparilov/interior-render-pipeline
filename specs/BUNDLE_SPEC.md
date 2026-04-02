@@ -77,7 +77,14 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
       "name": "Sumele",
       "reason": "Human figure for scale"
     }
-  ]
+  ],
+  
+  "scene_visibility": {
+    "scene_name": "Сцена №1",
+    "hidden_pids": [12345, 67890],
+    "hidden_layers": ["Front Wall"],
+    "hidden_count": 2
+  }
 }
 ```
 
@@ -98,6 +105,28 @@ All fields marked REQUIRED must be present. Renderer will fail if missing.
 | technical_spec | object | ✅ | ТЗ traceability info |
 | entities | array | ✅ | Mapped entities |
 | excluded | array | ❌ | Excluded entities with reasons |
+| scene_visibility | object | ❌ | Hidden entities for current scene |
+
+### scene_visibility Object
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| scene_name | string | ✅ | Name of the active SketchUp scene |
+| hidden_pids | array | ✅ | List of persistent IDs of hidden entities |
+| hidden_layers | array | ✅ | List of layer names that are OFF for this scene |
+| hidden_count | integer | ✅ | Total count of hidden entities |
+
+Example:
+```json
+"scene_visibility": {
+  "scene_name": "Сцена №1",
+  "hidden_pids": [12345, 67890],
+  "hidden_layers": ["Front Wall", "Section Cut"],
+  "hidden_count": 2
+}
+```
+
+This allows renderers to hide the same entities that were hidden in the original SketchUp scene (e.g., front wall for interior views).
 
 ### technical_spec Object
 

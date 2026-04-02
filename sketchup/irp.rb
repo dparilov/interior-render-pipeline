@@ -504,6 +504,69 @@ module IRP
   end
   
   # ============================================
+  # SCENE VISIBILITY
+  # ============================================
+  
+  def self.collect_scene_visibility
+    page = model.pages.selected_page
+    hidden_pids = []
+    hidden_layers = []
+    
+    # Hidden layers for current Scene
+    if page
+      # Get layers that are OFF for this scene
+      model.layers.each do |layer|
+        # In SketchUp, page.layers returns layers that are visible
+        # We want layers that are NOT visible
+        begin
+          layer_visible = page.get_status(layer)
+          unless layer_visible
+            layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
+            hidden_layers << layer_name
+          end
+        rescue
+          # Fallback for older API
+          unless page.layers.include?(layer)
+            layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
+            hidden_layers << layer_name
+          end
+        end
+      end
+    end
+    
+    # Collect hidden entities recursively
+    collect_hidden_recursive(model.entities, hidden_pids, hidden_layers)
+    
+    scene_name = page ? page.name : 'Default'
+    scene_name = scene_name.encode('UTF-8', invalid: :replace, undef: :replace) rescue 'Default'
+    
+    {
+      scene_name: scene_name,
+      hidden_pids: hidden_pids,
+      hidden_layers: hidden_layers,
+      hidden_count: hidden_pids.length
+    }
+  end
+  
+  def self.collect_hidden_recursive(entities, hidden_pids, hidden_layers)
+    entities.each do |e|
+      next unless e.is_a?(Sketchup::Group) || e.is_a?(Sketchup::ComponentInstance)
+      
+      # Check if entity is hidden or on a hidden layer
+      layer_name = e.layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue e.layer.name
+      
+      if e.hidden? || hidden_layers.include?(layer_name)
+        hidden_pids << e.persistent_id
+        next  # Don't recurse into hidden entities
+      end
+      
+      # Recurse into visible entities
+      inner = e.is_a?(Sketchup::Group) ? e.entities : e.definition.entities
+      collect_hidden_recursive(inner, hidden_pids, hidden_layers)
+    end
+  end
+  
+  # ============================================
   # MANIFEST
   # ============================================
   
@@ -570,7 +633,8 @@ module IRP
         summary: @technical_spec[:summary] || 'ТЗ not found - manual verification required'
       },
       entities: entities,
-      excluded: @excluded
+      excluded: @excluded,
+      scene_visibility: collect_scene_visibility
     }
     
     File.write(File.join(output_dir, 'manifest.json'), JSON.pretty_generate(manifest))
