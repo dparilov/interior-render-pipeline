@@ -1,0 +1,29 @@
+{
+  "experiment": "B36",
+  "method": "Exact viewport resolution",
+  "bundle": "bathroom_05",
+  "resolution": [
+    1066,
+    1239
+  ],
+  "aspect": 0.86,
+  "source": "viewport exact",
+  "camera": {
+    "eye": [
+      1.147,
+      -4.442,
+      1.948
+    ],
+    "fov_vertical": 35.0,
+    "fov_horizontal": 30.4,
+    "resolution": [
+      1066,
+      1239
+    ],
+    "aspect": 0.86
+  },
+  "offset": {
+    "camera_y_adjusted": -4.599,
+    "clip_start": 5.899
+  }
+}
