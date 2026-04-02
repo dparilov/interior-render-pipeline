@@ -75,6 +75,13 @@ def apply_scene_visibility(manifest_path):
         print("No visibility data in manifest")
         return 0
     
+    # Collect all names to hide (from new format)
+    hidden_names = set()
+    if 'visibility' in manifest:
+        vis = manifest['visibility']
+        hidden_names.update(vis.get('global', {}).get('hidden_names', []))
+        hidden_names.update(vis.get('scene', {}).get('hidden_names', []))
+    
     hidden_count = 0
     for obj in bpy.data.objects:
         if obj.type != 'MESH':
@@ -82,11 +89,16 @@ def apply_scene_visibility(manifest_path):
         
         should_hide = False
         
-        # Method 1: Check for HIDDEN_S_ or HIDDEN_G_ prefix (new naming)
-        if obj.name.startswith('HIDDEN_S_') or obj.name.startswith('HIDDEN_G_'):
+        # Method 1: Check for exact name match (new format with hidden_names)
+        if obj.name in hidden_names:
             should_hide = True
         
-        # Method 2: Try to extract PID from object name
+        # Method 2: Check for HIDDEN_S_ or HIDDEN_G_ prefix (naming convention)
+        if not should_hide:
+            if obj.name.startswith('HIDDEN_S_') or obj.name.startswith('HIDDEN_G_'):
+                should_hide = True
+        
+        # Method 3: Try to extract PID from object name (legacy/fallback)
         if not should_hide:
             name_parts = obj.name.replace('IRP_', '').replace('.', '_').split('_')
             for part in name_parts:
@@ -96,7 +108,7 @@ def apply_scene_visibility(manifest_path):
                         should_hide = True
                         break
         
-        # Method 3: Check if object name matches hidden layer
+        # Method 4: Check if object name matches hidden layer
         if not should_hide:
             for layer_name in hidden_layers:
                 if layer_name.lower() in obj.name.lower():

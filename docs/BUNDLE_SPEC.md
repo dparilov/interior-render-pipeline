@@ -149,6 +149,45 @@ Contains both global and scene-specific hidden entities:
 
 This allows renderers to hide entities by name pattern matching.
 
+### coordinate_transform Object
+
+```json
+"coordinate_transform": {
+  "dae_unit_meters": 0.0254,
+  "axis_swap": "Z-up → Y-up: (x,y,z) → (x,z,-y)",
+  "glb_offset": [0.0, 0.0, 0.0]
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| dae_unit_meters | float | DAE unit in meters (0.0254 for inches) |
+| axis_swap | string | Axis transformation description |
+| glb_offset | array | [x, y, z] offset to apply after axis swap |
+
+**Camera Transform Formula (DAE to GLB):**
+```python
+INCH = 0.0254
+# Position: inches Z-up → meters Y-up + offset
+glb_pos = [
+    dae_pos[0] * INCH + offset[0],
+    dae_pos[2] * INCH + offset[1],  # Z → Y
+    -dae_pos[1] * INCH + offset[2]  # -Y → Z
+]
+```
+
+### entity_mapping Object
+
+Maps entity names to PIDs and GLB names for lookup:
+
+```json
+"entity_mapping": {
+  "walls": {"pid": 36696, "glb_name": "IRP_walls", "role": "surface.walls"},
+  "floor": {"pid": 36828, "glb_name": "IRP_floor", "role": "surface.floor"},
+  "hidden_global_0": {"pid": 27700, "glb_name": "HIDDEN_G_27700", "type": "global_hidden"}
+}
+```
+
 ### technical_spec Object
 
 | Field | Type | Required | Description |

@@ -558,11 +558,13 @@ module IRP
     {
       global: {
         hidden_pids: global_hidden,
+        hidden_names: global_hidden.map { |pid| "HIDDEN_G_#{pid}" },
         count: global_hidden.length
       },
       scene: {
         name: scene_name,
         hidden_pids: scene_hidden,
+        hidden_names: scene_hidden.map { |pid| "HIDDEN_S_#{pid}" },
         hidden_layers: scene_hidden_layers,
         count: scene_hidden.length
       }
@@ -665,6 +667,59 @@ module IRP
   end
   
   # ============================================
+  # COORDINATE TRANSFORM
+  # ============================================
+  
+  def self.calculate_coordinate_transform
+    """Calculate transform from DAE coordinates to GLB coordinates.
+    
+    SketchUp DAE: inches, Z-up
+    SketchUp GLB: meters, Y-up (Blender convention)
+    """
+    {
+      dae_unit_meters: 0.0254,  # inches to meters
+      axis_swap: "Z-up → Y-up: (x,y,z) → (x,z,-y)",
+      note: "Apply after loading DAE camera into GLB scene",
+      glb_offset: [0.0, 0.0, 0.0]  # May need calibration per model
+    }
+  end
+  
+  def self.build_entity_mapping
+    """Build mapping of role names to PIDs and GLB names."""
+    mapping = {}
+    
+    @role_map.each do |pid, info|
+      mapping[info[:name]] = {
+        pid: pid,
+        glb_name: "IRP_#{info[:name]}",
+        role: info[:role],
+        entity_class: info[:entity_class] || 'fixture'
+      }
+    end
+    
+    # Add visibility info
+    vis = collect_visibility
+    
+    vis[:global][:hidden_pids].each_with_index do |pid, i|
+      mapping["hidden_global_#{i}"] = {
+        pid: pid,
+        glb_name: "HIDDEN_G_#{pid}",
+        type: "global_hidden"
+      }
+    end
+    
+    vis[:scene][:hidden_pids].each_with_index do |pid, i|
+      mapping["hidden_scene_#{i}"] = {
+        pid: pid,
+        glb_name: "HIDDEN_S_#{pid}",
+        type: "scene_hidden"
+      }
+    end
+    
+    mapping
+  end
+  
+  # ============================================
   # MANIFEST
   # ============================================
   
@@ -732,7 +787,9 @@ module IRP
       },
       entities: entities,
       excluded: @excluded,
-      visibility: collect_visibility
+      visibility: collect_visibility,
+      coordinate_transform: calculate_coordinate_transform,
+      entity_mapping: build_entity_mapping
     }
     
     File.write(File.join(output_dir, 'manifest.json'), JSON.pretty_generate(manifest))
