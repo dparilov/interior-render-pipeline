@@ -1,0 +1,45 @@
+{
+  "experiment": "B14",
+  "front_wall_faces_removed": 11881,
+  "camera_source": "exact_dae_matrix",
+  "camera_id": "ID2",
+  "camera_position_m": [
+    0.45176441192626954,
+    -1.7486529541015625,
+    0.7669273376464844
+  ],
+  "camera_fov_deg": 35.0,
+  "camera_look_direction": [
+    0.0013993082102388144,
+    0.9994346499443054,
+    -0.03359362483024597
+  ],
+  "tile_scale_floor": [
+    5.0,
+    5.0,
+    1.0
+  ],
+  "note": "NO manual adjustments - exact DAE matrix, front wall removed",
+  "issue": "DAE and GLB have different coordinate systems",
+  "dae_bounds_m": {
+    "x": [
+      -5.22,
+      5.0
+    ],
+    "y": [
+      -5.0,
+      5.0
+    ]
+  },
+  "glb_bounds_m": {
+    "x": [
+      -0.69,
+      2.55
+    ],
+    "y": [
+      -0.74,
+      3.29
+    ]
+  },
+  "camera_x_offset_needed": 0.48
+}
