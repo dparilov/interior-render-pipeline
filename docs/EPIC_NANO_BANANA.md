@@ -216,3 +216,80 @@ def generate_prompt(manifest, references):
     
     return prompt
 ```
+
+---
+
+## Full Input Pipeline
+
+### Required Inputs
+
+| Input | Source | Role |
+|-------|--------|------|
+| **Base Image** | `beauty.png` from bundle | Geometry anchor |
+| **Masks** | `masks/*.png` from bundle | Regional control |
+| **Manifest** | `manifest.json` | Entity metadata |
+| **References** | `references/*.jpg` | Material swatches |
+| **Tech Spec** | Client ТЗ | Requirements |
+
+### Pipeline Flow
+
+```
+SketchUp → IRP.export → Bundle
+                          ↓
+              ┌───────────────────────┐
+              │   Prompt Generator    │
+              │   manifest + ТЗ +     │
+              │   references          │
+              └───────────────────────┘
+                          ↓
+              ┌───────────────────────┐
+              │   Nano Banana Pro     │
+              │   base_image +        │
+              │   references +        │
+              │   masks (optional) +  │
+              │   prompt              │
+              └───────────────────────┘
+                          ↓
+              Photorealistic Render
+```
+
+### Base Image Options
+
+| Option | Source | Pros | Cons |
+|--------|--------|------|------|
+| A | SketchUp beauty.png | Fast, exists | SKP textures |
+| B | Blender white render | Clean geometry | Extra step |
+| C | Blender + lighting | Realistic shadows | Complex |
+
+### Prompt Auto-generation
+
+```python
+def generate_prompt(manifest, tech_spec, references):
+    prompt = "Transform SketchUp view into photorealistic render.\n"
+    prompt += "GEOMETRY: Preserve exact camera, fixtures, layout.\n"
+    prompt += "SURFACES:\n"
+    
+    for entity in manifest['entities']:
+        if entity['class'] == 'surface':
+            ref_idx = references.index(entity['reference']) + 1
+            prompt += f"- {entity['name']}: ref{ref_idx}, {entity['prompt']}\n"
+    
+    prompt += "FIXTURES:\n"
+    for entity in manifest['entities']:
+        if entity['class'] == 'fixture':
+            prompt += f"- {entity['name']}: {entity.get('prompt', 'enhance realism')}\n"
+    
+    prompt += f"LIGHTING: {tech_spec.get('lighting', 'natural daylight')}\n"
+    prompt += "STYLE: Professional interior photography, 4K.\n"
+    
+    return prompt
+```
+
+### Mask Usage
+
+For precise regional control:
+```
+"The white area in mask image shows the floor surface.
+Apply tile pattern from reference 1 ONLY to this masked area.
+Keep all other areas unchanged."
+```
