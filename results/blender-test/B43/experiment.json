@@ -1,0 +1,12 @@
+{
+  "experiment": "B43",
+  "method": "LuxCoreRender GPU test",
+  "status": "FAILED",
+  "reason": "BlendLuxCore v2.10.2 not compatible with Blender 4.3",
+  "fallback": "Cycles CPU (process killed before completion)",
+  "notes": [
+    "LuxCore addon requires specific Blender version",
+    "v2.10.2 supports Blender 3.x, not 4.x",
+    "Need to use older Blender or wait for LuxCore 4.x support"
+  ]
+}
