@@ -1,0 +1,30 @@
+{
+  "experiment": "B40",
+  "method": "UV mapping diagnostic + variants test",
+  "variants": {
+    "B40a_uv": {
+      "mapping": "UV",
+      "scale": [
+        5,
+        5
+      ],
+      "output": "B40a_uv.png"
+    },
+    "B40b_generated": {
+      "mapping": "Generated",
+      "scale": [
+        3,
+        3
+      ],
+      "output": "B40b_generated.png"
+    },
+    "B40c_box": {
+      "mapping": "BOX",
+      "scale": [
+        3,
+        3
+      ],
+      "output": "B40c_box.png"
+    }
+  }
+}

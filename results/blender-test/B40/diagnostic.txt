@@ -1,0 +1,11 @@
+=== UV DIAGNOSTIC for Geom3D_IRP_walls ===
+
+Vertices: 55
+Polygons: 43
+UV layers: 0
+
+⚠️ NO UV LAYERS FOUND!
+
+Object bounds:
+  Min: [0.0, -118.11, 0.0]
+  Max: [86.024, -0.0, 72.323]
