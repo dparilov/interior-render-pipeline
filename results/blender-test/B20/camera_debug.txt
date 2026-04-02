@@ -1,0 +1,11 @@
+=== B20 STRICT Camera Debug ===
+
+DAE (from manifest):
+  eye:    [1.147, -4.442, 1.948]
+  target: [1.162, 5.983, 1.598]
+  fov:    35.0°
+
+GLB (after transform x,z,-y):
+  eye:    [1.147, 1.948, 4.442]
+  target: [1.162, 1.598, -5.983]
+  fov:    35.0° (unchanged)

@@ -1,0 +1,39 @@
+{
+  "experiment": "B20",
+  "method": "STRICT camera from manifest (no calculations)",
+  "bundle": "bathroom_04",
+  "camera": {
+    "dae_eye": [
+      1.147,
+      -4.442,
+      1.948
+    ],
+    "dae_target": [
+      1.162,
+      5.983,
+      1.598
+    ],
+    "glb_eye": [
+      1.147,
+      1.948,
+      4.442
+    ],
+    "glb_target": [
+      1.162,
+      1.598,
+      -5.983
+    ],
+    "fov": 35.0,
+    "transform": "(x, y, z) \u2192 (x, z, -y)"
+  },
+  "visibility": {
+    "global_hidden_pids": [],
+    "scene_hidden_pids": [],
+    "hidden_count": 0
+  },
+  "constraints": [
+    "NO calculate_scene_bounds()",
+    "FOV from manifest only",
+    "Camera from manifest only"
+  ]
+}
