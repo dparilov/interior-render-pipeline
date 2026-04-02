@@ -23,8 +23,8 @@ def parse_args():
         argv = []
     
     parser = argparse.ArgumentParser(description='Render model with material textures')
-    parser.add_argument('--model', '-m', required=True, help='Input GLB model')
-    parser.add_argument('--camera', '-c', required=True, help='Camera JSON file')
+    parser.add_argument('--model', '-m', required=True, help='Input model (GLB or DAE)')
+    parser.add_argument('--camera', '-c', help='Camera JSON file (optional if using DAE)')
     parser.add_argument('--floor-texture', help='Floor texture image')
     parser.add_argument('--wall-texture', help='Wall texture image')
     parser.add_argument('--floor-tile-size', default='200x200', help='Floor tile size mm')
@@ -97,13 +97,38 @@ def apply_scene_visibility(manifest_path):
 
 
 def import_model(filepath):
+    """Import model from GLB, FBX, or DAE format.
+    
+    For DAE files, uses pycollada via dae_to_blender module.
+    Returns camera object if DAE camera was imported, None otherwise.
+    """
     filepath = os.path.abspath(filepath)
     ext = Path(filepath).suffix.lower()
-    if ext in ['.glb', '.gltf']:
+    
+    camera = None
+    
+    if ext == '.dae':
+        # Use pycollada for DAE import
+        script_dir = Path(__file__).parent
+        if str(script_dir) not in sys.path:
+            sys.path.insert(0, str(script_dir))
+        from dae_to_blender import import_dae_geometry, import_dae_camera
+        
+        objects = import_dae_geometry(filepath)
+        camera = import_dae_camera(filepath)
+        print(f"Imported DAE {filepath}: {len(objects)} meshes")
+        if camera:
+            print(f"  Camera from DAE: {camera.name}")
+    elif ext in ['.glb', '.gltf']:
         bpy.ops.import_scene.gltf(filepath=filepath)
+        print(f"Imported GLB {filepath}: {len([o for o in bpy.data.objects if o.type == 'MESH'])} meshes")
     elif ext == '.fbx':
         bpy.ops.import_scene.fbx(filepath=filepath)
-    print(f"Imported {filepath}: {len([o for o in bpy.data.objects if o.type == 'MESH'])} meshes")
+        print(f"Imported FBX {filepath}: {len([o for o in bpy.data.objects if o.type == 'MESH'])} meshes")
+    else:
+        raise ValueError(f"Unsupported format: {ext}")
+    
+    return camera
 
 
 def setup_camera(camera_json_path):
@@ -387,10 +412,13 @@ def render(output_path):
 def main():
     args = parse_args()
     
-    print("=== Blender Material Render (B8: Real Mesh Separation) ===")
+    print("=== Blender Material Render (B15b: DAE Support) ===")
     
     clear_scene()
-    import_model(args.model)
+    
+    # Import model (GLB, FBX, or DAE)
+    # DAE import also returns camera if available
+    dae_camera = import_model(args.model)
     
     # Apply scene visibility from manifest (hide entities hidden in SketchUp)
     manifest_path = Path(args.model).parent.parent / 'manifest.json'
@@ -400,7 +428,14 @@ def main():
     # Per-face assignment doesn't work with textures in Cycles
     sep_stats = separate_geometry()
     
-    setup_camera(args.camera)
+    # Setup camera: use DAE camera if available, otherwise JSON
+    if dae_camera:
+        print(f"Using camera from DAE: {dae_camera.name}")
+        bpy.context.scene.camera = dae_camera
+    elif args.camera:
+        setup_camera(args.camera)
+    else:
+        print("WARNING: No camera specified and no camera in DAE!")
     
     # Create materials
     floor_mat = None
@@ -424,9 +459,12 @@ def main():
     
     # Save experiment.json
     exp_path = str(Path(args.output).parent / "experiment.json")
+    model_format = Path(args.model).suffix.lower()
     exp_data = {
-        "experiment": "B8",
-        "method": "Real mesh separation (bpy.ops.mesh.separate)",
+        "experiment": "B15b",
+        "method": "Real mesh separation + DAE support",
+        "model_format": model_format,
+        "camera_source": "dae" if dae_camera else "json",
         "objects_created": ["IRP_Floor", "IRP_Walls", "IRP_Other"],
         "floor_faces": mat_stats.get('floor', 0),
         "wall_faces": mat_stats.get('wall', 0),

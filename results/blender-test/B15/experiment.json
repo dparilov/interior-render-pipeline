@@ -1,0 +1,19 @@
+{
+  "experiment": "B15b",
+  "method": "Real mesh separation + DAE support",
+  "model_format": ".dae",
+  "camera_source": "dae",
+  "objects_created": [
+    "IRP_Floor",
+    "IRP_Walls",
+    "IRP_Other"
+  ],
+  "floor_faces": 1200,
+  "wall_faces": 110976,
+  "other_faces": 78460,
+  "hidden_objects": 0,
+  "floor_tile_size": "200x200",
+  "wall_tile_size": "50x200",
+  "resolution": "1920x1080",
+  "samples": 64
+}
