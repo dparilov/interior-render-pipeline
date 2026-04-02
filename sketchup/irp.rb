@@ -511,6 +511,38 @@ module IRP
   @scene_hidden_pids = []
   @global_hidden_pids = []
   
+  # Layer page_behavior flag
+  LAYER_HIDDEN_BY_DEFAULT = 0x0001
+  
+  def self.hidden_by_default?(layer)
+    """Check if layer is hidden by default (page_behavior flag)."""
+    (layer.page_behavior & LAYER_HIDDEN_BY_DEFAULT) == LAYER_HIDDEN_BY_DEFAULT
+  end
+  
+  def self.layer_visible_in_scene?(layer, page)
+    """Determine if layer is visible in specific scene.
+    
+    SketchUp layer visibility logic:
+    - page.layers contains layers with NON-DEFAULT visibility for this scene
+    - If layer is in page.layers AND hidden_by_default => it's VISIBLE (override)
+    - If layer is in page.layers AND NOT hidden_by_default => it's HIDDEN (override)
+    - If layer NOT in page.layers => use default visibility
+    """
+    return true unless page  # No scene = all visible
+    
+    in_page_layers = page.layers.include?(layer)
+    default_hidden = hidden_by_default?(layer)
+    
+    if in_page_layers
+      # Layer has non-default visibility for this scene
+      # XOR logic: visibility is OPPOSITE of default
+      return default_hidden  # If default hidden, being in list means visible
+    else
+      # Layer uses default visibility
+      return !default_hidden  # Visible if NOT hidden by default
+    end
+  end
+  
   def self.collect_visibility
     """Collect visibility info at both global and scene levels."""
     page = model.pages.selected_page
@@ -526,26 +558,9 @@ module IRP
     
     if page
       model.layers.each do |layer|
-        # Use get_visibility for scene-specific layer state
-        begin
-          unless page.get_visibility(layer)
-            layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
-            scene_hidden_layers << layer_name
-          end
-        rescue
-          # Fallback for older API versions
-          begin
-            unless page.get_status(layer)
-              layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
-              scene_hidden_layers << layer_name
-            end
-          rescue
-            # Last resort fallback
-            unless page.layers.include?(layer)
-              layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
-              scene_hidden_layers << layer_name
-            end
-          end
+        unless layer_visible_in_scene?(layer, page)
+          layer_name = layer.name.encode('UTF-8', invalid: :replace, undef: :replace) rescue layer.name
+          scene_hidden_layers << layer_name
         end
       end
       collect_scene_hidden(model.entities, scene_hidden, scene_hidden_layers)
