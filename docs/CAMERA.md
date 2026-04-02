@@ -1,79 +1,71 @@
-# Camera Transform — SketchUp → Blender
+# Camera Transform — SketchUp to Blender
 
-## Canonical Formula
+## The Problem
 
-SketchUp exports camera in DAE with:
-- Position in **inches**, Z-up coordinate system
-- 4x4 transformation matrix
+SketchUp DAE exports camera position and rotation matrix.
+Blender GLB uses different coordinate conventions.
+Getting the camera right is critical for matching beauty.png.
 
-Blender GLB import uses **Z-up** (same as SketchUp).
+## Solution (Phase B Finding)
 
-### Step 1: Read from manifest.json
+**Don't use complex matrix transforms.** Use DAE position as-is with fixed rotation.
 
-```python
-import json
-
-with open('manifest.json') as f:
-    m = json.load(f)
-
-# Position already in meters (irp.rb converts)
-eye = m['camera']['eye']      # [x, y, z] meters
-target = m['camera']['target'] # [x, y, z] meters
-fov = m['camera']['fov']       # degrees
-```
-
-### Step 2: Apply in Blender
+### Working Formula
 
 ```python
-import bpy
 import math
 
-camera = bpy.data.objects['Camera']
+# From manifest.json camera.eye (already in meters)
+dae_eye = [1.147, -4.442, 1.948]
 
-# Position: use directly (both Z-up)
-camera.location = (eye[0], eye[1], eye[2])
+# Position: use as-is
+camera.location = (dae_eye[0], dae_eye[1], dae_eye[2])
 
-# Rotation: 90° around X to look along +Y
+# Rotation: 90° around X axis (camera looks +Y direction)
 camera.rotation_mode = 'XYZ'
-camera.rotation_euler = (math.radians(90), 0.0, 0.0)
+camera.rotation_euler = (math.radians(90), 0, 0)
 
-# FOV
-camera.data.angle = math.radians(fov)
+# FOV from manifest
+camera.data.angle = math.radians(35.0)
 ```
 
-### Why 90° Rotation?
+### Why This Works
 
-- Blender camera default: looks along **-Z**
-- SketchUp camera: looks along **+Y** (into room)
-- Rotate 90° around X: -Z becomes +Y ✓
+1. Both SketchUp GLB and Blender use **Z-up** coordinate system
+2. Camera Y=-4.44 places it **outside** the room (in front of entrance)
+3. 90° X rotation makes camera look **+Y** (into the room)
 
----
+### What Doesn't Work
 
-## Verified Values (bathroom_04)
+❌ Transform `(x, z, -y)` — puts camera outside scene bounds
+❌ Using DAE rotation matrix directly — axis conventions differ
+❌ Track-to constraint with DAE target — target coordinates also wrong
+
+## Coordinate Systems
+
+| System | X | Y | Z |
+|--------|---|---|---|
+| SketchUp | Right | Forward | Up |
+| Blender | Right | Forward | Up |
+| GLB | Right | Forward | Up |
+
+All are Z-up! The issue is **camera facing direction**, not coordinates.
+
+## Scene Bounds Check
+
+Always verify camera is near the scene:
 
 ```python
-# From DAE matrix decomposition
-POSITION = (1.147482, -4.441579, 1.947995)  # meters
-ROTATION = (math.radians(90), 0.0, 0.0)     # radians
-FOV = 35.0                                   # degrees
+# Scene bounds for bathroom_04
+Y: [-0.74, 3.29]
+Z: [0, 3.50]
+
+# Camera at Y=-4.44 is OUTSIDE (correct - in front of door)
+# Camera at Z=1.95 is INSIDE bounds (correct - eye height)
 ```
-
-**Result:** Camera outside room at Y=-4.44m, looking through door into bathroom.
-
----
 
 ## Known Issues
 
-### Clipping Plane Not Exported
-
-SketchUp viewport clipping ("ползунок") hides geometry in front of camera. This is **NOT** exported to DAE/GLB.
-
-**Workaround:** Manually hide front-facing geometry in SketchUp before export.
-
----
-
-## Reference
-
-- B21 commit: `7ed7a45`
-- B26 commit: `24baa12` (exact copy, verified)
-- Script: `scripts/b21_dae_matrix_render.py`
+1. **Narrow FOV**: DAE FOV=35° shows limited view through doorway
+2. **Front wall blocking**: Need to hide front wall for wider interior view
+3. **Mirror reflection**: Renders black without proper material setup
