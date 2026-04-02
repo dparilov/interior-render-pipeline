@@ -33,6 +33,7 @@ echo ""
 echo "[3/5] Installing Python dependencies..."
 pip install -q -r $COMFYUI_PATH/requirements.txt 2>/dev/null || true
 pip install -q opencv-python-headless tqdm alembic blake3 sqlalchemy aiohttp 2>/dev/null || true
+pip install -q pycollada numpy 2>/dev/null || true  # For DAE import
 
 # 4. Check models
 echo ""
