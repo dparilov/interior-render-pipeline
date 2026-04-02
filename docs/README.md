@@ -24,6 +24,7 @@ blender --background --python scripts/render_canonical.py -- \
 | Document | Description |
 |----------|-------------|
 | [CAMERA.md](CAMERA.md) | Camera transform formula (SketchUp → Blender) |
+| [TEXTURES.md](TEXTURES.md) | Tile/texture rendering guide |
 | [WORKFLOW.md](WORKFLOW.md) | End-to-end pipeline |
 | [PREFLIGHT.md](PREFLIGHT.md) | SketchUp export checklist |
 | [KNOWN_ISSUES.md](KNOWN_ISSUES.md) | Blocking issues and workarounds |
@@ -47,3 +48,18 @@ blender --background --python scripts/render_canonical.py -- \
 | `blender_material_render.py` | Material-based render (floor/wall textures) |
 | `compare_dae_glb.py` | Compare DAE vs GLB imports |
 | `dae_to_blender.py` | Import DAE via pycollada |
+
+## Texture Rendering
+
+```bash
+# Render with floor/wall textures
+blender --background --python scripts/blender_material_render.py -- \
+    --model examples/bathroom_04/model.glb \
+    --floor-texture references/floor_tiles.jpg \
+    --wall-texture references/wall_tiles.png \
+    --floor-tile-size 200x200 \
+    --wall-tile-size 50x200 \
+    --output render.png
+```
+
+See [TEXTURES.md](docs/TEXTURES.md) for details.
