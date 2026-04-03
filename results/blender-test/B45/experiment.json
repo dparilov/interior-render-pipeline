@@ -1,0 +1,13 @@
+{
+  "experiment": "B45",
+  "method": "Cycles (fallback)",
+  "engine": "CYCLES",
+  "render_time_seconds": 15.2,
+  "render_time_minutes": 0.25,
+  "resolution": [
+    1066,
+    1239
+  ],
+  "samples": 2048,
+  "fallback": true
+}
